@@ -1,0 +1,36 @@
+import { Routes } from '@angular/router';
+import { authGuard } from './guards/auth.guard';
+
+export const routes: Routes = [
+  { path: '', loadComponent: () => import('./pages/home/home.component').then(m => m.HomeComponent) },
+  { path: 'listing/:id', loadComponent: () => import('./pages/listing-detail/listing-detail.component').then(m => m.ListingDetailComponent) },
+  { path: 'login', loadComponent: () => import('./pages/login/login.component').then(m => m.LoginComponent) },
+  { path: 'register', loadComponent: () => import('./pages/register/register.component').then(m => m.RegisterComponent) },
+  { path: 'forgot-password', loadComponent: () => import('./pages/forgot-password/forgot-password.component').then(m => m.ForgotPasswordComponent) },
+  { path: 'reset-password', loadComponent: () => import('./pages/reset-password/reset-password.component').then(m => m.ResetPasswordComponent) },
+  { path: 'profile', canActivate: [authGuard], loadComponent: () => import('./pages/profile/profile.component').then(m => m.ProfileComponent) },
+  { path: 'edit-profile', canActivate: [authGuard], loadComponent: () => import('./pages/edit-profile/edit-profile.component').then(m => m.EditProfileComponent) },
+  { path: 'my-listings', canActivate: [authGuard], loadComponent: () => import('./pages/my-listings/my-listings.component').then(m => m.MyListingsComponent) },
+  { path: 'new-listing', canActivate: [authGuard], loadComponent: () => import('./pages/new-listing/new-listing.component').then(m => m.NewListingComponent) },
+  { path: 'edit-listing/:id', canActivate: [authGuard], loadComponent: () => import('./pages/edit-listing/edit-listing.component').then(m => m.EditListingComponent) },
+  { path: 'messages', canActivate: [authGuard], loadComponent: () => import('./pages/messages/messages.component').then(m => m.MessagesComponent) },
+  { path: 'chat/:id', canActivate: [authGuard], loadComponent: () => import('./pages/chat/chat.component').then(m => m.ChatComponent) },
+  { path: 'favorites', canActivate: [authGuard], loadComponent: () => import('./pages/favorites/favorites.component').then(m => m.FavoritesComponent) },
+  { path: 'promote/:id', canActivate: [authGuard], loadComponent: () => import('./pages/promote/promote.component').then(m => m.PromoteComponent) },
+  { path: 'admin/chats', canActivate: [authGuard], loadComponent: () => import('./pages/admin/admin-chats.component').then(m => m.AdminChatsComponent) },
+  { path: 'admin/support', canActivate: [authGuard], loadComponent: () => import('./pages/admin/admin-support.component').then(m => m.AdminSupportComponent) },
+  { path: 'admin/users', canActivate: [authGuard], loadComponent: () => import('./pages/admin/admin-users.component').then(m => m.AdminUsersComponent) },
+  { path: 'admin/listings/:id/chats', canActivate: [authGuard], loadComponent: () => import('./pages/admin/admin-listing-chat.component').then(m => m.AdminListingChatComponent) },
+  { path: 'users/:id', loadComponent: () => import('./pages/public-profile/public-profile.component').then(m => m.PublicProfileComponent) },
+  { path: 'support', canActivate: [authGuard], loadComponent: () => import('./pages/support-chat/support-chat.component').then(m => m.SupportChatComponent) },
+  { path: 'about', loadComponent: () => import('./pages/about/about.component').then(m => m.AboutComponent) },
+  { path: 'privacy', loadComponent: () => import('./pages/privacy/privacy.component').then(m => m.PrivacyComponent) },
+  { path: 'terms', loadComponent: () => import('./pages/terms/terms.component').then(m => m.TermsComponent) },
+  { path: 'refund', loadComponent: () => import('./pages/refund/refund.component').then(m => m.RefundComponent) },
+  { path: 'contact', loadComponent: () => import('./pages/contact/contact.component').then(m => m.ContactComponent) },
+  { path: 'verify-email', loadComponent: () => import('./pages/verify-email/verify-email.component').then(m => m.VerifyEmailComponent) },
+  { path: '403', loadComponent: () => import('./pages/error/forbidden.component').then(m => m.ForbiddenComponent) },
+  { path: '500', loadComponent: () => import('./pages/error/server-error.component').then(m => m.ServerErrorComponent) },
+  { path: '404', loadComponent: () => import('./pages/error/not-found.component').then(m => m.NotFoundComponent) },
+  { path: '**', loadComponent: () => import('./pages/error/not-found.component').then(m => m.NotFoundComponent) }
+];

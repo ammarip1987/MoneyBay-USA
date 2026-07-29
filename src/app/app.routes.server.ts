@@ -1,0 +1,28 @@
+import { RenderMode, ServerRoute } from '@angular/ssr';
+
+export const serverRoutes: ServerRoute[] = [
+  { path: '', renderMode: RenderMode.Server },
+  { path: 'login', renderMode: RenderMode.Server },
+  { path: 'register', renderMode: RenderMode.Server },
+  { path: 'forgot-password', renderMode: RenderMode.Server },
+  { path: 'reset-password', renderMode: RenderMode.Server },
+  { path: 'about', renderMode: RenderMode.Server },
+  { path: 'privacy', renderMode: RenderMode.Server },
+  { path: 'terms', renderMode: RenderMode.Server },
+  { path: 'refund', renderMode: RenderMode.Server },
+  { path: 'contact', renderMode: RenderMode.Server },
+  { path: 'listing/:id', renderMode: RenderMode.Server },
+  { path: 'profile', renderMode: RenderMode.Client },
+  { path: 'edit-profile', renderMode: RenderMode.Client },
+  { path: 'my-listings', renderMode: RenderMode.Client },
+  { path: 'new-listing', renderMode: RenderMode.Client },
+  { path: 'edit-listing/:id', renderMode: RenderMode.Client },
+  { path: 'messages', renderMode: RenderMode.Client },
+  { path: 'chat/:id', renderMode: RenderMode.Client },
+  { path: 'favorites', renderMode: RenderMode.Client },
+  { path: 'promote/:id', renderMode: RenderMode.Client },
+  { path: 'admin/chats', renderMode: RenderMode.Client },
+  { path: 'admin/support', renderMode: RenderMode.Client },
+  { path: 'admin/users', renderMode: RenderMode.Client },
+  { path: '**', renderMode: RenderMode.Server }
+];

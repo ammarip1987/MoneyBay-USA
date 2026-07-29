@@ -1,0 +1,25 @@
+{
+  "permissions": {
+    "allow": [
+      "Read(c:\\moneybayts\\**)",
+      "Read(C:\\moneybayts\\**)",
+      "Write(c:\\moneybayts\\**)",
+      "Write(C:\\moneybayts\\**)",
+      "Edit(c:\\moneybayts\\**)",
+      "Edit(C:\\moneybayts\\**)",
+      "Glob(**)",
+      "Grep(**)",
+      "Bash(npm:*)",
+      "Bash(npx:*)",
+      "Bash(ng:*)",
+      "Bash(node:*)",
+      "Bash(git:*)",
+      "Bash(ls:*)",
+      "Bash(cp:*)",
+      "Bash(mv:*)",
+      "Bash(mkdir:*)",
+      "Bash(cat:*)",
+      "Bash(rm:*)"
+    ]
+  }
+}

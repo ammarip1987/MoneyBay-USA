@@ -1,0 +1,152 @@
+import { Component, OnInit, inject, signal } from '@angular/core';
+import { CommonModule } from '@angular/common';
+import { FormsModule } from '@angular/forms';
+import { ActivatedRoute, Router } from '@angular/router';
+import { ApiService } from '../../services/api.service';
+import { NotificationService } from '../../services/notification.service';
+import { Listing } from '../../models/listing.model';
+import { ImageUploadComponent } from '../../components/image-upload/image-upload.component';
+import { environment } from '../../../environments/environment';
+
+@Component({
+  selector: 'app-edit-listing',
+  standalone: true,
+  imports: [CommonModule, FormsModule, ImageUploadComponent],
+  template: `
+    <div class="max-w-3xl mx-auto px-4 py-8">
+      <h1 class="text-3xl font-bold text-mb-dark mb-8">Edit Listing</h1>
+
+      @if (listing()) {
+        <form (ngSubmit)="onSubmit()" class="bg-white rounded-2xl shadow-lg p-8 space-y-6">
+          <div class="form-group">
+            <label class="form-label">Title *</label>
+            <input type="text" [(ngModel)]="title" name="title" class="form-input" required>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label">Description</label>
+            <textarea [(ngModel)]="description" name="description" class="form-input" rows="6"></textarea>
+          </div>
+
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div class="form-group">
+              <label class="form-label">Price ($) *</label>
+              <input type="number" [(ngModel)]="price" name="price" class="form-input" required>
+            </div>
+
+            <div class="form-group">
+              <label class="form-label">City</label>
+              <input type="text" [(ngModel)]="city" name="city" class="form-input">
+            </div>
+          </div>
+
+          @if (existingImages().length > 0) {
+            <div class="form-group">
+              <label class="form-label">Current Photos</label>
+              <div class="grid grid-cols-4 gap-2">
+                @for (img of existingImages(); track $index) {
+                  <div class="relative group">
+                    <img [src]="getImageUrl(img)" class="w-full h-24 object-cover rounded border border-gray-200" loading="lazy" decoding="async">
+                    <button type="button" (click)="removeExisting($index)"
+                            class="absolute top-1 right-1 bg-red-500 text-white w-6 h-6 rounded-full text-xs opacity-0 group-hover:opacity-100 transition">×</button>
+                  </div>
+                }
+              </div>
+            </div>
+          }
+
+          <div class="form-group">
+            <label class="form-label">Add Photos</label>
+            <app-image-upload [maxFiles]="10" (filesChange)="onFilesChange($event)"></app-image-upload>
+          </div>
+
+          <div class="flex gap-3 pt-4 border-t border-gray-100">
+            <button type="submit" class="btn btn-primary flex-1" [disabled]="loading()">
+              {{ loading() ? 'Saving...' : 'Save Changes' }}
+            </button>
+            <button type="button" (click)="cancel()" class="btn btn-secondary">Cancel</button>
+          </div>
+        </form>
+      } @else {
+        <div class="text-center py-12 text-gray-500">Loading...</div>
+      }
+    </div>
+  `
+})
+export class EditListingComponent implements OnInit {
+  private api = inject(ApiService);
+  private route = inject(ActivatedRoute);
+  private router = inject(Router);
+  private notification = inject(NotificationService);
+
+  listing = signal<Listing | null>(null);
+  existingImages = signal<string[]>([]);
+  loading = signal(false);
+
+  title = '';
+  description = '';
+  price = 0;
+  city = '';
+  newFiles: File[] = [];
+  removedImages: string[] = [];
+
+  ngOnInit(): void {
+    const id = Number(this.route.snapshot.paramMap.get('id'));
+    if (id) {
+      this.api.getListing(id).subscribe({
+        next: (data) => {
+          this.listing.set(data);
+          this.title = data.title;
+          this.description = data.description || '';
+          this.price = data.price;
+          this.city = data.location;
+          this.existingImages.set(data.images || []);
+        }
+      });
+    }
+  }
+
+  getImageUrl(image: string): string {
+    if (image.startsWith('http')) return image;
+    return `${environment.apiUrl}/api/uploads/${image}`;
+  }
+
+  removeExisting(index: number): void {
+    const img = this.existingImages()[index];
+    this.removedImages.push(img);
+    this.existingImages.update(list => list.filter((_, i) => i !== index));
+  }
+
+  onFilesChange(files: File[]): void {
+    this.newFiles = files;
+  }
+
+  onSubmit(): void {
+    if (!this.listing()) return;
+    this.loading.set(true);
+
+    const formData = new FormData();
+    formData.append('title', this.title);
+    formData.append('description', this.description);
+    formData.append('price', String(this.price));
+    formData.append('location', this.city);
+    this.removedImages.forEach(img => formData.append('removed_images', img));
+    this.newFiles.forEach(f => formData.append('images', f));
+
+    this.api.updateListing(this.listing()!.id, formData).subscribe({
+      next: () => {
+        this.loading.set(false);
+        this.notification.success('Listing updated');
+        this.router.navigate(['/my-listings']);
+      },
+      error: (err) => {
+        this.loading.set(false);
+        this.notification.error(err?.error?.message || 'Failed to save');
+      }
+    });
+  }
+
+  cancel(): void {
+    this.router.navigate(['/my-listings']);
+  }
+}

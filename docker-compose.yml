@@ -1,0 +1,47 @@
+version: '3.9'
+
+services:
+  postgres:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_DB: moneybay
+      POSTGRES_USER: moneybay_app
+      POSTGRES_PASSWORD: moneybay123
+    ports:
+      - "5432:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U moneybay_app -d moneybay"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  backend:
+    build: ./backend
+    depends_on:
+      postgres:
+        condition: service_healthy
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/moneybay
+      SPRING_DATASOURCE_USERNAME: moneybay_app
+      SPRING_DATASOURCE_PASSWORD: moneybay123
+      JWT_SECRET: dev-secret-key-change-this-in-production-at-least-256-bits-long
+      ALLOWED_ORIGINS: http://localhost:1100,http://localhost
+      FRONTEND_URL: http://localhost:1100
+      SPRING_PROFILES_ACTIVE: prod
+    ports:
+      - "5000:8080"
+    volumes:
+      - uploads:/tmp/uploads
+
+  frontend:
+    build: .
+    depends_on:
+      - backend
+    ports:
+      - "1100:80"
+
+volumes:
+  pgdata:
+  uploads:

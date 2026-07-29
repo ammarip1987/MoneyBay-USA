@@ -1,0 +1,209 @@
+/* UGC (User-Generated Content) Styles */
+/* Стилизация описаний объявлений, комментариев, отзывов из базы данных */
+
+.prose {
+  /* Headings */
+  h1, h2, h3, h4, h5, h6 {
+    margin: 1.5rem 0 1rem 0;
+    font-weight: 600;
+    line-height: 1.3;
+    color: #1a1a1a;
+  }
+
+  h1 {
+    font-size: 2rem;
+    border-bottom: 2px solid #e5e7eb;
+    padding-bottom: 0.5rem;
+  }
+
+  h2 {
+    font-size: 1.5rem;
+  }
+
+  h3 {
+    font-size: 1.25rem;
+  }
+
+  /* Paragraphs */
+  p {
+    margin: 1rem 0;
+    line-height: 1.6;
+    color: #374151;
+  }
+
+  /* Links */
+  a {
+    color: #0066cc;
+    text-decoration: none;
+    border-bottom: 1px solid #0066cc;
+    transition: all 0.2s ease;
+
+    &:hover {
+      color: #0052a3;
+      background-color: rgba(0, 102, 204, 0.1);
+    }
+
+    &:visited {
+      color: #663399;
+    }
+  }
+
+  /* Lists */
+  ul, ol {
+    margin: 1rem 0;
+    padding-left: 2rem;
+    line-height: 1.8;
+  }
+
+  ul {
+    list-style-type: disc;
+  }
+
+  ol {
+    list-style-type: decimal;
+  }
+
+  li {
+    margin: 0.5rem 0;
+  }
+
+  /* Code blocks */
+  code {
+    background-color: #f3f4f6;
+    color: #d97706;
+    padding: 0.2rem 0.4rem;
+    border-radius: 3px;
+    font-family: 'Monaco', 'Courier New', monospace;
+    font-size: 0.9em;
+  }
+
+  pre {
+    background-color: #1f2937;
+    color: #e5e7eb;
+    padding: 1rem;
+    border-radius: 6px;
+    overflow-x: auto;
+    margin: 1rem 0;
+    font-family: 'Monaco', 'Courier New', monospace;
+    font-size: 0.85em;
+    line-height: 1.5;
+
+    code {
+      background-color: transparent;
+      color: inherit;
+      padding: 0;
+    }
+  }
+
+  /* Blockquotes */
+  blockquote {
+    border-left: 4px solid #3b82f6;
+    padding-left: 1rem;
+    margin: 1rem 0;
+    color: #6b7280;
+    font-style: italic;
+  }
+
+  /* Horizontal rules */
+  hr {
+    margin: 2rem 0;
+    border: none;
+    border-top: 1px solid #d1d5db;
+  }
+
+  /* Tables */
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    margin: 1rem 0;
+  }
+
+  thead {
+    background-color: #f3f4f6;
+    border-bottom: 2px solid #d1d5db;
+  }
+
+  th {
+    padding: 0.75rem;
+    text-align: left;
+    font-weight: 600;
+    color: #1f2937;
+  }
+
+  td {
+    padding: 0.75rem;
+    border-bottom: 1px solid #e5e7eb;
+  }
+
+  tbody tr:hover {
+    background-color: #f9fafb;
+  }
+
+  /* Strong & emphasis */
+  strong, b {
+    font-weight: 700;
+    color: #1f2937;
+  }
+
+  em, i {
+    font-style: italic;
+    color: #6b7280;
+  }
+
+  /* Inline elements */
+  mark {
+    background-color: #fef3c7;
+    padding: 0.2rem 0.4rem;
+    border-radius: 2px;
+  }
+
+  del {
+    text-decoration: line-through;
+    color: #9ca3af;
+  }
+
+  /* Images */
+  img {
+    max-width: 100%;
+    height: auto;
+    border-radius: 6px;
+    margin: 1rem 0;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+  }
+
+  /* Line breaks */
+  > :first-child {
+    margin-top: 0;
+  }
+
+  > :last-child {
+    margin-bottom: 0;
+  }
+}
+
+/* Responsive adjustments */
+@media (max-width: 640px) {
+  .prose {
+    h1 { font-size: 1.5rem; }
+    h2 { font-size: 1.25rem; }
+    h3 { font-size: 1.1rem; }
+
+    code {
+      font-size: 0.85em;
+      padding: 0.15rem 0.3rem;
+    }
+
+    pre {
+      padding: 0.75rem;
+      font-size: 0.8em;
+    }
+
+    table {
+      font-size: 0.85em;
+    }
+
+    th, td {
+      padding: 0.5rem;
+    }
+  }
+}
