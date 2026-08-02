@@ -29,7 +29,4 @@ pipelines:
               variables:
                 SSH_USER: 'admin'
                 SERVER: '16.16.207.124'
-                COMMAND_SEQUENCE:
-                  - 'cd /home/admin/apps/backend'
-                  - 'pkill -f "java -jar" || true'
-                  - 'nohup java -jar *.jar > backend.log 2>&1 &'
+                COMMAND: 'cd /home/admin/apps/backend && pkill -f "java -jar" || true && nohup java -jar *.jar > backend.log 2>&1 &'
