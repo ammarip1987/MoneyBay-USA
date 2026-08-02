@@ -1,3 +1,19 @@
+image: eclipse-temurin:25-jdk
+
+pipelines:
+  branches:
+    main:
+      - step:
+          name: Build Java Backend
+          caches:
+            - maven
+          script:
+            - cd backend
+            - chmod +x mvnw
+            - ./mvnw clean package -DskipTests
+          artifacts:
+            - backend/target/*.jar
+
       - step:
           name: Deploy JAR to AWS Server
           deployment: production
@@ -11,7 +27,7 @@
 
             - pipe: atlassian/ssh-run:0.4.1
               variables:
-                SSH_USER: 'admin' # Вот здесь обязательно должно быть SSH_USER
+                SSH_USER: 'admin'
                 SERVER: '16.16.207.124'
                 COMMAND_SEQUENCE:
                   - 'cd /home/admin/apps/backend'
