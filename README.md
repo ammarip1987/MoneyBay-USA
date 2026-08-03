@@ -1,6 +1,6 @@
 # MoneyBay (Angular + Spring Boot)
 
-Marketplace for the USA — full-stack rewrite of Flask MoneyBay (`c:\Moneybay`).
+Marketplace USA
 
 ## Stack
 
