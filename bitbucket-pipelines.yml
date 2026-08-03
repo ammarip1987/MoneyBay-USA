@@ -47,7 +47,7 @@ pipelines:
             CLOUDFLARE_ACCOUNT_ID: '${CLOUDFLARE_ACCOUNT_ID}'
           script:
             - node --version && npm --version
-            - npm ci
+            - npm ci --legacy-peer-deps
             - NODE_ENV=production npm run build
             - npm install -g wrangler
             - wrangler pages deploy dist/moneybay-angular/browser --project-name=moneybay
