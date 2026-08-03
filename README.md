@@ -45,87 +45,87 @@ Marketplace for the USA — full-stack rewrite of Flask MoneyBay (`c:\Moneybay`)
 
 ```
 Moneybay/
-├── CLAUDE.md                          # Інструкції для Claude
-├── README.md                          # Документація проекту
-├── MEMORY.md                          # Memory індекс
-├── package.json                       # Frontend залежності
-├── angular.json                       # Angular конфігурація
-├── tsconfig.json                      # TypeScript конфігурація
-├── tailwind.config.js                 # Tailwind CSS конфіг
-├── postcss.config.js                  # PostCSS конфіг
+├── CLAUDE.md                          # Инструкции для Claude
+├── README.md                          # Документация проекта
+├── MEMORY.md                          # Memory индекс
+├── package.json                       # Frontend зависимости
+├── angular.json                       # Angular конфигурация
+├── tsconfig.json                      # TypeScript конфигурация
+├── tailwind.config.js                 # Tailwind CSS конфиг
+├── postcss.config.js                  # PostCSS конфиг
 ├── bitbucket-pipelines.yml           # CI/CD pipeline (Bitbucket)
-├── docker-compose.yml                 # Docker для локальної розробки
+├── docker-compose.yml                 # Docker для локальной разработки
 ├── Dockerfile                         # Docker image для фронтенда
-├── nginx.conf                         # NGINX конфігурація
-├── ngsw-config.json                   # Angular Service Worker конфіг
-├── proxy.conf.json                    # Proxy для локальної розробки
+├── nginx.conf                         # NGINX конфигурация
+├── ngsw-config.json                   # Angular Service Worker конфиг
+├── proxy.conf.json                    # Proxy для локальной разработки
 │
 ├── src/                               # FRONTEND (Angular 21)
 │   ├── app/
-│   │   ├── components/                # Переиспользуемі компоненти
-│   │   │   ├── header/               # Шапка сайту
-│   │   │   ├── footer/               # Підвал
-│   │   │   ├── listing-card/         # Карточка оголошення
-│   │   │   ├── filter-chips-bar/     # Фільтри пошуку
-│   │   │   ├── filter-drawer/        # Висувна панель фільтрів
-│   │   │   ├── search-autocomplete/  # Автозаповнення пошуку
-│   │   │   ├── image-upload/         # Завантаження фото
-│   │   │   ├── skeleton-loader/      # Скелет завантаження
-│   │   │   ├── theme-toggle/         # Перемикач теми
-│   │   │   └── toast/                # Спливаючі сповіщення
+│   │   ├── components/                # Переиспользуемые компоненты
+│   │   │   ├── header/               # Шапка сайта
+│   │   │   ├── footer/               # Подвал
+│   │   │   ├── listing-card/         # Карточка объявления
+│   │   │   ├── filter-chips-bar/     # Фильтры поиска
+│   │   │   ├── filter-drawer/        # Выдвижная панель фильтров
+│   │   │   ├── search-autocomplete/  # Автозаполнение поиска
+│   │   │   ├── image-upload/         # Загрузка фото
+│   │   │   ├── skeleton-loader/      # Скелет загрузки
+│   │   │   ├── theme-toggle/         # Переключатель темы
+│   │   │   └── toast/                # Всплывающие уведомления
 │   │   │
-│   │   ├── pages/                    # Сторінки додатку
-│   │   │   ├── home/                 # Головна сторінка
-│   │   │   ├── listing-detail/       # Деталі оголошення
-│   │   │   ├── edit-listing/         # Редагування оголошення
-│   │   │   ├── create-listing/       # Створення оголошення
-│   │   │   ├── user-profile/         # Профіль користувача
-│   │   │   ├── edit-profile/         # Редагування профілю
-│   │   │   ├── login/                # Вхід
-│   │   │   ├── register/             # Реєстрація
-│   │   │   ├── forgot-password/      # Відновлення пароля
-│   │   │   ├── chat/                 # Чат між користувачами
-│   │   │   ├── favorites/            # Улюблені оголошення
-│   │   │   ├── admin/                # Адмін-панель
-│   │   │   ├── about/                # Про проект
-│   │   │   ├── contact/              # Контакти
-│   │   │   └── error/                # Сторінка помилки
+│   │   ├── pages/                    # Страницы приложения
+│   │   │   ├── home/                 # Главная страница
+│   │   │   ├── listing-detail/       # Детали объявления
+│   │   │   ├── edit-listing/         # Редактирование объявления
+│   │   │   ├── create-listing/       # Создание объявления
+│   │   │   ├── user-profile/         # Профиль пользователя
+│   │   │   ├── edit-profile/         # Редактирование профиля
+│   │   │   ├── login/                # Вход
+│   │   │   ├── register/             # Регистрация
+│   │   │   ├── forgot-password/      # Восстановление пароля
+│   │   │   ├── chat/                 # Чат между пользователями
+│   │   │   ├── favorites/            # Избранные объявления
+│   │   │   ├── admin/                # Админ-панель
+│   │   │   ├── about/                # О проекте
+│   │   │   ├── contact/              # Контакты
+│   │   │   └── error/                # Страница ошибки
 │   │   │
-│   │   ├── services/                 # API сервіси
-│   │   │   ├── api.service.ts        # Базовий API клієнт
-│   │   │   ├── auth.service.ts       # Аутентифікація
-│   │   │   ├── listing.service.ts    # Робота з оголошеннями
-│   │   │   ├── user.service.ts       # Робота з користувачами
+│   │   ├── services/                 # API сервисы
+│   │   │   ├── api.service.ts        # Базовый API клиент
+│   │   │   ├── auth.service.ts       # Аутентификация
+│   │   │   ├── listing.service.ts    # Работа с объявлениями
+│   │   │   ├── user.service.ts       # Работа с пользователями
 │   │   │   ├── chat.service.ts       # Чат (WebSocket)
-│   │   │   ├── payment.service.ts    # Платежі (Stripe)
+│   │   │   ├── payment.service.ts    # Платежи (Stripe)
 │   │   │   └── city.service.ts       # City context (subdomain routing)
 │   │   │
 │   │   ├── guards/                   # Route guards
-│   │   │   ├── auth.guard.ts         # Перевірка аутентифікації
-│   │   │   └── admin.guard.ts        # Перевірка адміна
+│   │   │   ├── auth.guard.ts         # Проверка аутентификации
+│   │   │   └── admin.guard.ts        # Проверка админа
 │   │   │
 │   │   ├── interceptors/             # HTTP interceptors
 │   │   │   ├── auth.interceptor.ts   # JWT токен
-│   │   │   ├── error.interceptor.ts  # Обробка помилок
-│   │   │   └── loading.interceptor.ts # Індикатор завантаження
+│   │   │   ├── error.interceptor.ts  # Обработка ошибок
+│   │   │   └── loading.interceptor.ts # Индикатор загрузки
 │   │   │
-│   │   ├── models/                   # TypeScript інтерфейси
+│   │   ├── models/                   # TypeScript интерфейсы
 │   │   │   ├── listing.model.ts
 │   │   │   ├── user.model.ts
 │   │   │   ├── category.model.ts
 │   │   │   └── ...
 │   │   │
-│   │   ├── directives/               # Кастомні директиви
+│   │   ├── directives/               # Кастомные директивы
 │   │   └── app.module.ts             # Root модуль Angular
 │   │
-│   ├── assets/                       # Статичні файли
+│   ├── assets/                       # Статические файлы
 │   │   ├── images/                   # Картинки
-│   │   ├── icons/                    # SVG іконки
-│   │   └── fonts/                    # Шрифти
+│   │   ├── icons/                    # SVG иконки
+│   │   └── fonts/                    # Шрифты
 │   │
-│   ├── styles/                       # Глобальні стилі
-│   │   ├── styles.css                # Основний CSS (Tailwind)
-│   │   └── ugc.scss                  # SASS для UGC контенту
+│   ├── styles/                       # Глобальные стили
+│   │   ├── styles.css                # Основной CSS (Tailwind)
+│   │   └── ugc.scss                  # SASS для UGC контента
 │   │
 │   ├── main.ts                       # Entry point
 │   ├── index.html                    # HTML шаблон
@@ -133,16 +133,16 @@ Moneybay/
 │
 ├── backend/                           # BACKEND (Spring Boot 3.5)
 │   ├── src/main/java/us/moneybay/
-│   │   ├── controller/               # REST контролери
+│   │   ├── controller/               # REST контроллеры
 │   │   │   ├── ListingController.java
 │   │   │   ├── UserController.java
 │   │   │   ├── AuthController.java
 │   │   │   ├── CategoryController.java
 │   │   │   ├── ChatController.java
 │   │   │   ├── PaymentController.java
-│   │   │   └── FlagController.java    # Флагування оголошень
+│   │   │   └── FlagController.java    # Флагирование объявлений
 │   │   │
-│   │   ├── service/                  # Бізнес-логіка
+│   │   ├── service/                  # Бизнес-логика
 │   │   │   ├── ListingService.java
 │   │   │   ├── UserService.java
 │   │   │   ├── AuthService.java
@@ -158,7 +158,7 @@ Moneybay/
 │   │   │   ├── ListingFlagRepository.java
 │   │   │   └── KeywordFilterRepository.java
 │   │   │
-│   │   ├── model/                    # JPA Entity класи
+│   │   ├── model/                    # JPA Entity классы
 │   │   │   ├── Listing.java
 │   │   │   ├── User.java
 │   │   │   ├── Category.java
@@ -172,34 +172,34 @@ Moneybay/
 │   │   │   ├── LoginRequest.java
 │   │   │   └── ...
 │   │   │
-│   │   ├── config/                   # Конфігурація
+│   │   ├── config/                   # Конфигурация
 │   │   │   ├── SecurityConfig.java   # Spring Security + JWT
 │   │   │   ├── WebConfig.java        # CORS, WebSocket
-│   │   │   ├── CacheConfig.java      # Redis кешування
+│   │   │   ├── CacheConfig.java      # Redis кэширование
 │   │   │   └── FileStorageConfig.java # Cloudflare R2
 │   │   │
-│   │   ├── security/                 # JWT та аутентифікація
+│   │   ├── security/                 # JWT и аутентификация
 │   │   │   ├── JwtTokenProvider.java
 │   │   │   ├── JwtAuthFilter.java
 │   │   │   └── CityContextFilter.java # City subdomain routing
 │   │   │
-│   │   └── MoneyBayApplication.java  # Main клас
+│   │   └── MoneyBayApplication.java  # Main класс
 │   │
 │   ├── src/main/resources/
-│   │   ├── application.properties     # Конфігурація (dev)
-│   │   ├── application-prod.properties # Production конфіг
-│   │   ├── db/migration/             # Liquibase міграції БД
+│   │   ├── application.properties     # Конфигурация (dev)
+│   │   ├── application-prod.properties # Production конфиг
+│   │   ├── db/migration/             # Liquibase миграции БД
 │   │   │   ├── V1__Initial_schema.sql
 │   │   │   ├── V2__Add_JWT_tables.sql
 │   │   │   └── ...
-│   │   └── application.yml           # YAML конфіг
+│   │   └── application.yml           # YAML конфиг
 │   │
-│   ├── pom.xml                       # Maven залежності
+│   ├── pom.xml                       # Maven зависимости
 │   ├── mvnw                          # Maven Wrapper
 │   └── mvnw.cmd                      # Maven Wrapper (Windows)
 │
-├── .claude/                           # Claude Code конфіг
-│   └── settings.json                 # Налаштування Claude
+├── .claude/                           # Claude Code конфиг
+│   └── settings.json                 # Настройки Claude
 │
 └── dist/                              # Build output (Angular)
     └── moneybay-angular/
