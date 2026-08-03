@@ -44,53 +44,190 @@ Marketplace for the USA — full-stack rewrite of Flask MoneyBay (`c:\Moneybay`)
 ## Project Structure
 
 ```
-c:\moneybayts\
-├── src/                            # Angular frontend
+Moneybay/
+├── CLAUDE.md                          # Інструкції для Claude
+├── README.md                          # Документація проекту
+├── MEMORY.md                          # Memory індекс
+├── package.json                       # Frontend залежності
+├── angular.json                       # Angular конфігурація
+├── tsconfig.json                      # TypeScript конфігурація
+├── tailwind.config.js                 # Tailwind CSS конфіг
+├── postcss.config.js                  # PostCSS конфіг
+├── bitbucket-pipelines.yml           # CI/CD pipeline (Bitbucket)
+├── docker-compose.yml                 # Docker для локальної розробки
+├── Dockerfile                         # Docker image для фронтенда
+├── nginx.conf                         # NGINX конфігурація
+├── ngsw-config.json                   # Angular Service Worker конфіг
+├── proxy.conf.json                    # Proxy для локальної розробки
+│
+├── src/                               # FRONTEND (Angular 21)
 │   ├── app/
-│   │   ├── components/             # Header, Footer, ListingCard, Toast, ImageUpload, SearchAutocomplete
-│   │   ├── pages/                  # 21+ routed pages
-│   │   ├── services/               # ApiService, AuthService, SocketService, NotificationService, CityContextService, SeoService
-│   │   ├── interceptors/           # authInterceptor, cityContextInterceptor
-│   │   ├── guards/                 # authGuard
-│   │   ├── models/                 # TypeScript interfaces
-│   │   ├── app.routes.ts
-│   │   ├── app.routes.server.ts    # SSR route render modes
-│   │   ├── app.config.ts
-│   │   ├── app.config.server.ts    # SSR config (provideServerRendering + withRoutes)
-│   │   ├── app.html
-│   │   └── app.ts
-│   ├── environments/
-│   │   ├── environment.ts          # dev (localhost:5000)
-│   │   └── environment.prod.ts     # prod (api.moneybay.us)
-│   ├── styles.css                  # Tailwind + @tailwindcss/typography
-│   ├── main.ts                     # Browser bootstrap
-│   ├── main.server.ts              # SSR bootstrap (BootstrapContext)
-│   └── server.ts                   # Express SSR server
-├── public/                         # Static assets (icons)
-├── backend/                        # Spring Boot
+│   │   ├── components/                # Переиспользуемі компоненти
+│   │   │   ├── header/               # Шапка сайту
+│   │   │   ├── footer/               # Підвал
+│   │   │   ├── listing-card/         # Карточка оголошення
+│   │   │   ├── filter-chips-bar/     # Фільтри пошуку
+│   │   │   ├── filter-drawer/        # Висувна панель фільтрів
+│   │   │   ├── search-autocomplete/  # Автозаповнення пошуку
+│   │   │   ├── image-upload/         # Завантаження фото
+│   │   │   ├── skeleton-loader/      # Скелет завантаження
+│   │   │   ├── theme-toggle/         # Перемикач теми
+│   │   │   └── toast/                # Спливаючі сповіщення
+│   │   │
+│   │   ├── pages/                    # Сторінки додатку
+│   │   │   ├── home/                 # Головна сторінка
+│   │   │   ├── listing-detail/       # Деталі оголошення
+│   │   │   ├── edit-listing/         # Редагування оголошення
+│   │   │   ├── create-listing/       # Створення оголошення
+│   │   │   ├── user-profile/         # Профіль користувача
+│   │   │   ├── edit-profile/         # Редагування профілю
+│   │   │   ├── login/                # Вхід
+│   │   │   ├── register/             # Реєстрація
+│   │   │   ├── forgot-password/      # Відновлення пароля
+│   │   │   ├── chat/                 # Чат між користувачами
+│   │   │   ├── favorites/            # Улюблені оголошення
+│   │   │   ├── admin/                # Адмін-панель
+│   │   │   ├── about/                # Про проект
+│   │   │   ├── contact/              # Контакти
+│   │   │   └── error/                # Сторінка помилки
+│   │   │
+│   │   ├── services/                 # API сервіси
+│   │   │   ├── api.service.ts        # Базовий API клієнт
+│   │   │   ├── auth.service.ts       # Аутентифікація
+│   │   │   ├── listing.service.ts    # Робота з оголошеннями
+│   │   │   ├── user.service.ts       # Робота з користувачами
+│   │   │   ├── chat.service.ts       # Чат (WebSocket)
+│   │   │   ├── payment.service.ts    # Платежі (Stripe)
+│   │   │   └── city.service.ts       # City context (subdomain routing)
+│   │   │
+│   │   ├── guards/                   # Route guards
+│   │   │   ├── auth.guard.ts         # Перевірка аутентифікації
+│   │   │   └── admin.guard.ts        # Перевірка адміна
+│   │   │
+│   │   ├── interceptors/             # HTTP interceptors
+│   │   │   ├── auth.interceptor.ts   # JWT токен
+│   │   │   ├── error.interceptor.ts  # Обробка помилок
+│   │   │   └── loading.interceptor.ts # Індикатор завантаження
+│   │   │
+│   │   ├── models/                   # TypeScript інтерфейси
+│   │   │   ├── listing.model.ts
+│   │   │   ├── user.model.ts
+│   │   │   ├── category.model.ts
+│   │   │   └── ...
+│   │   │
+│   │   ├── directives/               # Кастомні директиви
+│   │   └── app.module.ts             # Root модуль Angular
+│   │
+│   ├── assets/                       # Статичні файли
+│   │   ├── images/                   # Картинки
+│   │   ├── icons/                    # SVG іконки
+│   │   └── fonts/                    # Шрифти
+│   │
+│   ├── styles/                       # Глобальні стилі
+│   │   ├── styles.css                # Основний CSS (Tailwind)
+│   │   └── ugc.scss                  # SASS для UGC контенту
+│   │
+│   ├── main.ts                       # Entry point
+│   ├── index.html                    # HTML шаблон
+│   └── favicon.ico                   # Favicon
+│
+├── backend/                           # BACKEND (Spring Boot 3.5)
 │   ├── src/main/java/us/moneybay/
-│   │   ├── controller/             # 15 REST controllers
-│   │   ├── repository/             # JPA repositories
-│   │   ├── model/                  # JPA entities (User, Listing, Category, Subcategory, City, Message, Favorite, EmailVerificationToken)
-│   │   ├── dto/                    # Auth, User, Listing DTOs
-│   │   ├── config/                 # Security, CORS, WebSocket, DataInitializer, GlobalExceptionHandler, CityContextFilter, RateLimitFilter
-│   │   ├── security/               # JwtUtil, JwtAuthFilter
-│   │   └── service/                # StripeService, EmailService, RecaptchaService, EmailVerificationService
+│   │   ├── controller/               # REST контролери
+│   │   │   ├── ListingController.java
+│   │   │   ├── UserController.java
+│   │   │   ├── AuthController.java
+│   │   │   ├── CategoryController.java
+│   │   │   ├── ChatController.java
+│   │   │   ├── PaymentController.java
+│   │   │   └── FlagController.java    # Флагування оголошень
+│   │   │
+│   │   ├── service/                  # Бізнес-логіка
+│   │   │   ├── ListingService.java
+│   │   │   ├── UserService.java
+│   │   │   ├── AuthService.java
+│   │   │   ├── ChatService.java
+│   │   │   ├── PaymentService.java
+│   │   │   ├── FlagListingService.java
+│   │   │   └── KeywordFilterService.java
+│   │   │
+│   │   ├── repository/               # Database доступ
+│   │   │   ├── ListingRepository.java
+│   │   │   ├── UserRepository.java
+│   │   │   ├── ChatRepository.java
+│   │   │   ├── ListingFlagRepository.java
+│   │   │   └── KeywordFilterRepository.java
+│   │   │
+│   │   ├── model/                    # JPA Entity класи
+│   │   │   ├── Listing.java
+│   │   │   ├── User.java
+│   │   │   ├── Category.java
+│   │   │   ├── Chat.java
+│   │   │   ├── ListingFlag.java
+│   │   │   └── KeywordFilter.java
+│   │   │
+│   │   ├── dto/                      # Data Transfer Objects
+│   │   │   ├── ListingDTO.java
+│   │   │   ├── UserDTO.java
+│   │   │   ├── LoginRequest.java
+│   │   │   └── ...
+│   │   │
+│   │   ├── config/                   # Конфігурація
+│   │   │   ├── SecurityConfig.java   # Spring Security + JWT
+│   │   │   ├── WebConfig.java        # CORS, WebSocket
+│   │   │   ├── CacheConfig.java      # Redis кешування
+│   │   │   └── FileStorageConfig.java # Cloudflare R2
+│   │   │
+│   │   ├── security/                 # JWT та аутентифікація
+│   │   │   ├── JwtTokenProvider.java
+│   │   │   ├── JwtAuthFilter.java
+│   │   │   └── CityContextFilter.java # City subdomain routing
+│   │   │
+│   │   └── MoneyBayApplication.java  # Main клас
+│   │
 │   ├── src/main/resources/
-│   │   ├── application.properties              # dev
-│   │   ├── application-prod.properties         # prod
-│   │   └── application-test.properties         # H2 for tests
-│   ├── Dockerfile                  # multi-stage JDK build
-│   └── pom.xml
-├── Dockerfile                      # multi-stage Node + Nginx
-├── docker-compose.yml              # postgres + backend + frontend
-├── nginx.conf
-├── tailwind.config.js              # + @tailwindcss/typography plugin
-├── package.json
-├── tsconfig.json
-├── angular.json                    # SSR config (outputMode: server)
-├── .github/workflows/deploy.yml    # CI/CD
-└── README.md
+│   │   ├── application.properties     # Конфігурація (dev)
+│   │   ├── application-prod.properties # Production конфіг
+│   │   ├── db/migration/             # Liquibase міграції БД
+│   │   │   ├── V1__Initial_schema.sql
+│   │   │   ├── V2__Add_JWT_tables.sql
+│   │   │   └── ...
+│   │   └── application.yml           # YAML конфіг
+│   │
+│   ├── pom.xml                       # Maven залежності
+│   ├── mvnw                          # Maven Wrapper
+│   └── mvnw.cmd                      # Maven Wrapper (Windows)
+│
+├── .claude/                           # Claude Code конфіг
+│   └── settings.json                 # Налаштування Claude
+│
+└── dist/                              # Build output (Angular)
+    └── moneybay-angular/
+        ├── browser/                  # Статика для фронтенда
+        └── server/                   # SSR сервер
+```
+
+### Основні технології
+
+| Шар | Технологія | Порт | Деплой |
+|------|-----------|------|---------|
+| Frontend | Angular 21 + Tailwind CSS | 1100 (dev), 443 (prod) | Cloudflare Pages |
+| Backend | Spring Boot 3.5 + Spring Security | 5000 | AWS EC2 |
+| Database | PostgreSQL 18 | 5432 | AWS RDS |
+| Real-time | WebSocket STOMP | 5000 | AWS EC2 |
+| CDN фото | Cloudflare R2 | - | Cloudflare R2 |
+| Платежі | Stripe | - | Stripe API |
+
+### Flow запросів
+
+```
+User Browser
+    ↓
+Cloudflare Pages (moneybay.us) ← Frontend (Angular)
+    ↓
+AWS EC2 Backend (api.moneybay.us:5000) ← Spring Boot API
+    ↓
+AWS RDS PostgreSQL ← Database
 ```
 
 ## Setup
