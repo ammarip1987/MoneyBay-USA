@@ -39,7 +39,6 @@ pipelines:
                   export SPRING_PROFILES_ACTIVE=prod
                   nohup java -jar backend/backend-0.0.1-SNAPSHOT.jar > app.log 2>&1 &
 
-
       - step:
           name: Build and Deploy Frontend to Cloudflare Pages
           image: node:20
