@@ -29,4 +29,12 @@ pipelines:
               variables:
                 SSH_USER: 'admin'
                 SERVER: '16.16.207.124'
-                COMMAND: 'cd /home/admin/apps/backend && pkill -f "java -jar" || true && nohup java -jar *.jar > backend.log 2>&1 &'
+                COMMAND: 'cd /home/admin/apps && pkill -f "backend-0.0.1-SNAPSHOT.jar" || true && export DATABASE_URL="jdbc:postgresql://db-moneybay-usa.c5qkmgi6m2e9.eu-north-1.rds.amazonaws.com:5432/moneybay" && export DB_USERNAME="moneybayusa" && export DB_PASSWORD="${DB_PASSWORD}" && export JWT_SECRET="${JWT_SECRET}" && export SPRING_PROFILES_ACTIVE=prod && nohup java -jar backend/backend-0.0.1-SNAPSHOT.jar > app.log 2>&1 &'
+
+
+      - step:
+          name: Деплой фронтенда в Cloudflare
+          script:
+            - npm install
+            - npm run build || true
+            - npx wrangler pages deploy ./dist --project-name=moneybay
