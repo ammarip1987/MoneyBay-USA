@@ -1,6 +1,6 @@
 # MoneyBay (Angular + Spring Boot)
 
-Marketplace for the USA — full-stack rewrite of Flask MoneyBay (`c:\Moneybay`).
+Modern marketplace platform for the USA classifieds. Full-stack application built with Angular 21 + Spring Boot 3.5.
 
 ## Stack
 
