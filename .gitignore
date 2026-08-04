@@ -57,3 +57,6 @@ neon-migration-dump.sql
 # Env files with secrets
 .env
 backend/.env
+deploy-body.json
+env-*.json
+stripe-*.json
