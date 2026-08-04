@@ -1,16 +1,14 @@
-import { Component, inject, signal, PLATFORM_ID } from '@angular/core';
-import { CommonModule, isPlatformBrowser } from '@angular/common';
+import { Component, inject, signal } from '@angular/core';
+import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Router, RouterLink } from '@angular/router';
-import { RecaptchaModule } from 'ng-recaptcha';
 import { AuthService } from '../../services/auth.service';
 import { NotificationService } from '../../services/notification.service';
-import { environment } from '../../../environments/environment';
 
 @Component({
   selector: 'app-login',
   standalone: true,
-  imports: [CommonModule, FormsModule, RouterLink, RecaptchaModule],
+  imports: [CommonModule, FormsModule, RouterLink],
   template: `
     <div class="min-h-[calc(100vh-200px)] flex items-center justify-center px-4 py-12">
       <div class="max-w-md w-full">
@@ -49,15 +47,9 @@ import { environment } from '../../../environments/environment';
               <a routerLink="/forgot-password" class="text-sm text-mb-blue hover:underline">Forgot password?</a>
             </div>
 
-            @if (isBrowser) {
-              <div class="flex justify-center">
-                <re-captcha [siteKey]="siteKey" (resolved)="onCaptchaResolved($event)"></re-captcha>
-              </div>
-            }
-
             <button type="submit"
                     class="w-full bg-mb-blue hover:bg-blue-700 text-white font-bold py-3 rounded-lg transition shadow-md hover:shadow-lg disabled:opacity-50 disabled:cursor-not-allowed"
-                    [disabled]="loading() || (isBrowser && !captchaToken())">
+                    [disabled]="loading()">
               {{ loading() ? 'Logging in...' : 'Log in' }}
             </button>
           </form>
@@ -74,24 +66,16 @@ export class LoginComponent {
   private auth = inject(AuthService);
   private router = inject(Router);
   private notification = inject(NotificationService);
-  private platformId = inject(PLATFORM_ID);
 
   email = '';
   password = '';
   loading = signal(false);
   error = signal<string | null>(null);
-  captchaToken = signal<string | null>(null);
-  siteKey = environment.recaptchaSiteKey;
-  isBrowser = isPlatformBrowser(this.platformId);
-
-  onCaptchaResolved(token: string | null): void {
-    this.captchaToken.set(token);
-  }
 
   onSubmit(): void {
     this.loading.set(true);
     this.error.set(null);
-    this.auth.login(this.email, this.password, this.captchaToken() || undefined).subscribe({
+    this.auth.login(this.email, this.password).subscribe({
       next: () => {
         this.loading.set(false);
         this.notification.success('Welcome back!');
@@ -100,7 +84,6 @@ export class LoginComponent {
       error: (err) => {
         this.loading.set(false);
         this.error.set(err?.error?.message || 'Invalid email or password');
-        this.captchaToken.set(null);
       }
     });
   }
