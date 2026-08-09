@@ -47,7 +47,7 @@ jobs:
             export DB_USERNAME="moneybayusa"
             export DB_PASSWORD="${{ secrets.DB_PASSWORD }}"
             export JWT_SECRET="${{ secrets.JWT_SECRET }}"
-            export SPRING_PROFILES_ACTIVE=prod
+            export SPRING_PROFILES_ACTIVE=production
             nohup java -jar backend/backend-0.0.1-SNAPSHOT.jar > app.log 2>&1 &
             echo "Backend started, waiting for health check..."
             sleep 10
