@@ -53,7 +53,7 @@ Moneybay/
 ├── tsconfig.json                      # TypeScript конфигурация
 ├── tailwind.config.js                 # Tailwind CSS конфиг
 ├── postcss.config.js                  # PostCSS конфиг
-├── bitbucket-pipelines.yml           # CI/CD pipeline (Bitbucket)
+├── .github/workflows/deploy.yml      # CI/CD pipeline (GitHub Actions)
 ├── docker-compose.yml                 # Docker для локальной разработки
 ├── Dockerfile                         # Docker image для фронтенда
 ├── nginx.conf                         # NGINX конфигурация
@@ -207,7 +207,7 @@ Moneybay/
         └── server/                   # SSR сервер
 ```
 
-### Основні технології
+### основные технологии
 
 | Шар | Технологія | Порт | Деплой |
 |------|-----------|------|---------|
@@ -218,7 +218,7 @@ Moneybay/
 | CDN фото | Cloudflare R2 | - | Cloudflare R2 |
 | Платежі | Stripe | - | Stripe API |
 
-### Flow запросів
+### Flow зпросов
 
 ```
 User Browser
