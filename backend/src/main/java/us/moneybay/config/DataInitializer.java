@@ -218,78 +218,29 @@ public class DataInitializer implements CommandLineRunner {
 
     // Largest city of each of the 50 US states + Washington, DC (51 entries).
     // US marketplace standard format "City, ST" (eBay / Facebook Marketplace / Craigslist).
-    private static final List<CityDef> CITY_DEFS = new java.util.ArrayList<>(List.of(
-        new CityDef("Birmingham, AL", "birmingham-al"),
-        new CityDef("Anchorage, AK", "anchorage-ak"),
-        new CityDef("Phoenix, AZ", "phoenix-az"),
-        new CityDef("Little Rock, AR", "littlerock-ar"),
-        new CityDef("Los Angeles, CA", "losangeles-ca"),
-        new CityDef("Denver, CO", "denver-co"),
-        new CityDef("Bridgeport, CT", "bridgeport-ct"),
-        new CityDef("Wilmington, DE", "wilmington-de"),
-        new CityDef("Jacksonville, FL", "jacksonville-fl"),
-        new CityDef("Atlanta, GA", "atlanta-ga"),
-        new CityDef("Honolulu, HI", "honolulu-hi"),
-        new CityDef("Boise, ID", "boise-id"),
-        new CityDef("Chicago, IL", "chicago-il"),
-        new CityDef("Indianapolis, IN", "indianapolis-in"),
-        new CityDef("Des Moines, IA", "desmoines-ia"),
-        new CityDef("Wichita, KS", "wichita-ks"),
-        new CityDef("Louisville, KY", "louisville-ky"),
-        new CityDef("New Orleans, LA", "neworleans-la"),
-        new CityDef("Portland, ME", "portland-me"),
-        new CityDef("Baltimore, MD", "baltimore-md"),
-        new CityDef("Boston, MA", "boston-ma"),
-        new CityDef("Detroit, MI", "detroit-mi"),
-        new CityDef("Minneapolis, MN", "minneapolis-mn"),
-        new CityDef("Jackson, MS", "jackson-ms"),
-        new CityDef("Kansas City, MO", "kansascity-mo"),
-        new CityDef("Billings, MT", "billings-mt"),
-        new CityDef("Omaha, NE", "omaha-ne"),
-        new CityDef("Las Vegas, NV", "lasvegas-nv"),
-        new CityDef("Manchester, NH", "manchester-nh"),
-        new CityDef("Newark, NJ", "newark-nj"),
-        new CityDef("Albuquerque, NM", "albuquerque-nm"),
-        new CityDef("New York City, NY", "newyorkcity-ny"),
-        new CityDef("Charlotte, NC", "charlotte-nc"),
-        new CityDef("Fargo, ND", "fargo-nd"),
-        new CityDef("Columbus, OH", "columbus-oh"),
-        new CityDef("Oklahoma City, OK", "oklahomacity-ok"),
-        new CityDef("Portland, OR", "portland-or"),
-        new CityDef("Philadelphia, PA", "philadelphia-pa"),
-        new CityDef("Providence, RI", "providence-ri"),
-        new CityDef("Charleston, SC", "charleston-sc"),
-        new CityDef("Sioux Falls, SD", "siouxfalls-sd"),
-        new CityDef("Nashville, TN", "nashville-tn"),
-        new CityDef("Houston, TX", "houston-tx"),
-        new CityDef("Salt Lake City, UT", "saltlakecity-ut"),
-        new CityDef("Burlington, VT", "burlington-vt"),
-        new CityDef("Virginia Beach, VA", "virginiabeach-va"),
-        new CityDef("Seattle, WA", "seattle-wa"),
-        new CityDef("Charleston, WV", "charleston-wv"),
-        new CityDef("Milwaukee, WI", "milwaukee-wi"),
-        new CityDef("Cheyenne, WY", "cheyenne-wy"),
-        new CityDef("Washington, DC", "washingtondc")
-    ));
+  private static final List<CityDef> CITY_DEFS = new java.util.ArrayList<>();
 
     @Transactional
     private void syncCities() {
         log.info("Syncing cities, current count: {}", cityRepository.count());
+        log.info("Cities sync skipped. Managed via SQL migrations.");
+    }
+ ///  private void syncCities() {
 
         // No FK references to cities (Listing.location / User.city are plain strings),
         // so rebuild the table to exactly match CITY_DEFS and drop all legacy rows.
-        cityRepository.deleteAll();
-        cityRepository.flush();
+     //   cityRepository.deleteAll();
+     //   cityRepository.flush();
 
-        for (CityDef def : CITY_DEFS) {
-            City city = new City();
-            city.setName(def.name());
-            city.setSubdomain(def.subdomain());
-            cityRepository.save(city);
-        }
+     //   for (CityDef def : CITY_DEFS) {
+     //       City city = new City();
+      //      city.setName(def.name());
+      //      city.setSubdomain(def.subdomain());
+     //       cityRepository.save(city);
+     //   }
 
-        log.info("Cities synced, final count: {}", cityRepository.count());
-    }
+     //   log.info("Cities synced, final count: {}", cityRepository.count());
+  //  }
 
 
 }
