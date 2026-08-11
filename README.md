@@ -2,6 +2,10 @@
 
 Marketplace USA
 
+MoneyBay project is built in Enterprise using strict typing and preserving inheritance for developers.
+
+Проэкт сделан по типу Enterprise используя строгую типизацию и сохраняя наследсвенность для програмистов.
+
 ## Stack
 
 **Frontend:**
