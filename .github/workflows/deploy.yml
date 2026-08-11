@@ -41,7 +41,7 @@ jobs:
           username: ${{ vars.EC2_USER }}
           key: ${{ secrets.EC2_SSH_KEY }}
           script: |
-            cd /home/admin/apps
+            cd /home/admin/apps/backend
             pkill -f "backend-0.0.1-SNAPSHOT.jar" || true
             sleep 2
             export DATABASE_URL="jdbc:postgresql://db-moneybay-usa.c5qkmgi6m2e9.eu-north-1.rds.amazonaws.com:5432/moneybay"
@@ -49,6 +49,6 @@ jobs:
             export DB_PASSWORD="${{ secrets.DB_PASSWORD }}"
             export JWT_SECRET="${{ secrets.JWT_SECRET }}"
             export SPRING_PROFILES_ACTIVE=production
-            nohup java -jar backend/backend-0.0.1-SNAPSHOT.jar > app.log 2>&1 &
+            nohup java -jar backend-0.0.1-SNAPSHOT.jar > app.log 2>&1 &
             sleep 10
             curl -sf http://localhost:5000/actuator/health || echo "Health check failed, check app.log"
