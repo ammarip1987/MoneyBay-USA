@@ -28,21 +28,21 @@ jobs:
       - name: Upload JAR to AWS EC2
         uses: appleboy/scp-action@v0.1.7
         with:
-          host: ${{ secrets.EC2_HOST }}
-          username: ${{ secrets.EC2_USER }}
+          host: ${{ vars.EC2_HOST }}
+          username: ${{ vars.EC2_USER }}
           key: ${{ secrets.EC2_SSH_KEY }}
           source: "backend/target/*.jar"
-          target: "/home/${{ secrets.EC2_USER }}/apps/backend"
+          target: "/home/admin/apps/backend"
           strip_components: 2
 
       - name: Restart Backend on EC2
         uses: appleboy/ssh-action@v1
         with:
-          host: ${{ secrets.EC2_HOST }}
-          username: ${{ secrets.EC2_USER }}
+          host: ${{ vars.EC2_HOST }}
+          username: ${{ vars.EC2_USER }}
           key: ${{ secrets.EC2_SSH_KEY }}
           script: |
-            cd /home/${{ secrets.EC2_USER }}/apps
+            cd /home/admin/apps
             pkill -f "backend-0.0.1-SNAPSHOT.jar" || true
             sleep 2
             export DATABASE_URL="jdbc:postgresql://db-moneybay-usa.c5qkmgi6m2e9.eu-north-1.rds.amazonaws.com:5432/moneybay"
