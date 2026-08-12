@@ -9,7 +9,7 @@ env:
   AWS_REGION: eu-north-1
   ECR_REPOSITORY: moneybay-usa
   ECS_SERVICE: moneybay-backend
-  ECS_CLUSTER: moneybay-cluster
+  ECS_CLUSTER: default
 
 jobs:
   build-and-deploy:
