@@ -1,6 +1,8 @@
 # Multi-stage build for Spring Boot
 FROM eclipse-temurin:25-jdk-alpine AS builder
 
+RUN apk add --no-cache bash
+
 WORKDIR /app
 
 # Copy Maven wrapper and pom first for better layer caching
