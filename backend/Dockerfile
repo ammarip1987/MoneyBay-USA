@@ -1,5 +1,5 @@
 # Multi-stage build for Spring Boot
-FROM eclipse-temurin:25-jdk AS builder
+FROM eclipse-temurin:21-jdk AS builder
 
 WORKDIR /app
 
@@ -17,7 +17,7 @@ COPY src src
 # Build with more memory
 RUN ./mvnw package -DskipTests -B -Dmaven.test.skip=true || ./mvnw package -DskipTests -B
 
-FROM eclipse-temurin:25-jre
+FROM eclipse-temurin:21-jre
 
 WORKDIR /app
 RUN groupadd -r spring && useradd -r -g spring spring
