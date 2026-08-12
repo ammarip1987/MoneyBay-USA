@@ -22,7 +22,7 @@ RUN ./mvnw package -DskipTests -B -Dmaven.test.skip=true || ./mvnw package -Dski
 FROM eclipse-temurin:25-jre-alpine
 
 WORKDIR /app
-RUN groupadd -r spring && useradd -r -g spring spring
+RUN addgroup -S spring && adduser -S spring -G spring
 USER spring
 
 COPY --from=builder /app/target/*.jar app.jar
