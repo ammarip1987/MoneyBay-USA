@@ -1232,3 +1232,98 @@ ng serve
 **Причина:** Angular Router переиспользует `ListingDetailComponent` при навигации `/listing/X` → `/listing/Y`. `ngOnInit()` запускается только при создании компонента.
 
 **Устранено:** используется `route.paramMap.subscribe()` вместо `route.snapshot.paramMap` для реактивной подписки на изменения параметра.
+
+---
+
+## Project Data
+
+### Infrastructure
+
+| Компонент | Сервис | Детали |
+|-----------|--------|--------|
+| **Frontend** | Cloudflare Pages | Автодеплой через Git интеграцию |
+| **Backend** | AWS ECS Express Mode | `moneybay-backend`, cluster `default` |
+| **Database** | AWS RDS PostgreSQL | `db-moneybay-usa.c5qkmgi6m2e9.eu-north-1.rds.amazonaws.com` |
+| **Photo Storage** | Cloudflare R2 | Bucket: `moneybayts-photos` |
+| **Domain** | moneybay.us | Cloudflare DNS |
+| **CI/CD** | GitHub Actions + ECR | `.github/workflows/deploy.yml` |
+| **Container Registry** | AWS ECR | `moneybay-usa` |
+
+### AWS Resources
+
+| Ресурс | ID/Name | Регион |
+|--------|---------|--------|
+| ECS Service | `moneybay-backend` | eu-north-1 |
+| ECS Cluster | `default` | eu-north-1 |
+| ECR Repository | `moneybay-usa` | eu-north-1 |
+| RDS Database | `db-moneybay-usa` | eu-north-1 |
+| AWS Account | `172575865299` | - |
+
+### GitHub Configuration
+
+| Тип | Name | Назначение |
+|-----|------|-----------|
+| **Secret** | `AWS_ACCESS_KEY_ID` | AWS авторизация для ECR/ECS |
+| **Secret** | `AWS_SECRET_ACCESS_KEY` | AWS авторизация для ECR/ECS |
+
+### Environment Variables (ECS)
+
+| Key | Value | Type |
+|-----|-------|------|
+| `SPRING_PROFILES_ACTIVE` | `production` | Environment variable |
+| `DATABASE_URL` | `jdbc:postgresql://db-moneybay-usa.c5qkmgi6m2e9.eu-north-1.rds.amazonaws.com:5432/moneybay` | Environment variable |
+| `DB_USERNAME` | `moneybayusa` | Environment variable |
+| `DB_PASSWORD` | (пароль RDS) | Environment variable |
+| `JWT_SECRET` | `Jv6s9CLn1FmwMtYhqHiPUdcIQbSrao7p` | Environment variable |
+
+### CI/CD Pipeline
+
+```
+Git push → GitHub Actions → Docker build → ECR push → ECS update
+```
+
+**Workflow шаги:**
+1. Checkout code
+2. Configure AWS credentials
+3. Login to Amazon ECR
+4. Build Docker image (Java 25, Alpine)
+5. Push to ECR (`moneybay-usa:latest` + git SHA)
+6. Update ECS service
+
+### Docker Configuration
+
+**Base images:**
+- Builder: `eclipse-temurin:25-jdk-alpine`
+- Runtime: `eclipse-temurin:25-jre-alpine`
+
+**Java version:** 25
+**Maven Compiler Plugin:** 3.14.0
+**Lombok:** 1.18.38
+
+### Local Development
+
+```cmd
+# Backend (порт 5000)
+cd c:\Moneybay\backend
+.\mvnw spring-boot:run
+
+# Frontend (порт 1100)
+cd c:\Moneybay
+ng serve
+```
+
+### Deploy Commands
+
+```cmd
+# AWS CLI (настроен локально)
+aws sts get-caller-identity
+aws ec2 describe-instances
+aws rds describe-db-instances
+
+# SSH к EC2
+ssh -i "G:\Мой диск\работа\ключи aws moneybay\MoneyBay.us server.pem#1-8" admin@16.16.207.124
+```
+
+### Architecture Style
+
+**Enterprise** — строгая типизация, наследование, слоистая архитектура.
