@@ -1326,4 +1326,4 @@ ssh -i "G:\Мой диск\работа\ключи aws moneybay\MoneyBay.us serv
 
 ### Architecture Style
 
-**Enterprise** — строгая типизация, наследование, архитектура.
+**Enterprise** — Angular + Spring Boot, строгая типизация, корпоративное наследие.
