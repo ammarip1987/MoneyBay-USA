@@ -218,29 +218,12 @@ public class DataInitializer implements CommandLineRunner {
 
     // Largest city of each of the 50 US states + Washington, DC (51 entries).
     // US marketplace standard format "City, ST" (eBay / Facebook Marketplace / Craigslist).
-  private static final List<CityDef> CITY_DEFS = new java.util.ArrayList<>();
+    private static final List<CityDef> CITY_DEFS = new java.util.ArrayList<>();
 
     @Transactional
     private void syncCities() {
         log.info("Syncing cities, current count: {}", cityRepository.count());
         log.info("Cities sync skipped. Managed via SQL migrations.");
     }
- ///  private void syncCities() {
-
-        // No FK references to cities (Listing.location / User.city are plain strings),
-        // so rebuild the table to exactly match CITY_DEFS and drop all legacy rows.
-     //   cityRepository.deleteAll();
-     //   cityRepository.flush();
-
-     //   for (CityDef def : CITY_DEFS) {
-     //       City city = new City();
-      //      city.setName(def.name());
-      //      city.setSubdomain(def.subdomain());
-     //       cityRepository.save(city);
-     //   }
-
-     //   log.info("Cities synced, final count: {}", cityRepository.count());
-  //  }
-
 
 }
