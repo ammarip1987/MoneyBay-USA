@@ -1326,4 +1326,4 @@ ssh -i "G:\Мой диск\работа\ключи aws moneybay\MoneyBay.us serv
 
 ### Architecture Style
 
-**Enterprise** — строгая типизация, наследование, слоистая архитектура.
+**Enterprise** — строгая типизация, наследование, архитектура.
