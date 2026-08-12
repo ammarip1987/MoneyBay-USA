@@ -21,6 +21,8 @@ RUN ./mvnw package -DskipTests -B -Dmaven.test.skip=true || ./mvnw package -Dski
 
 FROM eclipse-temurin:25-jre-alpine
 
+RUN apk add --no-cache curl
+
 WORKDIR /app
 RUN addgroup -S spring && adduser -S spring -G spring
 USER spring
