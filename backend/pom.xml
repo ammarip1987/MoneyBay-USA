@@ -146,12 +146,12 @@
 				<configuration>
 					<source>25</source>
 					<target>25</target>
-					<forceJavacCompilerUse>true</forceJavacCompilerUse>
+					<forceLegacyJavacApi>true</forceLegacyJavacApi>
 					<annotationProcessorPaths>
 						<path>
 							<groupId>org.projectlombok</groupId>
 							<artifactId>lombok</artifactId>
-							<version>1.18.36</version>
+							<version>1.18.38</version>
 						</path>
 					</annotationProcessorPaths>
 				</configuration>
