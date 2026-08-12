@@ -216,23 +216,39 @@ Moneybay/
 | Шар | Технологія | Порт | Деплой |
 |------|-----------|------|---------|
 | Frontend | Angular 21 + Tailwind CSS | 1100 (dev), 443 (prod) | Cloudflare Pages |
-| Backend | Spring Boot 3.5 + Spring Security | 5000 | AWS EC2 |
+| Backend | Spring Boot 3.5 + Spring Security | 8080 | AWS ECS Express Mode |
 | Database | PostgreSQL 18 | 5432 | AWS RDS |
-| Real-time | WebSocket STOMP | 5000 | AWS EC2 |
+| Real-time | WebSocket STOMP | 8080 | AWS ECS Express Mode |
 | CDN фото | Cloudflare R2 | - | Cloudflare R2 |
 | Платежі | Stripe | - | Stripe API |
 
-### Flow зпросов
+### Flow запросов
 
 ```
 User Browser
     ↓
 Cloudflare Pages (moneybay.us) ← Frontend (Angular)
     ↓
-AWS EC2 Backend (api.moneybay.us:5000) ← Spring Boot API
+AWS ECS Express Mode (moneybay-backend) ← Spring Boot API (порт 8080)
     ↓
 AWS RDS PostgreSQL ← Database
+    ↓
+Cloudflare R2 ← Фото объявлений
 ```
+
+### CI/CD Pipeline
+
+```
+Git push → GitHub Actions → Docker build → ECR push → ECS update
+```
+
+**Шаги деплоя:**
+1. Разработчик делает `git push origin main`
+2. GitHub Actions запускает workflow `.github/workflows/deploy.yml`
+3. Собирает Docker образ из `backend/Dockerfile` (Java 25, Alpine)
+4. Загружает образ в AWS ECR (`moneybay-usa:latest` + git SHA)
+5. Обновляет ECS сервис — новая версия контейнера запускается автоматически
+6. Cloudflare Pages автоматически деплоит frontend при изменениях в `src/`
 
 ## Setup
 
