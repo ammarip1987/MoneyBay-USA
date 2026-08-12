@@ -146,6 +146,7 @@
 				<configuration>
 					<source>25</source>
 					<target>25</target>
+					<forceJavacCompilerUse>true</forceJavacCompilerUse>
 					<annotationProcessorPaths>
 						<path>
 							<groupId>org.projectlombok</groupId>
