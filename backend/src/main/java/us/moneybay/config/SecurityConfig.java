@@ -56,7 +56,7 @@ public class SecurityConfig {
                 .requestMatchers("/api/auth/**", "/api/listings/**", "/api/categories/**", "/api/cities/**",
                                   "/api/subcategories/**", "/api/uploads/**", "/api/photos/**", "/sitemap.xml", "/robots.txt",
                                   "/api/stripe/webhook", "/swagger-ui/**", "/v3/api-docs/**", "/ws/**",
-                                  "/actuator/health", "/actuator/info")
+                                  "/health", "/actuator/health", "/actuator/info")
                     .permitAll()
                 .requestMatchers("/api/profile/**", "/api/my-listings/**", "/api/messages/**", "/api/favorites/**",
                                   "/api/chats/**", "/api/boost/**", "/api/admin/**", "/api/unread-messages-count")
