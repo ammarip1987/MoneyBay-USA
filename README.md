@@ -366,6 +366,9 @@ Subcategory hierarchy (3 levels):
 - `POST /api/auth/forgot-password`
 - `POST /api/auth/reset-password`
 - `POST /api/auth/verify-email?token=...` (email verification with DB-backed tokens)
+- `GET /api/auth/oauth2/config` — enabled social providers with their client ids
+- `POST /api/auth/oauth2/{provider}` — `google` | `facebook` | `apple`; accepts
+  `{code, redirect_uri}` (authorization code flow) or a token from a client SDK
 
 ### Listings
 - `GET /api/listings?page=&q=&city=&category=&sort=` (public)
@@ -382,6 +385,9 @@ Subcategory hierarchy (3 levels):
 - `GET /api/subcategories/{id}/children`
 - `GET /api/cities`
 - `GET /api/cities/current` (returns city by subdomain context)
+- `GET /api/states` — 51 states plus DC, derived from the `us_city` catalogue
+- `GET /api/us-cities?state=&q=&limit=` — city autocomplete inside one state;
+  `state` takes a code (`CA`) or a full name (`California`), `limit` capped at 25
 
 ### User (auth)
 - `GET /api/profile`
@@ -505,6 +511,162 @@ Frontend: `overflow-x-auto` + `snap-x` для свайпа на mobile, кноп
 - Static pages: home, about, contact, terms, privacy
 
 **robots.txt** — статически, с правилами для `/admin/`, `/api/`, allow `/sitemap.xml`.
+
+## Security Model
+
+**SecurityConfig fail-closed.** Правил `permitAll` ровно столько, сколько нужно
+публичным чтениям и авторизации; заключительное правило — `anyRequest()
+.authenticated()`. Прежний catch-all `permitAll` открывал всё, что не перечислено
+явно, поэтому новый эндпоинт по умолчанию оказывался публичным.
+
+Проверка идёт с учётом метода: `GET` на публичные адреса открыт, а `POST`/`PUT`/
+`DELETE` требуют аутентификации, если не разрешены отдельно. Под `ROLE_ADMIN`:
+`/api/admin/**`, `/api/test/**`, `/api/listings/*/flag/resolve`,
+`/api/listings/*/restore`.
+
+**Authorities.** `JwtAuthFilter` выдаёт `ROLE_USER`, администратору — ещё и
+`ROLE_ADMIN`. Без этого проверки по ролям не срабатывали: список authorities был
+пустым.
+
+**Principal, не `auth.getName()`.** У non-`UserDetails` принципала `getName()`
+возвращает Lombok-строку `toString()` всей сущности, а не email, поэтому
+`findByEmail(auth.getName())` не находил пользователя никогда. Везде используется
+`(User) auth.getPrincipal()`.
+
+**Загрузка файлов.** `R2PhotoService` принимает только `image/jpeg`, `image/png`,
+`image/webp`, `image/gif`; `FileUploadController` дополнительно сверяет расширение
+по белому списку и вычищает из имени всё, кроме букв и цифр, чтобы имя вида
+`a./../../..` не выходило за каталог. Без проверки типа сюда проходил HTML,
+то есть сохранённый XSS.
+
+**CORS.** `setAllowedOriginPatterns` вместо `setAllowedOrigins` — с
+`allowCredentials=true` шаблоны вида `https://*.moneybay.us` законны только через
+patterns; нужно для субдоменов городов.
+
+**Rate limiting.** Клиентский адрес берётся из **последнего** значения
+`X-Forwarded-For`: его дописывает балансировщик, тогда как первые значения задаёт
+клиент и их можно подставлять, обходя лимит.
+
+**Удалён `/api/test/delete-listings`** — эндпоинт без проверки аутентификации,
+вызывавший `listingRepository.deleteAll()`, то есть полное уничтожение данных
+одним запросом. Остался `purge-test-listings`, проверяющий права.
+
+**Ответы авторизации** отдают `UserDto`, не сущность `User`: сериализация сущности
+включала хэш пароля.
+
+**Автобан.** При `status = BANNED` выставляется и `isActive = false`: запросы
+поиска фильтруют по `isActive`/`isDeleted` и поле `status` не смотрят, поэтому
+один флаг статуса на выдачу не влиял.
+
+**Дедупликация репортов** по IP (анонимные) и по пользователю (авторизованные) —
+иначе счётчик авто-скрытия накручивался повторными жалобами.
+
+## Secrets (AWS Secrets Manager)
+
+Секреты backend хранятся в Secrets Manager, регион `eu-north-1`. В `task-def.json`
+только ссылки `valueFrom` по ARN — значений в репозитории нет.
+
+| Секрет | Переменная контейнера | Что внутри |
+|---|---|---|
+| `moneybay/db-password` | `DB_PASSWORD` | пароль пользователя `moneybayusa` |
+| `moneybay/jwt-secret` | `JWT_SECRET` | `app.jwt.secret` |
+| `moneybay/oauth` | `GOOGLE_CLIENT_SECRET` | JSON, ссылка на ключ внутри секрета |
+
+Ссылка на отдельный ключ JSON-секрета задаётся так (тариф считается за секрет,
+а не за ключ, поэтому все OAuth-значения кладутся в один):
+
+```
+arn:aws:secretsmanager:eu-north-1:<account>:secret:moneybay/oauth:GOOGLE_CLIENT_SECRET::
+```
+
+Читать их задаче разрешает inline-политика `MoneybaySecretsRead` на роли
+`ecsTaskExecutionRole`, ограниченная перечисленными ARN.
+
+**Смена значения:** консоль AWS → Secrets Manager → секрет → Retrieve secret value
+→ Edit, либо `aws secretsmanager put-secret-value`. После правки нужен перезапуск
+задачи, контейнер читает секрет на старте:
+
+```bash
+aws ecs update-service --cluster default --service moneybay-api --force-new-deployment
+```
+
+Пароль базы меняется согласованно в двух местах — в RDS через
+`modify-db-instance --master-user-password` и в секрете. Если поменять только в
+одном, задачи перестанут подключаться.
+
+Публичные значения (`GOOGLE_CLIENT_ID`, `DATABASE_URL`, `DB_USERNAME`) остаются в
+`environment` задачи: client id по устройству OAuth виден браузеру.
+
+## Social Sign-In (OAuth2)
+
+Обмен authorization code на токен идёт на backend, client secret в браузер не
+попадает. Client id отдаётся клиенту через `GET /api/auth/oauth2/config`, поэтому
+новые credentials применяются переменными окружения без пересборки frontend.
+
+| Провайдер | Переменные |
+|---|---|
+| Google | `GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET` |
+| Facebook | `FACEBOOK_APP_ID`, `FACEBOOK_APP_SECRET` |
+| Apple | `APPLE_CLIENT_ID`, `APPLE_TEAM_ID`, `APPLE_KEY_ID`, `APPLE_PRIVATE_KEY` |
+
+Провайдер с незаданными значениями считается отключённым: `/config` его не
+отдаёт, кнопка на `/register` не отрисовывается, а `POST` на него отвечает 503.
+Так кнопка не ведёт на страницу ошибки провайдера.
+
+**Redirect URI** прописывается в консоли провайдера посимвольно, без слеша на
+конце: `https://moneybay.us/auth/google/callback` (и так же для остальных). Для
+локальной отладки — `http://localhost:1100/auth/google/callback`. При несовпадении
+провайдер отвечает `redirect_uri_mismatch` и до backend запрос не доходит.
+
+**Apple** отличается от остальных: `client_secret` — это JWT, подписанный ES256
+ключом из `.p8`; профиль берётся из `id_token`, отдельного userinfo-эндпоинта нет.
+`AppleAuthService` проверяет подпись `id_token` по JWKS Apple (RS256) со сверкой
+issuer и audience. Без scope `name`/`email` Apple отвечает redirect'ом с query;
+запрос этих scope переводит ответ в `form_post`, который SPA не примет.
+
+**Защита от CSRF:** `OAuthService` кладёт случайный `state` в `sessionStorage` и
+сверяет его один раз на возврате. При несовпадении код на backend не отправляется.
+
+**Привязка аккаунтов:** таблица `social_accounts` связывает профиль провайдера с
+пользователем. Тот же email, зашедший ранее паролем или другой соцсетью,
+привязывается к существующему аккаунту, второй не создаётся. `users.username`
+уникален, поэтому отображаемое имя приводится к слагу и получает суффикс при
+совпадении. Apple Private Relay может не отдать email — тогда подставляется
+заглушка, детерминированная по провайдеру и его id, чтобы повторный вход не
+создавал второй аккаунт.
+
+## US Cities Catalogue
+
+Таблица `us_city` — 4335 населённых пункта от 10 тыс. жителей по 51 штату.
+Источник: GeoNames (`US.txt`, CC BY 4.0), класс `P`, коды `PPL*`.
+
+Используется полями State и City / Town в формах объявления. Поиск ограничен
+выбранным штатом: сначала совпадения с начала строки, затем вхождения внутри,
+внутри группы — по убыванию населения, чтобы крупный город не встал ниже
+одноимённого посёлка.
+
+```
+GET /api/us-cities?state=CA&q=San   → San Diego, San Jose, San Francisco
+GET /api/us-cities?state=TX&q=San   → San Antonio, San Angelo, San Marcos
+```
+
+Штаты выводятся из этого же справочника (`GET /api/states`), отдельной таблицы
+под них нет.
+
+`listings.location` продолжает хранить строку `"City, ST"` — формат совпадает с
+таблицей `cities`, поэтому фильтры поиска, фасеты и субдомены не затронуты.
+Форма собирает эту строку из двух полей, `edit-listing` разбирает обратно.
+
+**Наполнение:** Flyway в проекте не подключён (нет зависимости в `pom.xml`, нет
+таблицы `flyway_schema_history`); схему создаёт `ddl-auto=update`, а файлы в
+`backend/src/main/resources/db/migration` применяются вручную. Таблицу создаёт
+Hibernate по сущности `UsCity`, данные заливаются скриптом
+`V103__us_cities_data.sql` через bastion. Повторный запуск безопасен — вставляются
+только отсутствующие записи.
+
+Файлы `V101__reset_cities.sql` и `V102__update_cities_to_states.sql` адресуют
+таблицу `city` в единственном числе, которой в базе нет. Они никогда не
+применялись — это мёртвый SQL, ориентироваться на него при чтении схемы нельзя.
 
 ## Configuration
 
@@ -872,7 +1034,10 @@ DELETE FROM users WHERE email LIKE '%@test.moneybay.us';
 | Backend REST API | 95% |
 | Categories/subcategories | 100% (13 cat + 41 sub + 36 subsub + FontAwesome) |
 | Cities + city subdomain routing | 100% |
+| US cities catalogue (4335 городов, автоподстановка) | 100% |
 | Auth + JWT | 100% |
+| Social sign-in (OAuth2) | Google настроен; Facebook и Apple ждут credentials |
+| Secrets в AWS Secrets Manager | 100% |
 | Email verification (DB-backed) | 100% |
 | SMTP отправка (Mailtrap dev / SendGrid prod) | 100% |
 | WebSocket chat | 80% |
@@ -1289,8 +1454,12 @@ ng serve
 | `SPRING_PROFILES_ACTIVE` | `production` | Environment variable |
 | `DATABASE_URL` | `jdbc:postgresql://db-moneybay-usa.c5qkmgi6m2e9.eu-north-1.rds.amazonaws.com:5432/moneybay` | Environment variable |
 | `DB_USERNAME` | `moneybayusa` | Environment variable |
-| `DB_PASSWORD` | (пароль RDS) | Environment variable |
-| `JWT_SECRET` | `Jv6s9CLn1FmwMtYhqHiPUdcIQbSrao7p` | Environment variable |
+| `GOOGLE_CLIENT_ID` | client id из Google Cloud Console | Environment variable |
+| `DB_PASSWORD` | `moneybay/db-password` | Secret (`valueFrom`) |
+| `JWT_SECRET` | `moneybay/jwt-secret` | Secret (`valueFrom`) |
+| `GOOGLE_CLIENT_SECRET` | `moneybay/oauth`, ключ `GOOGLE_CLIENT_SECRET` | Secret (`valueFrom`) |
+
+Значения секретов в репозитории не хранятся — см. [Secrets](#secrets-aws-secrets-manager).
 
 ### CI/CD Pipeline
 
