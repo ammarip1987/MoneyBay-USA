@@ -27,14 +27,6 @@
                     "value": "moneybayusa"
                 },
                 {
-                    "name": "JWT_SECRET",
-                    "value": "Jv6s9CLn1FmwMtYhqHiPUdcIQbSrao7p"
-                },
-                {
-                    "name": "DB_PASSWORD",
-                    "value": "!CA1987j7!CA1987j7"
-                },
-                {
                     "name": "SPRING_PROFILES_ACTIVE",
                     "value": "production"
                 },
@@ -49,7 +41,16 @@
             ],
             "mountPoints": [],
             "volumesFrom": [],
-            "secrets": [],
+            "secrets": [
+                {
+                    "name": "DB_PASSWORD",
+                    "valueFrom": "arn:aws:secretsmanager:eu-north-1:172575865299:secret:moneybay/db-password-GjHssp"
+                },
+                {
+                    "name": "JWT_SECRET",
+                    "valueFrom": "arn:aws:secretsmanager:eu-north-1:172575865299:secret:moneybay/jwt-secret-Iyi55d"
+                }
+            ],
             "logConfiguration": {
                 "logDriver": "awslogs",
                 "options": {
