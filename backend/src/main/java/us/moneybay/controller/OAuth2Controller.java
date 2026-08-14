@@ -3,34 +3,76 @@ package us.moneybay.controller;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import us.moneybay.config.OAuth2Properties;
 import us.moneybay.dto.AuthDto;
 import us.moneybay.dto.UserDto;
 import us.moneybay.model.User;
 import us.moneybay.security.JwtUtil;
 import us.moneybay.service.OAuth2Service;
+
+import java.util.ArrayList;
+import java.util.LinkedHashMap;
+import java.util.List;
 import java.util.Map;
 
 @RestController
 @RequestMapping("/api/auth/oauth2")
 @RequiredArgsConstructor
 public class OAuth2Controller {
+
     private final OAuth2Service oauth2Service;
+    private final OAuth2Properties props;
     private final JwtUtil jwtUtil;
 
+    /**
+     * Client ID публичны по своей природе и отдаются клиенту отсюда.
+     * Так новые credentials задаются переменными окружения, без пересборки frontend.
+     */
+    @GetMapping("/config")
+    public ResponseEntity<?> config() {
+        List<Map<String, String>> providers = new ArrayList<>();
+        for (String provider : List.of("google", "facebook", "apple")) {
+            if (!props.isEnabled(provider)) continue;
+            Map<String, String> entry = new LinkedHashMap<>();
+            entry.put("provider", provider);
+            entry.put("clientId", props.clientIdOf(provider));
+            providers.add(entry);
+        }
+        return ResponseEntity.ok(Map.of("providers", providers));
+    }
+
+    /**
+     * Принимает authorization code (основной путь) либо готовый токен от клиентского SDK.
+     * Секреты провайдеров остаются на backend.
+     */
     @PostMapping("/{provider}")
     public ResponseEntity<?> login(@PathVariable String provider,
                                    @RequestBody Map<String, String> body) {
         if (!OAuth2Service.isSupported(provider)) {
             return ResponseEntity.badRequest().body(Map.of("message", "Unsupported provider"));
         }
-
-        // Google/Facebook отдают access_token, Apple — id_token
-        String token = body.get("id_token") != null ? body.get("id_token") : body.get("access_token");
-        if (token == null || token.isBlank()) {
-            return ResponseEntity.badRequest().body(Map.of("message", "Missing access_token"));
+        if (!props.isEnabled(provider)) {
+            return ResponseEntity.status(503).body(Map.of(
+                "message", "Sign-in with " + provider + " is not configured"));
         }
 
-        User user = oauth2Service.handleOAuth2Login(provider, token);
+        String code = trimToNull(body.get("code"));
+        String accessToken = trimToNull(body.get("access_token"));
+        String idToken = trimToNull(body.get("id_token"));
+
+        User user;
+        if (code != null) {
+            String redirectUri = trimToNull(body.get("redirect_uri"));
+            if (redirectUri == null) {
+                return ResponseEntity.badRequest().body(Map.of("message", "Missing redirect_uri"));
+            }
+            user = oauth2Service.loginWithCode(provider, code, redirectUri);
+        } else if (idToken != null || accessToken != null) {
+            user = oauth2Service.loginWithAccessToken(provider, idToken != null ? idToken : accessToken);
+        } else {
+            return ResponseEntity.badRequest().body(Map.of("message", "Missing authorization code"));
+        }
+
         if (user == null) {
             return ResponseEntity.status(401).body(Map.of(
                 "message", "Failed to authenticate with " + provider));
@@ -38,5 +80,9 @@ public class OAuth2Controller {
 
         String jwt = jwtUtil.generateToken(user.getId(), user.getEmail());
         return ResponseEntity.ok(new AuthDto.AuthResponse(jwt, UserDto.from(user)));
+    }
+
+    private static String trimToNull(String s) {
+        return s == null || s.isBlank() ? null : s.trim();
     }
 }

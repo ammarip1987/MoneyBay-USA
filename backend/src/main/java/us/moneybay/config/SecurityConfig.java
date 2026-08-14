@@ -61,6 +61,7 @@ public class SecurityConfig {
                     "/api/listings/**", "/api/categories/**", "/api/cities/**",
                     "/api/subcategories/**", "/api/uploads/**", "/api/photos/**",
                     "/api/users/*/public",
+                    "/api/auth/oauth2/config",
                     "/sitemap.xml", "/robots.txt",
                     "/health", "/actuator/health", "/actuator/info")
                     .permitAll()

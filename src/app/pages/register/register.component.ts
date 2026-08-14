@@ -4,6 +4,7 @@ import { FormsModule } from '@angular/forms';
 import { Router, RouterLink } from '@angular/router';
 import { AuthService } from '../../services/auth.service';
 import { NotificationService } from '../../services/notification.service';
+import { OAuthService, OAuthProvider } from '../../services/oauth.service';
 
 @Component({
   selector: 'app-register',
@@ -56,26 +57,20 @@ import { NotificationService } from '../../services/notification.service';
             </button>
           </form>
 
-          <div class="mt-6 pt-6 border-t border-gray-200">
-            <p class="text-xs text-gray-500 text-center mb-4">Or continue with</p>
-            <div class="grid grid-cols-3 gap-3">
-              <button type="button" (click)="loginWithGoogle()"
-                      class="py-3 px-2 border border-gray-200 rounded-lg hover:bg-gray-50 transition flex items-center justify-center gap-2 text-sm font-medium text-gray-700"
-                      [disabled]="loading()">
-                <span class="text-lg">🔵</span> Google
-              </button>
-              <button type="button" (click)="loginWithFacebook()"
-                      class="py-3 px-2 border border-gray-200 rounded-lg hover:bg-gray-50 transition flex items-center justify-center gap-2 text-sm font-medium text-gray-700"
-                      [disabled]="loading()">
-                <span class="text-lg">f</span> Facebook
-              </button>
-              <button type="button" (click)="loginWithApple()"
-                      class="py-3 px-2 border border-gray-200 rounded-lg hover:bg-gray-50 transition flex items-center justify-center gap-2 text-sm font-medium text-gray-700"
-                      [disabled]="loading()">
-                <span class="text-lg">🍎</span> Apple
-              </button>
+          @if (providers().length > 0) {
+            <div class="mt-6 pt-6 border-t border-gray-200">
+              <p class="text-xs text-gray-500 text-center mb-4">Or continue with</p>
+              <div class="space-y-3">
+                @for (p of providers(); track p.provider) {
+                  <button type="button" (click)="startOAuth(p)" [disabled]="loading()"
+                          class="w-full py-3 px-4 border border-gray-300 rounded-lg hover:bg-gray-50 transition flex items-center justify-center gap-3 text-sm font-medium text-gray-800 disabled:opacity-50">
+                    <i [class]="iconOf(p.provider)"></i>
+                    {{ oauth.label(p.provider) }}
+                  </button>
+                }
+              </div>
             </div>
-          </div>
+          }
 
           <p class="text-xs text-gray-500 mt-4 text-center">
             By signing up you agree to our
@@ -95,6 +90,7 @@ export class RegisterComponent {
   private auth = inject(AuthService);
   private router = inject(Router);
   private notification = inject(NotificationService);
+  oauth = inject(OAuthService);
 
   username = '';
   email = '';
@@ -103,28 +99,24 @@ export class RegisterComponent {
   loading = signal(false);
   error = signal<string | null>(null);
 
-  loginWithGoogle(): void {
-    const clientId = 'YOUR_GOOGLE_CLIENT_ID';
-    const redirectUri = window.location.origin + '/auth/google/callback';
-    const scope = 'openid email profile';
-    const url = `https://accounts.google.com/o/oauth2/v2/auth?client_id=${clientId}&redirect_uri=${redirectUri}&response_type=code&scope=${scope}`;
-    window.location.href = url;
+  providers = signal<OAuthProvider[]>([]);
+
+  private readonly icons: Record<string, string> = {
+    google: 'fab fa-google text-[#4285F4]',
+    facebook: 'fab fa-facebook text-[#1877F2]',
+    apple: 'fab fa-apple text-black'
+  };
+
+  constructor() {
+    this.oauth.providers$.subscribe(list => this.providers.set(list));
   }
 
-  loginWithFacebook(): void {
-    const appId = 'YOUR_FACEBOOK_APP_ID';
-    const redirectUri = window.location.origin + '/auth/facebook/callback';
-    const scope = 'email,public_profile';
-    const url = `https://www.facebook.com/v18.0/dialog/oauth?client_id=${appId}&redirect_uri=${redirectUri}&scope=${scope}`;
-    window.location.href = url;
+  iconOf(provider: string): string {
+    return this.icons[provider] || 'fas fa-right-to-bracket';
   }
 
-  loginWithApple(): void {
-    const teamId = 'YOUR_APPLE_TEAM_ID';
-    const clientId = 'YOUR_APPLE_SERVICE_ID';
-    const redirectUri = window.location.origin + '/auth/apple/callback';
-    const url = `https://appleid.apple.com/auth/authorize?client_id=${clientId}&team_id=${teamId}&redirect_uri=${redirectUri}&response_type=code`;
-    window.location.href = url;
+  startOAuth(p: OAuthProvider): void {
+    this.oauth.start(p);
   }
 
   onSubmit(): void {
