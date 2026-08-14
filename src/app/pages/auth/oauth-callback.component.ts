@@ -24,28 +24,23 @@ export class OAuthCallbackComponent implements OnInit {
   private auth = inject(AuthService);
 
   ngOnInit(): void {
-    this.route.queryParams.subscribe(params => {
-      const code = params['code'];
-      const provider = this.getProvider();
+    // Провайдер берётся из route data — все три маршрута используют этот компонент
+    const provider = this.route.snapshot.data['provider'] as string;
 
-      if (code) {
-        this.exchangeCodeForToken(provider, code);
-      } else {
+    this.route.queryParams.subscribe(params => {
+      const accessToken = params['access_token'];
+      const idToken = params['id_token'];
+
+      if (!provider || (!accessToken && !idToken)) {
         this.router.navigate(['/register']);
+        return;
       }
+      this.exchangeToken(provider, { access_token: accessToken, id_token: idToken });
     });
   }
 
-  private getProvider(): string {
-    const path = this.router.routerState.root.component?.constructor.name || '';
-    if (path.includes('google')) return 'google';
-    if (path.includes('facebook')) return 'facebook';
-    if (path.includes('apple')) return 'apple';
-    return 'unknown';
-  }
-
-  private exchangeCodeForToken(provider: string, code: string): void {
-    this.http.post(`${environment.apiUrl}/api/auth/oauth2/${provider}`, { code }).subscribe({
+  private exchangeToken(provider: string, body: Record<string, string>): void {
+    this.http.post(`${environment.apiUrl}/api/auth/oauth2/${provider}`, body).subscribe({
       next: (response: any) => {
         this.auth.setSession(response);
         this.router.navigate(['/']);

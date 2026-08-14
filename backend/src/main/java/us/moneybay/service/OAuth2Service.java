@@ -11,6 +11,7 @@ import us.moneybay.repository.SocialAccountRepository;
 import us.moneybay.repository.UserRepository;
 import java.util.Map;
 import java.util.Optional;
+import java.util.Set;
 import java.util.UUID;
 
 @Service
@@ -19,7 +20,15 @@ public class OAuth2Service {
     private final SocialAccountRepository socialAccountRepository;
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
-    private final RestTemplate restTemplate;
+    // Инициализируется здесь (как в RecaptchaService): бина RestTemplate в контексте нет,
+    // инжект через конструктор ронял бы старт приложения
+    private final RestTemplate restTemplate = new RestTemplate();
+
+    private static final Set<String> SUPPORTED = Set.of("google", "facebook", "apple");
+
+    public static boolean isSupported(String provider) {
+        return provider != null && SUPPORTED.contains(provider.toLowerCase());
+    }
 
     @Transactional
     public User handleOAuth2Login(String provider, String accessToken) {
