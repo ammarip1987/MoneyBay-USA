@@ -59,6 +59,8 @@ public class FlagListingService {
 
     private void autoBanListing(Listing listing) {
         listing.setStatus(Listing.ListingStatus.BANNED);
+        // Все выборки фильтруют по isActive — без этого статус BANNED не влияет на выдачу.
+        listing.setActive(false);
         listingRepo.save(listing);
         log.warn("Listing {} auto-banned after {} flags", listing.getId(), AUTO_BAN_THRESHOLD);
     }

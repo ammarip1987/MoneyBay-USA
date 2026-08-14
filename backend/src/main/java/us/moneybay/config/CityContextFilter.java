@@ -50,7 +50,10 @@ public class CityContextFilter extends OncePerRequestFilter {
         }
 
         String[] parts = host.split("\\.");
-        if (parts.length < 2) return null;
+        // apex-домен (moneybay.us) — без subdomain; newyork.localhost — subdomain из двух частей
+        boolean localhostHost = parts[parts.length - 1].equals("localhost");
+        int minParts = localhostHost ? 2 : 3;
+        if (parts.length < minParts) return null;
 
         String candidate = parts[0];
         if (RESERVED.contains(candidate)) return null;

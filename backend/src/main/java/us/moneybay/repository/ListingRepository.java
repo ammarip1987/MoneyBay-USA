@@ -16,6 +16,8 @@ public interface ListingRepository extends JpaRepository<Listing, Long> {
 
     long countByIsTestTrue();
 
+    long countByIsActiveTrueAndIsDeletedFalse();
+
     @Modifying
     @Transactional
     @Query("DELETE FROM Listing l WHERE l.isTest = true")

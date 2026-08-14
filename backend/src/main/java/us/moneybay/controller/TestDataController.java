@@ -209,13 +209,4 @@ public class TestDataController {
         ));
     }
 
-    @DeleteMapping("/delete-listings")
-    public ResponseEntity<?> deleteTestListings() {
-        long count = listingRepository.count();
-        listingRepository.deleteAll();
-        return ResponseEntity.ok(Map.of(
-            "message", "All listings deleted",
-            "count", count
-        ));
-    }
 }

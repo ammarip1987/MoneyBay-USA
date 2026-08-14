@@ -339,12 +339,7 @@ export class ListingDetailComponent implements OnInit {
   }
 
   getImageUrl(image: string): string {
-    if (!image) return '';
-    if (image.startsWith('http')) return image;
-    if (image.startsWith('/api/photos/')) return image;
-    const url = `/api/photos/${image}`;
-    console.log('getImageUrl:', image, '->', url);
-    return url;
+    return this.api.imageUrl(image);
   }
 
   prevImage(): void {

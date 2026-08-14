@@ -3,6 +3,7 @@ package us.moneybay.config;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.http.HttpMethod;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
 import org.springframework.security.config.http.SessionCreationPolicy;
@@ -37,7 +38,9 @@ public class SecurityConfig {
     @Bean
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration config = new CorsConfiguration();
-        config.setAllowedOrigins(Arrays.asList(allowedOrigins.split(",")));
+        // Patterns (not exact origins): wildcard entries like https://*.moneybay.us
+        // must go through setAllowedOriginPatterns to be legal with allowCredentials=true.
+        config.setAllowedOriginPatterns(Arrays.asList(allowedOrigins.split(",")));
         config.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE", "OPTIONS", "PATCH"));
         config.setAllowedHeaders(List.of("*"));
         config.setAllowCredentials(true);
@@ -53,15 +56,26 @@ public class SecurityConfig {
             .cors(c -> c.configurationSource(corsConfigurationSource()))
             .sessionManagement(s -> s.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
             .authorizeHttpRequests(auth -> auth
-                .requestMatchers("/api/auth/**", "/api/listings/**", "/api/categories/**", "/api/cities/**",
-                                  "/api/subcategories/**", "/api/uploads/**", "/api/photos/**", "/sitemap.xml", "/robots.txt",
-                                  "/api/stripe/webhook", "/swagger-ui/**", "/v3/api-docs/**", "/ws/**",
-                                  "/health", "/actuator/health", "/actuator/info")
+                // public reads
+                .requestMatchers(HttpMethod.GET,
+                    "/api/listings/**", "/api/categories/**", "/api/cities/**",
+                    "/api/subcategories/**", "/api/uploads/**", "/api/photos/**",
+                    "/api/users/*/public",
+                    "/sitemap.xml", "/robots.txt",
+                    "/health", "/actuator/health", "/actuator/info")
                     .permitAll()
-                .requestMatchers("/api/profile/**", "/api/my-listings/**", "/api/messages/**", "/api/favorites/**",
-                                  "/api/chats/**", "/api/boost/**", "/api/admin/**", "/api/unread-messages-count")
-                    .authenticated()
-                .anyRequest().permitAll())
+                // public writes
+                .requestMatchers(HttpMethod.POST,
+                    "/api/auth/**", "/api/stripe/webhook", "/api/listings/*/report")
+                    .permitAll()
+                // websocket handshake + api docs
+                .requestMatchers("/ws/**", "/swagger-ui/**", "/v3/api-docs/**")
+                    .permitAll()
+                // admin-only surfaces
+                .requestMatchers("/api/admin/**", "/api/test/**", "/api/listings/*/flag/resolve", "/api/listings/*/restore")
+                    .hasRole("ADMIN")
+                // everything else requires a valid JWT
+                .anyRequest().authenticated())
             .addFilterBefore(jwtAuthFilter, UsernamePasswordAuthenticationFilter.class);
         return http.build();
     }

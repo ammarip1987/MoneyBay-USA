@@ -113,6 +113,10 @@ export class NewListingComponent implements OnInit {
       this.notification.error('Please fill all required fields');
       return;
     }
+    if (this.price === null || this.price === undefined || isNaN(Number(this.price)) || Number(this.price) < 0) {
+      this.notification.error('Please enter a valid price');
+      return;
+    }
 
     this.loading.set(true);
 

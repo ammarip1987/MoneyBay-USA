@@ -21,13 +21,16 @@ public class DataInitializer implements CommandLineRunner {
     private final CategoryRepository categoryRepository;
     private final CityRepository cityRepository;
     private final SubcategoryRepository subcategoryRepository;
+    private final us.moneybay.service.KeywordFilterService keywordFilterService;
 
     public DataInitializer(CategoryRepository categoryRepository,
                            CityRepository cityRepository,
-                           SubcategoryRepository subcategoryRepository) {
+                           SubcategoryRepository subcategoryRepository,
+                           us.moneybay.service.KeywordFilterService keywordFilterService) {
         this.categoryRepository = categoryRepository;
         this.cityRepository = cityRepository;
         this.subcategoryRepository = subcategoryRepository;
+        this.keywordFilterService = keywordFilterService;
     }
 
     @Override
@@ -42,6 +45,7 @@ public class DataInitializer implements CommandLineRunner {
             subcategoryRepository.deleteAll();
             initAllSubcategories();
         }
+        keywordFilterService.initializeDefaultKeywords();
     }
 
     private record CatDef(String slug, String name, String description, String icon, String color) {}

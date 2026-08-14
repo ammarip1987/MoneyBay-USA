@@ -26,11 +26,18 @@ public class R2PhotoService {
     @Value("${aws.r2.endpoint}")
     private String endpoint;
 
+    private static final java.util.Map<String, String> ALLOWED_TYPES = java.util.Map.of(
+        "image/jpeg", "jpg",
+        "image/png", "png",
+        "image/webp", "webp",
+        "image/gif", "gif"
+    );
+
     public String uploadPhoto(MultipartFile file) throws IOException {
-        String originalName = file.getOriginalFilename();
-        String extension = "jpg";
-        if (originalName != null && originalName.contains(".")) {
-            extension = originalName.substring(originalName.lastIndexOf(".") + 1).replaceAll("[^a-zA-Z0-9]", "").toLowerCase();
+        String contentType = file.getContentType();
+        String extension = contentType != null ? ALLOWED_TYPES.get(contentType) : null;
+        if (extension == null) {
+            throw new IOException("Unsupported file type: " + contentType + ". Allowed: JPEG, PNG, WebP, GIF");
         }
         String fileName = UUID.randomUUID().toString() + "." + extension;
 
@@ -41,7 +48,7 @@ public class R2PhotoService {
             PutObjectRequest putObjectRequest = PutObjectRequest.builder()
                     .bucket(bucketName)
                     .key(fileName)
-                    .contentType(file.getContentType())
+                    .contentType(contentType)
                     .build();
 
             s3Client.putObject(putObjectRequest, RequestBody.fromInputStream(

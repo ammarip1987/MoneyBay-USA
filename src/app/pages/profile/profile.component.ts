@@ -256,8 +256,7 @@ export class ProfileComponent implements OnInit {
   }
 
   getImageUrl(image: string): string {
-    if (image.startsWith('http')) return image;
-    return `${environment.apiUrl}/api/uploads/${image}`;
+    return this.api.imageUrl(image);
   }
 
   deleteListing(id: number): void {

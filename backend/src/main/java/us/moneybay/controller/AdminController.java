@@ -46,6 +46,10 @@ public class AdminController {
     @PostMapping("/users/{id}/toggle-admin")
     public ResponseEntity<?> toggleAdmin(@PathVariable Long id, Authentication auth) {
         if (!isAdmin(auth)) return ResponseEntity.status(403).body(Map.of("message", "Admin required"));
+        User current = (User) auth.getPrincipal();
+        if (current.getId().equals(id)) {
+            return ResponseEntity.status(400).body(Map.of("message", "Cannot change own admin status"));
+        }
         return userRepository.findById(id).map(u -> {
             u.setAdmin(!u.isAdmin());
             return ResponseEntity.ok((Object) UserDto.from(userRepository.save(u)));
@@ -55,7 +59,15 @@ public class AdminController {
     @DeleteMapping("/users/{id}")
     public ResponseEntity<?> deleteUser(@PathVariable Long id, Authentication auth) {
         if (!isAdmin(auth)) return ResponseEntity.status(403).body(Map.of("message", "Admin required"));
-        userRepository.deleteById(id);
+        User current = (User) auth.getPrincipal();
+        if (current.getId().equals(id)) {
+            return ResponseEntity.status(400).body(Map.of("message", "Cannot delete own account"));
+        }
+        try {
+            userRepository.deleteById(id);
+        } catch (org.springframework.dao.DataIntegrityViolationException e) {
+            return ResponseEntity.status(409).body(Map.of("message", "User has related data (listings/messages) and cannot be deleted"));
+        }
         return ResponseEntity.ok(Map.of("success", true));
     }
 
@@ -95,9 +107,11 @@ public class AdminController {
             : List.of();
 
         List<Message> allMessages = messageRepository.findByListingId(id);
+        Map<Long, User> buyers = new HashMap<>();
+        userRepository.findAllById(buyerIds).forEach(u -> buyers.put(u.getId(), u));
 
         List<Map<String, Object>> conversations = buyerIds.stream().map(buyerId -> {
-            User buyer = userRepository.findById(buyerId).orElse(null);
+            User buyer = buyers.get(buyerId);
             List<Message> conv = allMessages.stream()
                 .filter(m -> (m.getSender() != null && m.getSender().getId().equals(buyerId))
                           || (m.getReceiver() != null && m.getReceiver().getId().equals(buyerId)))
@@ -130,8 +144,10 @@ public class AdminController {
         if (!isAdmin(auth)) return ResponseEntity.status(403).body(Map.of("message", "Admin required"));
 
         List<Long> userIds = messageRepository.findUsersWithSupportMessages();
+        Map<Long, User> usersById = new HashMap<>();
+        userRepository.findAllById(userIds).forEach(u -> usersById.put(u.getId(), u));
         List<Map<String, Object>> result = userIds.stream().map(uid -> {
-            User u = userRepository.findById(uid).orElse(null);
+            User u = usersById.get(uid);
             Map<String, Object> entry = new HashMap<>();
             entry.put("user_id", uid);
             entry.put("username", u != null ? u.getUsername() : null);
@@ -167,7 +183,7 @@ public class AdminController {
         return ResponseEntity.ok(Map.of(
             "total_users", userRepository.count(),
             "total_listings", listingRepository.count(),
-            "active_listings", listingRepository.findAll().stream().filter(Listing::isActive).count()
+            "active_listings", listingRepository.countByIsActiveTrueAndIsDeletedFalse()
         ));
     }
 }

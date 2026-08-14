@@ -1,5 +1,6 @@
 import { Routes } from '@angular/router';
 import { authGuard } from './guards/auth.guard';
+import { adminGuard } from './guards/admin.guard';
 
 export const routes: Routes = [
   { path: '', loadComponent: () => import('./pages/home/home.component').then(m => m.HomeComponent) },
@@ -17,10 +18,10 @@ export const routes: Routes = [
   { path: 'chat/:id', canActivate: [authGuard], loadComponent: () => import('./pages/chat/chat.component').then(m => m.ChatComponent) },
   { path: 'favorites', canActivate: [authGuard], loadComponent: () => import('./pages/favorites/favorites.component').then(m => m.FavoritesComponent) },
   { path: 'promote/:id', canActivate: [authGuard], loadComponent: () => import('./pages/promote/promote.component').then(m => m.PromoteComponent) },
-  { path: 'admin/chats', canActivate: [authGuard], loadComponent: () => import('./pages/admin/admin-chats.component').then(m => m.AdminChatsComponent) },
-  { path: 'admin/support', canActivate: [authGuard], loadComponent: () => import('./pages/admin/admin-support.component').then(m => m.AdminSupportComponent) },
-  { path: 'admin/users', canActivate: [authGuard], loadComponent: () => import('./pages/admin/admin-users.component').then(m => m.AdminUsersComponent) },
-  { path: 'admin/listings/:id/chats', canActivate: [authGuard], loadComponent: () => import('./pages/admin/admin-listing-chat.component').then(m => m.AdminListingChatComponent) },
+  { path: 'admin/chats', canActivate: [authGuard, adminGuard], loadComponent: () => import('./pages/admin/admin-chats.component').then(m => m.AdminChatsComponent) },
+  { path: 'admin/support', canActivate: [authGuard, adminGuard], loadComponent: () => import('./pages/admin/admin-support.component').then(m => m.AdminSupportComponent) },
+  { path: 'admin/users', canActivate: [authGuard, adminGuard], loadComponent: () => import('./pages/admin/admin-users.component').then(m => m.AdminUsersComponent) },
+  { path: 'admin/listings/:id/chats', canActivate: [authGuard, adminGuard], loadComponent: () => import('./pages/admin/admin-listing-chat.component').then(m => m.AdminListingChatComponent) },
   { path: 'users/:id', loadComponent: () => import('./pages/public-profile/public-profile.component').then(m => m.PublicProfileComponent) },
   { path: 'support', canActivate: [authGuard], loadComponent: () => import('./pages/support-chat/support-chat.component').then(m => m.SupportChatComponent) },
   { path: 'about', loadComponent: () => import('./pages/about/about.component').then(m => m.AboutComponent) },

@@ -114,10 +114,7 @@ export class ListingCardComponent {
   }
 
   getImageUrl(image: string): string {
-    if (!image) return '';
-    if (image.startsWith('http')) return image;
-    if (image.startsWith('/api/photos/')) return image;
-    return `/api/photos/${image}`;
+    return this.api.imageUrl(image);
   }
 
   prevImage(e: Event): void {

@@ -3,6 +3,7 @@ import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
 import { ApiService } from '../../services/api.service';
+import { ImageCompressionService } from '../../services/image-compression.service';
 import { NotificationService } from '../../services/notification.service';
 import { Listing } from '../../models/listing.model';
 import { ImageUploadComponent } from '../../components/image-upload/image-upload.component';
@@ -78,6 +79,7 @@ export class EditListingComponent implements OnInit {
   private route = inject(ActivatedRoute);
   private router = inject(Router);
   private notification = inject(NotificationService);
+  private compressor = inject(ImageCompressionService);
 
   listing = signal<Listing | null>(null);
   existingImages = signal<string[]>([]);
@@ -107,8 +109,7 @@ export class EditListingComponent implements OnInit {
   }
 
   getImageUrl(image: string): string {
-    if (image.startsWith('http')) return image;
-    return `${environment.apiUrl}/api/uploads/${image}`;
+    return this.api.imageUrl(image);
   }
 
   removeExisting(index: number): void {
@@ -121,9 +122,23 @@ export class EditListingComponent implements OnInit {
     this.newFiles = files;
   }
 
-  onSubmit(): void {
+  async onSubmit(): Promise<void> {
     if (!this.listing()) return;
     this.loading.set(true);
+
+    let uploadFiles = this.newFiles;
+    if (this.newFiles.length > 0) {
+      try {
+        uploadFiles = await this.compressor.compressMany(this.newFiles, {
+          maxWidthPx: 1920,
+          maxHeightPx: 1920,
+          quality: 0.82,
+          maxSizeBytes: 800 * 1024
+        });
+      } catch {
+        uploadFiles = this.newFiles;
+      }
+    }
 
     const formData = new FormData();
     formData.append('title', this.title);
@@ -131,7 +146,7 @@ export class EditListingComponent implements OnInit {
     formData.append('price', String(this.price));
     formData.append('location', this.city);
     this.removedImages.forEach(img => formData.append('removed_images', img));
-    this.newFiles.forEach(f => formData.append('images', f));
+    uploadFiles.forEach(f => formData.append('images', f));
 
     this.api.updateListing(this.listing()!.id, formData).subscribe({
       next: () => {

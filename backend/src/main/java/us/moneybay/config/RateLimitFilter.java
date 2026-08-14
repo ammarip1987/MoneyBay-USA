@@ -104,13 +104,12 @@ public class RateLimitFilter extends OncePerRequestFilter {
     }
 
     private String resolveClientIp(HttpServletRequest request) {
+        // За ALB доверять можно только последнему значению X-Forwarded-For:
+        // его дописывает сам балансировщик; первые значения контролирует клиент.
         String xff = request.getHeader("X-Forwarded-For");
         if (xff != null && !xff.isBlank()) {
-            return xff.split(",")[0].trim();
-        }
-        String realIp = request.getHeader("X-Real-IP");
-        if (realIp != null && !realIp.isBlank()) {
-            return realIp;
+            String[] parts = xff.split(",");
+            return parts[parts.length - 1].trim();
         }
         return request.getRemoteAddr();
     }

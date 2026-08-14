@@ -35,13 +35,11 @@ public class MessageController {
         if (auth == null) return ResponseEntity.status(401).build();
         User user = (User) auth.getPrincipal();
 
-        List<Message> allMessages = messageRepository.findAll().stream()
-            .filter(m -> m.getSender().getId().equals(user.getId()) || m.getReceiver().getId().equals(user.getId()))
-            .sorted(Comparator.comparing(Message::getCreatedAt).reversed())
-            .toList();
+        List<Message> allMessages = messageRepository.findAllByParticipant(user.getId());
 
         Map<Long, Map<String, Object>> conversations = new LinkedHashMap<>();
         for (Message m : allMessages) {
+            if (m.getSender() == null || m.getReceiver() == null) continue;
             User other = m.getSender().getId().equals(user.getId()) ? m.getReceiver() : m.getSender();
             conversations.computeIfAbsent(other.getId(), k -> {
                 Map<String, Object> conv = new HashMap<>();
@@ -57,7 +55,7 @@ public class MessageController {
         // Count unread per conversation
         conversations.forEach((otherId, conv) -> {
             long unread = allMessages.stream()
-                .filter(m -> m.getSender().getId().equals(otherId) && !m.isRead())
+                .filter(m -> m.getSender() != null && m.getSender().getId().equals(otherId) && !m.isRead())
                 .count();
             conv.put("unread_count", unread);
         });
@@ -72,10 +70,11 @@ public class MessageController {
 
         List<Message> messages = messageRepository.findConversation(user.getId(), otherUserId);
 
-        // Mark received messages as read
-        messages.stream()
-            .filter(m -> m.getReceiver().getId().equals(user.getId()) && !m.isRead())
-            .forEach(m -> { m.setRead(true); messageRepository.save(m); });
+        // Mark received messages as read (single bulk UPDATE)
+        messageRepository.markConversationRead(user.getId(), otherUserId);
+        messages.forEach(m -> {
+            if (m.getReceiver().getId().equals(user.getId())) m.setRead(true);
+        });
 
         return ResponseEntity.ok(messages.stream().map(m -> {
             Map<String, Object> dto = new HashMap<>();
@@ -138,8 +137,7 @@ public class MessageController {
         if (auth == null) return ResponseEntity.status(401).build();
         User user = (User) auth.getPrincipal();
 
-        Optional<User> admin = userRepository.findAll().stream()
-            .filter(User::isAdmin).findFirst();
+        Optional<User> admin = userRepository.findFirstByIsAdminTrue();
         if (admin.isEmpty()) return ResponseEntity.status(503).body(Map.of("message", "No admin available"));
 
         Message message = new Message();

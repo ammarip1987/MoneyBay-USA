@@ -1,4 +1,4 @@
-import { Component, OnInit, ViewChild, ElementRef, inject, signal, afterNextRender } from '@angular/core';
+import { Component, OnInit, OnDestroy, ViewChild, ElementRef, inject, signal, afterNextRender } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { HttpClient } from '@angular/common/http';
@@ -81,7 +81,7 @@ interface SupportMessage {
     </div>
   `
 })
-export class SupportChatComponent implements OnInit {
+export class SupportChatComponent implements OnInit, OnDestroy {
   @ViewChild('scrollContainer') scrollContainer!: ElementRef;
 
   private http = inject(HttpClient);
@@ -98,10 +98,16 @@ export class SupportChatComponent implements OnInit {
     });
   }
 
+  private pollTimer: ReturnType<typeof setInterval> | null = null;
+
   ngOnInit(): void {
     if (typeof window !== 'undefined') {
-      setInterval(() => this.loadMessages(), 10000);
+      this.pollTimer = setInterval(() => this.loadMessages(), 10000);
     }
+  }
+
+  ngOnDestroy(): void {
+    if (this.pollTimer) clearInterval(this.pollTimer);
   }
 
   loadMessages(): void {

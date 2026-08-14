@@ -7,7 +7,6 @@ import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 import us.moneybay.model.ListingFlag;
 import us.moneybay.model.User;
-import us.moneybay.repository.UserRepository;
 import us.moneybay.service.FlagListingService;
 import java.util.Map;
 
@@ -17,9 +16,6 @@ public class FlagController {
 
     @Autowired
     private FlagListingService flagService;
-    
-    @Autowired
-    private UserRepository userRepo;
 
     @PostMapping("/{id}/flag")
     public ResponseEntity<?> flagListing(
@@ -28,10 +24,12 @@ public class FlagController {
             @RequestParam(required = false) String description,
             Authentication auth) {
         
+        if (auth == null) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(Map.of("error", "Not authenticated"));
+        }
         try {
-            User user = userRepo.findByEmail(auth.getName())
-                .orElseThrow(() -> new IllegalArgumentException("User not found"));
-            
+            User user = (User) auth.getPrincipal();
+
             ListingFlag.FlagReason flagReason = ListingFlag.FlagReason.valueOf(reason.toUpperCase());
             ListingFlag flag = flagService.flagListing(id, user, flagReason, description);
             
@@ -53,9 +51,12 @@ public class FlagController {
     public ResponseEntity<?> resolveFlagged(
             @PathVariable Long id,
             Authentication auth) {
-        
+
+        if (auth == null || !(auth.getPrincipal() instanceof User admin) || !admin.isAdmin()) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).body(Map.of("error", "Admin required"));
+        }
         try {
-            flagService.resolveFlaggedListing(id, auth.getName());
+            flagService.resolveFlaggedListing(id, admin.getEmail());
             return ResponseEntity.ok(Map.of("message", "Flags resolved"));
         } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)

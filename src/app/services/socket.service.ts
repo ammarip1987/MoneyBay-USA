@@ -18,6 +18,7 @@ export class SocketService {
   private auth = inject(AuthService);
   private platformId = inject(PLATFORM_ID);
   private client: any = null;
+  private connecting: Promise<void> | null = null;
 
   messages$ = new Subject<ChatMessage>();
   connected$ = new Subject<boolean>();
@@ -29,12 +30,22 @@ export class SocketService {
   async connect(): Promise<void> {
     if (!this.isBrowser()) return;
     if (this.client?.connected) return;
+    // Одновременные вызовы ждут один и тот же процесс подключения —
+    // иначе dynamic import создаёт дублирующие клиенты и подписки
+    if (this.connecting) return this.connecting;
+    this.connecting = this.doConnect().finally(() => { this.connecting = null; });
+    return this.connecting;
+  }
 
+  private async doConnect(): Promise<void> {
     const token = this.auth.getToken();
     if (!token) return;
 
     const { Client } = await import('@stomp/stompjs');
     const SockJS = ((await import('sockjs-client')) as any).default;
+
+    if (this.client?.connected) return;
+    if (this.client) this.client.deactivate();
 
     this.client = new Client({
       webSocketFactory: () => new SockJS(environment.wsUrl) as any,

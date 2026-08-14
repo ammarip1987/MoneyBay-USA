@@ -161,7 +161,7 @@ export class SearchAutocompleteComponent implements OnInit, OnDestroy {
   }
 
   getImageUrl(image: string): string {
-    return `${environment.apiUrl}/api/uploads/${image}`;
+    return this.api.imageUrl(image);
   }
 
   @HostListener('document:click', ['$event'])

@@ -40,25 +40,34 @@ public class StripeWebhookController {
         } catch (SignatureVerificationException e) {
             log.error("Invalid Stripe signature: {}", e.getMessage());
             return ResponseEntity.status(400).body(Map.of("error", "Invalid signature"));
+        } catch (Exception e) {
+            log.error("Malformed Stripe webhook payload: {}", e.getMessage());
+            return ResponseEntity.status(400).body(Map.of("error", "Malformed payload"));
         }
 
-        if ("checkout.session.completed".equals(event.getType())) {
-            Session session = (Session) event.getDataObjectDeserializer().getObject().orElse(null);
-            if (session != null) {
-                String listingIdStr = session.getMetadata().get("listing_id");
-                String hoursStr = session.getMetadata().get("hours");
-                if (listingIdStr != null && hoursStr != null) {
-                    Long listingId = Long.parseLong(listingIdStr);
-                    int hours = Integer.parseInt(hoursStr);
-                    Optional<Listing> listing = listingRepository.findById(listingId);
-                    listing.ifPresent(l -> {
-                        l.setPromotedUntil(Instant.now().plus(hours, ChronoUnit.HOURS));
-                        l.setFeatured(true);
-                        listingRepository.save(l);
-                        log.info("Activated boost for listing {} ({}h)", listingId, hours);
-                    });
+        try {
+            if ("checkout.session.completed".equals(event.getType())) {
+                Session session = (Session) event.getDataObjectDeserializer().getObject().orElse(null);
+                Map<String, String> metadata = session != null ? session.getMetadata() : null;
+                if (metadata != null) {
+                    String listingIdStr = metadata.get("listing_id");
+                    String hoursStr = metadata.get("hours");
+                    if (listingIdStr != null && hoursStr != null) {
+                        Long listingId = Long.parseLong(listingIdStr);
+                        int hours = Integer.parseInt(hoursStr);
+                        Optional<Listing> listing = listingRepository.findById(listingId);
+                        listing.ifPresent(l -> {
+                            l.setPromotedUntil(Instant.now().plus(hours, ChronoUnit.HOURS));
+                            l.setFeatured(true);
+                            listingRepository.save(l);
+                            log.info("Activated boost for listing {} ({}h)", listingId, hours);
+                        });
+                    }
                 }
             }
+        } catch (Exception e) {
+            // Логируем и отвечаем 200: иначе Stripe будет бесконечно повторять доставку
+            log.error("Failed to process Stripe event {}: {}", event.getId(), e.getMessage(), e);
         }
 
         return ResponseEntity.ok(Map.of("received", true));

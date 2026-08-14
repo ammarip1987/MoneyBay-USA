@@ -57,14 +57,28 @@ public class ListingReportController {
             ));
         }
 
+        String clientIp = resolveClientIp(request);
+        User reporter = (auth != null && auth.getPrincipal() instanceof User u) ? u : null;
+
+        // Dedupe: один открытый репорт на listing с одного IP / от одного пользователя
+        boolean duplicate = reporter != null
+            ? reportRepository.existsOpenReportFromUser(id, reporter.getId())
+            : reportRepository.existsOpenReportFromIp(id, clientIp);
+        if (duplicate) {
+            Map<String, Object> dup = new HashMap<>();
+            dup.put("success", true);
+            dup.put("message", "Already reported. Our team will review this listing.");
+            dup.put("reports_count", reportRepository.countOpenReportsForListing(id));
+            dup.put("auto_hidden", false);
+            return ResponseEntity.ok(dup);
+        }
+
         ListingReport rep = new ListingReport();
         rep.setListing(listing);
         rep.setReason(reason);
         rep.setDetails(details);
-        rep.setReporterIp(resolveClientIp(request));
-        if (auth != null && auth.getPrincipal() instanceof User u) {
-            rep.setReporter(u);
-        }
+        rep.setReporterIp(clientIp);
+        rep.setReporter(reporter);
         reportRepository.save(rep);
 
         long openCount = reportRepository.countOpenReportsForListing(id);

@@ -37,8 +37,22 @@ public class BoostController {
         if (auth == null) return ResponseEntity.status(401).body(Map.of("message", "Not authenticated"));
         User user = (User) auth.getPrincipal();
 
-        Long listingId = Long.parseLong(body.get("listing_id").toString());
-        int hours = Integer.parseInt(body.get("hours").toString());
+        Object listingIdRaw = body.get("listing_id");
+        Object hoursRaw = body.get("hours");
+        if (listingIdRaw == null || hoursRaw == null) {
+            return ResponseEntity.badRequest().body(Map.of("message", "listing_id and hours are required"));
+        }
+        Long listingId;
+        int hours;
+        try {
+            listingId = Long.parseLong(listingIdRaw.toString());
+            hours = Integer.parseInt(hoursRaw.toString());
+        } catch (NumberFormatException e) {
+            return ResponseEntity.badRequest().body(Map.of("message", "listing_id and hours must be numbers"));
+        }
+        if (hours < 1 || hours > 720) {
+            return ResponseEntity.badRequest().body(Map.of("message", "hours out of range"));
+        }
 
         Optional<Listing> listing = listingRepository.findById(listingId);
         if (listing.isEmpty() || !listing.get().getUser().getId().equals(user.getId())) {

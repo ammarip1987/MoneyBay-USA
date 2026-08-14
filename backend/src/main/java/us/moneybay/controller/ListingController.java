@@ -36,6 +36,9 @@ public class ListingController {
     @Autowired
     private R2PhotoService r2PhotoService;
 
+    @Autowired
+    private us.moneybay.service.KeywordFilterService keywordFilterService;
+
     public ListingController(ListingRepository listingRepository,
                              CategoryRepository categoryRepository,
                              CityRepository cityRepository) {
@@ -62,19 +65,14 @@ public class ListingController {
             default -> Sort.by(Sort.Direction.DESC, "createdAt");
         };
 
-        if ((city == null || city.isBlank())) {
-            String subdomain = CityContext.getSubdomain();
-            if (subdomain != null) {
-                Optional<City> match = cityRepository.findBySubdomain(subdomain);
-                if (match.isPresent()) city = match.get().getName();
-            }
-        }
+        city = resolveCity(city);
 
         java.time.Instant postedAfter = null;
         if (postedWithinDays != null && postedWithinDays > 0) {
             postedAfter = java.time.Instant.now().minus(postedWithinDays, java.time.temporal.ChronoUnit.DAYS);
         }
 
+        if (page < 1) page = 1;
         PageRequest pageRequest = PageRequest.of(page - 1, 20, sortObj);
         boolean advancedFilters = priceMin != null || priceMax != null || hasImage || postedAfter != null;
 
@@ -95,13 +93,7 @@ public class ListingController {
         @RequestParam(required = false) String city,
         @RequestParam(required = false) String category) {
 
-        if ((city == null || city.isBlank())) {
-            String subdomain = CityContext.getSubdomain();
-            if (subdomain != null) {
-                Optional<City> match = cityRepository.findBySubdomain(subdomain);
-                if (match.isPresent()) city = match.get().getName();
-            }
-        }
+        city = resolveCity(city);
 
         List<Double> prices = listingRepository.pricesForCategory(city, category);
         Map<String, Object> response = new HashMap<>();
@@ -147,6 +139,17 @@ public class ListingController {
         return Math.round(value * 100.0) / 100.0;
     }
 
+    // Пустой city -> город из city-subdomain (единая точка для list/facets/suggest)
+    private String resolveCity(String city) {
+        if (city != null && !city.isBlank()) return city;
+        String subdomain = CityContext.getSubdomain();
+        if (subdomain != null) {
+            Optional<City> match = cityRepository.findBySubdomain(subdomain);
+            if (match.isPresent()) return match.get().getName();
+        }
+        return city;
+    }
+
     @GetMapping("/suggest")
     public ResponseEntity<List<Map<String, Object>>> suggest(
         @RequestParam(name = "q") String q,
@@ -159,14 +162,9 @@ public class ListingController {
 
         String query = q.trim();
         if (limit > 20) limit = 20;
+        if (limit < 1) limit = 1;
 
-        if ((city == null || city.isBlank())) {
-            String subdomain = CityContext.getSubdomain();
-            if (subdomain != null) {
-                Optional<City> match = cityRepository.findBySubdomain(subdomain);
-                if (match.isPresent()) city = match.get().getName();
-            }
-        }
+        city = resolveCity(city);
 
         org.springframework.data.domain.PageRequest pageReq = org.springframework.data.domain.PageRequest.of(0, limit);
         List<Listing> matches = listingRepository.suggestByTitlePrefix(query, city, pageReq);
@@ -257,6 +255,7 @@ public class ListingController {
             listing.setImages(saveImages(images));
         }
 
+        applyKeywordModeration(listing);
         return ResponseEntity.ok(ListingDto.from(listingRepository.save(listing)));
     }
 
@@ -300,7 +299,24 @@ public class ListingController {
             listing.setImages(all);
         }
 
+        applyKeywordModeration(listing);
         return ResponseEntity.ok(ListingDto.from(listingRepository.save(listing)));
+    }
+
+    // severity 2 -> hide, severity 3 -> ban (CLAUDE.md, Trust & Safety)
+    private void applyKeywordModeration(Listing listing) {
+        var result = keywordFilterService.checkContent(
+            listing.getTitle() == null ? "" : listing.getTitle(),
+            listing.getDescription() == null ? "" : listing.getDescription());
+        if (!result.matched) return;
+        if (result.severity >= 3) {
+            listing.setStatus(Listing.ListingStatus.BANNED);
+            listing.setActive(false);
+        } else if (result.severity == 2) {
+            listing.setStatus(Listing.ListingStatus.HIDDEN);
+            listing.setActive(false);
+            listing.setAutoHidden(true);
+        }
     }
 
     @DeleteMapping("/{id}")

@@ -30,7 +30,7 @@ public class Listing {
 
     private String area;
 
-    @ElementCollection
+    @ElementCollection(fetch = FetchType.EAGER)
     @CollectionTable(name = "listing_images", joinColumns = @JoinColumn(name = "listing_id"))
     @Column(name = "image_url")
     private List<String> images = new ArrayList<>();

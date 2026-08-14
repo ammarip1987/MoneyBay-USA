@@ -1,4 +1,4 @@
-import { Component, OnDestroy, inject, signal, afterNextRender } from '@angular/core';
+import { Component, OnDestroy, inject, signal, afterNextRender, effect } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { Router, RouterLink } from '@angular/router';
 import { AuthService } from '../../services/auth.service';
@@ -94,13 +94,31 @@ export class HeaderComponent implements OnDestroy {
   private pollTimer: any = null;
   private lastSeenCount = 0;
 
+  private isBrowser = false;
+
   constructor() {
     afterNextRender(() => {
-      if (this.auth.isAuthenticated()) {
-        this.loadUnread();
-        this.pollTimer = setInterval(() => this.loadUnread(), 5000);
-      }
+      this.isBrowser = true;
+      this.syncPolling();
     });
+    // Реагирует на login/logout в течение сессии, не только на первый рендер
+    effect(() => {
+      const authed = this.auth.isAuthenticated();
+      if (!this.isBrowser) return;
+      this.syncPolling(authed);
+    });
+  }
+
+  private syncPolling(authed: boolean = this.auth.isAuthenticated()): void {
+    if (authed && !this.pollTimer) {
+      this.loadUnread();
+      this.pollTimer = setInterval(() => this.loadUnread(), 20000);
+    } else if (!authed && this.pollTimer) {
+      clearInterval(this.pollTimer);
+      this.pollTimer = null;
+      this.unreadCount.set(0);
+      this.lastSeenCount = 0;
+    }
   }
 
   ngOnDestroy(): void {

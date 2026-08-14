@@ -17,6 +17,14 @@ public interface ListingReportRepository extends JpaRepository<ListingReport, Lo
     @Query("SELECT COUNT(r) FROM ListingReport r WHERE r.listing.id = :listingId AND r.status = 'OPEN'")
     long countOpenReportsForListing(@Param("listingId") Long listingId);
 
+    @Query("SELECT COUNT(r) > 0 FROM ListingReport r WHERE r.listing.id = :listingId " +
+           "AND r.status = 'OPEN' AND r.reporterIp = :ip")
+    boolean existsOpenReportFromIp(@Param("listingId") Long listingId, @Param("ip") String ip);
+
+    @Query("SELECT COUNT(r) > 0 FROM ListingReport r WHERE r.listing.id = :listingId " +
+           "AND r.status = 'OPEN' AND r.reporter.id = :userId")
+    boolean existsOpenReportFromUser(@Param("listingId") Long listingId, @Param("userId") Long userId);
+
     @Query("SELECT r.listing.id, COUNT(r) AS cnt FROM ListingReport r WHERE r.status = 'OPEN' " +
            "GROUP BY r.listing.id HAVING COUNT(r) >= :threshold")
     List<Object[]> findListingsExceedingReportThreshold(@Param("threshold") long threshold);

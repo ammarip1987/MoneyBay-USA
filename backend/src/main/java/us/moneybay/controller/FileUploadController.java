@@ -20,6 +20,16 @@ public class FileUploadController {
     @Value("${app.upload.dir:./uploads}")
     private String uploadDir;
 
+    private static final Set<String> ALLOWED_EXTENSIONS = Set.of("jpg", "jpeg", "png", "webp", "gif");
+
+    // Extension from the client filename, allow-listed; никакие символы пути не проходят.
+    private static String safeExtension(String original) {
+        if (original == null || !original.contains(".")) return null;
+        String ext = original.substring(original.lastIndexOf('.') + 1)
+            .replaceAll("[^a-zA-Z0-9]", "").toLowerCase();
+        return ALLOWED_EXTENSIONS.contains(ext) ? ext : null;
+    }
+
     @PostMapping
     public ResponseEntity<?> upload(@RequestParam("files") MultipartFile[] files, Authentication auth) {
         if (auth == null) return ResponseEntity.status(401).build();
@@ -34,9 +44,11 @@ public class FileUploadController {
         List<String> filenames = new ArrayList<>();
         for (MultipartFile file : files) {
             if (file.isEmpty()) continue;
-            String original = Optional.ofNullable(file.getOriginalFilename()).orElse("file");
-            String ext = original.contains(".") ? original.substring(original.lastIndexOf('.')) : "";
-            String filename = UUID.randomUUID() + ext;
+            String ext = safeExtension(file.getOriginalFilename());
+            if (ext == null) {
+                return ResponseEntity.status(400).body(Map.of("message", "Unsupported file type. Allowed: JPEG, PNG, WebP, GIF"));
+            }
+            String filename = UUID.randomUUID() + "." + ext;
             try {
                 Files.copy(file.getInputStream(), uploadPath.resolve(filename), StandardCopyOption.REPLACE_EXISTING);
                 filenames.add(filename);
@@ -59,9 +71,11 @@ public class FileUploadController {
             return ResponseEntity.status(500).body(Map.of("message", "Failed to create upload directory"));
         }
 
-        String original = Optional.ofNullable(file.getOriginalFilename()).orElse("photo");
-        String ext = original.contains(".") ? original.substring(original.lastIndexOf('.')) : "";
-        String filename = UUID.randomUUID() + ext;
+        String ext = safeExtension(file.getOriginalFilename());
+        if (ext == null) {
+            return ResponseEntity.status(400).body(Map.of("message", "Unsupported file type. Allowed: JPEG, PNG, WebP, GIF"));
+        }
+        String filename = UUID.randomUUID() + "." + ext;
         try {
             Files.copy(file.getInputStream(), uploadPath.resolve(filename), StandardCopyOption.REPLACE_EXISTING);
             return ResponseEntity.ok(filename);

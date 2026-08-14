@@ -1,4 +1,4 @@
-import { Injectable, inject, signal, PLATFORM_ID } from '@angular/core';
+import { Injectable, Injector, inject, signal, PLATFORM_ID } from '@angular/core';
 import { isPlatformBrowser } from '@angular/common';
 import { HttpClient, HttpContext } from '@angular/common/http';
 import { Observable, tap } from 'rxjs';
@@ -15,6 +15,7 @@ interface LoginResponse {
 export class AuthService {
   private http = inject(HttpClient);
   private platformId = inject(PLATFORM_ID);
+  private injector = inject(Injector);
   private readonly baseUrl = environment.apiUrl;
   private readonly tokenKey = 'mb_auth_token';
   private readonly userKey = 'mb_auth_user';
@@ -54,6 +55,11 @@ export class AuthService {
     }
     this.currentUser.set(null);
     this.isAuthenticated.set(false);
+    // Ленивый резолв (циклическая зависимость SocketService -> AuthService):
+    // без disconnect старый клиент продолжает reconnect с прежним JWT
+    import('./socket.service').then(({ SocketService }) => {
+      this.injector.get(SocketService).disconnect();
+    });
   }
 
   getToken(): string | null {
@@ -82,7 +88,16 @@ export class AuthService {
   private loadUser(): User | null {
     if (!this.isBrowser()) return null;
     const data = localStorage.getItem(this.userKey);
-    return data ? JSON.parse(data) : null;
+    if (!data) return null;
+    try {
+      return JSON.parse(data);
+    } catch {
+      // Битое значение (частичная запись, ручная правка) не должно ронять
+      // конструктор root-сервиса — чистим и продолжаем анонимно
+      localStorage.removeItem(this.userKey);
+      localStorage.removeItem(this.tokenKey);
+      return null;
+    }
   }
 
   private setSession(res: LoginResponse): void {

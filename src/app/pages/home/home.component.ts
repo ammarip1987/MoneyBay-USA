@@ -333,8 +333,13 @@ export class HomeComponent implements OnInit, OnDestroy, AfterViewInit {
   }
 
   ngOnDestroy(): void {
+    this.destroyed = true;
+    if (this.observeRetryTimer) clearTimeout(this.observeRetryTimer);
     this.scrollObserver?.disconnect();
   }
+
+  private destroyed = false;
+  private observeRetryTimer: ReturnType<typeof setTimeout> | null = null;
 
   private setupScrollObserver(): void {
     if (typeof IntersectionObserver === 'undefined') return;
@@ -350,10 +355,11 @@ export class HomeComponent implements OnInit, OnDestroy, AfterViewInit {
     );
 
     const tryObserve = () => {
+      if (this.destroyed) return;
       if (this.scrollSentinel?.nativeElement) {
         this.scrollObserver?.observe(this.scrollSentinel.nativeElement);
       } else {
-        setTimeout(tryObserve, 500);
+        this.observeRetryTimer = setTimeout(tryObserve, 500);
       }
     };
     tryObserve();
@@ -423,18 +429,19 @@ export class HomeComponent implements OnInit, OnDestroy, AfterViewInit {
             const sub = data.find((s: Subcategory) => s.slug === this.selectedSub()) || null;
             this.currentSub.set(sub);
             if (sub) {
-              // Load subsubcategories
-              fetch(`${environment.apiUrl}/api/subcategories/${sub.id}/children`)
-                .then(r => r.json())
-                .then((children: Subcategory[]) => {
+              // Load subsubcategories (через HttpClient: интерцепторы auth/city/error)
+              this.api.getSubcategoryChildren(sub.id).subscribe({
+                next: (children: Subcategory[]) => {
                   this.subsubcategories.set(children || []);
                   if (this.selectedSubSub()) {
-                    const ss = children.find(c => c.slug === this.selectedSubSub()) || null;
+                    const ss = (children || []).find(c => c.slug === this.selectedSubSub()) || null;
                     this.currentSubSub.set(ss);
                   } else {
                     this.currentSubSub.set(null);
                   }
-                });
+                },
+                error: () => this.subsubcategories.set([])
+              });
             }
           } else {
             this.currentSub.set(null);

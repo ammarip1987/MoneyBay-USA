@@ -92,6 +92,10 @@ export class ApiService {
     return this.http.get<any[]>(`${this.baseUrl}/api/subcategories/category/${categorySlug}`);
   }
 
+  getSubcategoryChildren(subcategoryId: number): Observable<any[]> {
+    return this.http.get<any[]>(`${this.baseUrl}/api/subcategories/${subcategoryId}/children`);
+  }
+
   getProfile(): Observable<User> {
     return this.http.get<User>(`${this.baseUrl}/api/profile`);
   }
@@ -119,7 +123,20 @@ export class ApiService {
   uploadChatPhoto(file: File): Observable<string> {
     const formData = new FormData();
     formData.append('file', file);
-    return this.http.post<string>(`${this.baseUrl}/api/photos/upload`, formData);
+    // Backend returns a plain-text URL, not JSON
+    return this.http.post(`${this.baseUrl}/api/photos/upload`, formData, { responseType: 'text' });
+  }
+
+  /**
+   * Единая точка построения URL изображений.
+   * Хранимые значения: абсолютные URL, пути вида /api/photos/<file> (R2)
+   * или голые имена файлов из старого /api/uploads.
+   */
+  imageUrl(image: string | null | undefined): string {
+    if (!image) return '';
+    if (image.startsWith('http://') || image.startsWith('https://')) return image;
+    if (image.startsWith('/')) return `${this.baseUrl}${image}`;
+    return `${this.baseUrl}/api/uploads/${image}`;
   }
 
   getFavorites(): Observable<Listing[]> {
