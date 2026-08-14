@@ -60,7 +60,7 @@ public class SecurityConfig {
                 .requestMatchers(HttpMethod.GET,
                     "/api/listings/**", "/api/categories/**", "/api/cities/**",
                     "/api/subcategories/**", "/api/uploads/**", "/api/photos/**",
-                    "/api/us-cities",
+                    "/api/us-cities", "/api/states",
                     "/api/users/*/public",
                     "/api/auth/oauth2/config",
                     "/sitemap.xml", "/robots.txt",

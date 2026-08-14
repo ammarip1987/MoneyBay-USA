@@ -52,11 +52,13 @@ import { ApiService, UsCitySuggestion } from '../../services/api.service';
   `
 })
 export class CityAutocompleteComponent implements OnInit, OnDestroy {
-  /** Полное название штата, например "California". */
+  /** Название штата ("California") либо его код ("CA"). */
   @Input() state = '';
   @Input() value = '';
   @Input() placeholder = 'Start typing a city';
   @Output() valueChange = new EventEmitter<string>();
+  /** Выбранный город целиком: имя и готовая строка "City, ST". */
+  @Output() citySelected = new EventEmitter<UsCitySuggestion>();
 
   @ViewChild('wrapper') wrapper!: ElementRef;
 
@@ -107,6 +109,7 @@ export class CityAutocompleteComponent implements OnInit, OnDestroy {
   pick(c: UsCitySuggestion): void {
     this.value = c.name;
     this.valueChange.emit(c.name);
+    this.citySelected.emit(c);
     this.open.set(false);
     this.highlighted.set(-1);
   }

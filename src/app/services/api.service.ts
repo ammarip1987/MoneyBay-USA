@@ -15,7 +15,14 @@ export interface ListingSuggestion {
 export interface UsCitySuggestion {
   name: string;
   state_code: string;
+  /** "Chicago, IL" — формат, в котором город хранится в listings.location */
+  display_name: string;
   population: number;
+}
+
+export interface UsState {
+  code: string;
+  name: string;
 }
 
 export interface SimilarListings {
@@ -100,6 +107,11 @@ export class ApiService {
 
   getSubcategoryChildren(subcategoryId: number): Observable<any[]> {
     return this.http.get<any[]>(`${this.baseUrl}/api/subcategories/${subcategoryId}/children`);
+  }
+
+  /** 51 штат плюс DC для выпадающего списка State. */
+  getStates(): Observable<UsState[]> {
+    return this.http.get<UsState[]>(`${this.baseUrl}/api/states`);
   }
 
   /** Города выбранного штата для автоподстановки в поле City / Area. */

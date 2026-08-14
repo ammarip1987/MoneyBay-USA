@@ -29,4 +29,8 @@ public interface UsCityRepository extends JpaRepository<UsCity, Long> {
            "WHERE LOWER(c.name) = :name " +
            "AND (LOWER(c.stateName) = :state OR LOWER(c.stateCode) = :state)")
     boolean existsInState(@Param("name") String lowercaseName, @Param("state") String lowercaseState);
+
+    /** Штаты выводятся из справочника городов: отдельной таблицы под них нет. */
+    @Query("SELECT DISTINCT c.stateCode, c.stateName FROM UsCity c ORDER BY c.stateName ASC")
+    List<Object[]> findDistinctStates();
 }

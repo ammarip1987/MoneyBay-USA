@@ -2,10 +2,10 @@ import { Component, OnInit, inject, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
-import { ApiService } from '../../services/api.service';
+import { ApiService, UsState, UsCitySuggestion } from '../../services/api.service';
 import { ImageCompressionService } from '../../services/image-compression.service';
 import { NotificationService } from '../../services/notification.service';
-import { Listing, City } from '../../models/listing.model';
+import { Listing } from '../../models/listing.model';
 import { ImageUploadComponent } from '../../components/image-upload/image-upload.component';
 import { CityAutocompleteComponent } from '../../components/city-autocomplete/city-autocomplete.component';
 import { environment } from '../../../environments/environment';
@@ -38,18 +38,28 @@ import { environment } from '../../../environments/environment';
 
             <div class="form-group">
               <label class="form-label">State</label>
-              <select [(ngModel)]="city" name="state" (ngModelChange)="onStateChange()" class="form-input">
+              <select [(ngModel)]="state" name="state" (ngModelChange)="onStateChange()" class="form-input">
                 <option value="">Select state</option>
-                @for (c of states(); track c.id) {
-                  <option [value]="c.name">{{ c.name }}</option>
+                @for (s of states(); track s.code) {
+                  <option [value]="s.code">{{ s.name }}</option>
                 }
               </select>
             </div>
+          </div>
 
-            <div class="form-group md:col-span-2">
-              <label class="form-label">City / Area</label>
-              <app-city-autocomplete [state]="city" [value]="area" (valueChange)="area = $event"
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div class="form-group">
+              <label class="form-label">City</label>
+              <app-city-autocomplete [state]="state" [value]="cityName"
+                                     (valueChange)="cityName = $event"
+                                     (citySelected)="cityName = $event.name"
                                      placeholder="Start typing a city" />
+            </div>
+
+            <div class="form-group">
+              <label class="form-label">Area / District</label>
+              <input type="text" [(ngModel)]="area" name="area" class="form-input"
+                     placeholder="Optional - neighborhood, district">
             </div>
           </div>
 
@@ -95,13 +105,14 @@ export class EditListingComponent implements OnInit {
 
   listing = signal<Listing | null>(null);
   existingImages = signal<string[]>([]);
-  states = signal<City[]>([]);
+  states = signal<UsState[]>([]);
   loading = signal(false);
 
   title = '';
   description = '';
   price = 0;
-  city = '';
+  state = '';
+  cityName = '';
   area = '';
 
   newFiles: File[] = [];
@@ -109,11 +120,24 @@ export class EditListingComponent implements OnInit {
 
   /** Список городов зависит от штата — при смене штата прежний город недействителен. */
   onStateChange(): void {
-    this.area = '';
+    this.cityName = '';
+  }
+
+  /** listings.location хранит "City, ST" — разбираем на город и код штата. */
+  private splitLocation(location: string): void {
+    const parts = (location || '').split(',');
+    this.cityName = (parts[0] || '').trim();
+    this.state = parts.length > 1 ? (parts[1] || '').trim().toUpperCase() : '';
+  }
+
+  private composeLocation(): string {
+    const city = this.cityName.trim();
+    if (!city) return '';
+    return this.state ? `${city}, ${this.state}` : city;
   }
 
   ngOnInit(): void {
-    this.api.getCities().subscribe({
+    this.api.getStates().subscribe({
       next: (data) => this.states.set(data || []),
       error: () => this.states.set([])
     });
@@ -126,7 +150,7 @@ export class EditListingComponent implements OnInit {
           this.title = data.title;
           this.description = data.description || '';
           this.price = data.price;
-          this.city = data.location;
+          this.splitLocation(data.location);
           this.area = data.area || '';
           this.existingImages.set(data.images || []);
         }
@@ -170,7 +194,7 @@ export class EditListingComponent implements OnInit {
     formData.append('title', this.title);
     formData.append('description', this.description);
     formData.append('price', String(this.price));
-    formData.append('location', this.city);
+    formData.append('location', this.composeLocation());
     formData.append('area', this.area);
     this.removedImages.forEach(img => formData.append('removed_images', img));
     uploadFiles.forEach(f => formData.append('images', f));

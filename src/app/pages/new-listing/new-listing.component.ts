@@ -2,7 +2,7 @@ import { Component, OnInit, inject, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
-import { ApiService } from '../../services/api.service';
+import { ApiService, UsState, UsCitySuggestion } from '../../services/api.service';
 import { NotificationService } from '../../services/notification.service';
 import { ImageCompressionService } from '../../services/image-compression.service';
 import { Category, City } from '../../models/listing.model';
@@ -47,19 +47,29 @@ import { CityAutocompleteComponent } from '../../components/city-autocomplete/ci
 
           <div class="form-group">
             <label class="form-label">State *</label>
-            <select [(ngModel)]="city" name="state" (ngModelChange)="onStateChange()" class="form-input" required>
+            <select [(ngModel)]="state" name="state" (ngModelChange)="onStateChange()" class="form-input" required>
               <option value="">Select state</option>
-              @for (c of cities(); track c.id) {
-                <option [value]="c.name">{{ c.name }}</option>
+              @for (s of states(); track s.code) {
+                <option [value]="s.code">{{ s.name }}</option>
               }
             </select>
           </div>
         </div>
 
-        <div class="form-group">
-          <label class="form-label">City / Area</label>
-          <app-city-autocomplete [state]="city" [value]="area" (valueChange)="area = $event"
-                                 placeholder="Start typing a city" />
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div class="form-group">
+            <label class="form-label">City *</label>
+            <app-city-autocomplete [state]="state" [value]="cityName"
+                                   (valueChange)="cityName = $event"
+                                   (citySelected)="onCityPicked($event)"
+                                   placeholder="Start typing a city" />
+          </div>
+
+          <div class="form-group">
+            <label class="form-label">Area / District</label>
+            <input type="text" [(ngModel)]="area" name="area" class="form-input"
+                   placeholder="Optional - neighborhood, district">
+          </div>
         </div>
 
         <div class="form-group">
@@ -84,19 +94,32 @@ export class NewListingComponent implements OnInit {
   private compressor = inject(ImageCompressionService);
 
   categories = signal<Category[]>([]);
-  cities = signal<City[]>([]);
   loading = signal(false);
 
   title = '';
   categoryId = '';
   description = '';
   price = 0;
-  city = '';
+  /** Двухбуквенный код выбранного штата. */
+  state = '';
+  cityName = '';
   area = '';
+  states = signal<UsState[]>([]);
 
   /** Список городов зависит от штата — при смене штата прежний город недействителен. */
   onStateChange(): void {
-    this.area = '';
+    this.cityName = '';
+  }
+
+  onCityPicked(c: UsCitySuggestion): void {
+    this.cityName = c.name;
+  }
+
+  /** listings.location хранит "City, ST" — формат совпадает с таблицей cities. */
+  private composeLocation(): string {
+    const city = this.cityName.trim();
+    if (!city) return '';
+    return this.state ? `${city}, ${this.state}` : city;
   }
   files: File[] = [];
 
@@ -105,9 +128,9 @@ export class NewListingComponent implements OnInit {
       next: (data) => this.categories.set(data),
       error: () => this.categories.set([])
     });
-    this.api.getCities().subscribe({
-      next: (data) => this.cities.set(data),
-      error: () => this.cities.set([])
+    this.api.getStates().subscribe({
+      next: (data) => this.states.set(data || []),
+      error: () => this.states.set([])
     });
   }
 
@@ -116,7 +139,7 @@ export class NewListingComponent implements OnInit {
   }
 
   async onSubmit(): Promise<void> {
-    if (!this.title || !this.categoryId || !this.description || !this.city) {
+    if (!this.title || !this.categoryId || !this.description || !this.state || !this.cityName.trim()) {
       this.notification.error('Please fill all required fields');
       return;
     }
@@ -152,7 +175,7 @@ export class NewListingComponent implements OnInit {
     formData.append('category_id', this.categoryId);
     formData.append('description', this.description);
     formData.append('price', String(this.price));
-    formData.append('location', this.city);
+    formData.append('location', this.composeLocation());
     if (this.area) formData.append('area', this.area);
     compressedFiles.forEach(f => formData.append('images', f));
 
