@@ -7,11 +7,12 @@ import { NotificationService } from '../../services/notification.service';
 import { ImageCompressionService } from '../../services/image-compression.service';
 import { Category, City } from '../../models/listing.model';
 import { ImageUploadComponent } from '../../components/image-upload/image-upload.component';
+import { CityAutocompleteComponent } from '../../components/city-autocomplete/city-autocomplete.component';
 
 @Component({
   selector: 'app-new-listing',
   standalone: true,
-  imports: [CommonModule, FormsModule, ImageUploadComponent],
+  imports: [CommonModule, FormsModule, ImageUploadComponent, CityAutocompleteComponent],
   template: `
     <div class="max-w-3xl mx-auto px-4 py-8">
       <h1 class="text-3xl font-bold text-mb-dark mb-8">Post New Ad</h1>
@@ -45,9 +46,9 @@ import { ImageUploadComponent } from '../../components/image-upload/image-upload
           </div>
 
           <div class="form-group">
-            <label class="form-label">City *</label>
-            <select [(ngModel)]="city" name="city" class="form-input" required>
-              <option value="">Select city</option>
+            <label class="form-label">State *</label>
+            <select [(ngModel)]="city" name="state" (ngModelChange)="onStateChange()" class="form-input" required>
+              <option value="">Select state</option>
               @for (c of cities(); track c.id) {
                 <option [value]="c.name">{{ c.name }}</option>
               }
@@ -56,8 +57,9 @@ import { ImageUploadComponent } from '../../components/image-upload/image-upload
         </div>
 
         <div class="form-group">
-          <label class="form-label">Area / District</label>
-          <input type="text" [(ngModel)]="area" name="area" class="form-input" placeholder="Optional - neighborhood, district">
+          <label class="form-label">City / Area</label>
+          <app-city-autocomplete [state]="city" [value]="area" (valueChange)="area = $event"
+                                 placeholder="Start typing a city" />
         </div>
 
         <div class="form-group">
@@ -91,6 +93,11 @@ export class NewListingComponent implements OnInit {
   price = 0;
   city = '';
   area = '';
+
+  /** Список городов зависит от штата — при смене штата прежний город недействителен. */
+  onStateChange(): void {
+    this.area = '';
+  }
   files: File[] = [];
 
   ngOnInit(): void {

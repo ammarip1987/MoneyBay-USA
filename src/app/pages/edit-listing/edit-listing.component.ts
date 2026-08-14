@@ -5,14 +5,15 @@ import { ActivatedRoute, Router } from '@angular/router';
 import { ApiService } from '../../services/api.service';
 import { ImageCompressionService } from '../../services/image-compression.service';
 import { NotificationService } from '../../services/notification.service';
-import { Listing } from '../../models/listing.model';
+import { Listing, City } from '../../models/listing.model';
 import { ImageUploadComponent } from '../../components/image-upload/image-upload.component';
+import { CityAutocompleteComponent } from '../../components/city-autocomplete/city-autocomplete.component';
 import { environment } from '../../../environments/environment';
 
 @Component({
   selector: 'app-edit-listing',
   standalone: true,
-  imports: [CommonModule, FormsModule, ImageUploadComponent],
+  imports: [CommonModule, FormsModule, ImageUploadComponent, CityAutocompleteComponent],
   template: `
     <div class="max-w-3xl mx-auto px-4 py-8">
       <h1 class="text-3xl font-bold text-mb-dark mb-8">Edit Listing</h1>
@@ -36,8 +37,19 @@ import { environment } from '../../../environments/environment';
             </div>
 
             <div class="form-group">
-              <label class="form-label">City</label>
-              <input type="text" [(ngModel)]="city" name="city" class="form-input">
+              <label class="form-label">State</label>
+              <select [(ngModel)]="city" name="state" (ngModelChange)="onStateChange()" class="form-input">
+                <option value="">Select state</option>
+                @for (c of states(); track c.id) {
+                  <option [value]="c.name">{{ c.name }}</option>
+                }
+              </select>
+            </div>
+
+            <div class="form-group md:col-span-2">
+              <label class="form-label">City / Area</label>
+              <app-city-autocomplete [state]="city" [value]="area" (valueChange)="area = $event"
+                                     placeholder="Start typing a city" />
             </div>
           </div>
 
@@ -83,16 +95,29 @@ export class EditListingComponent implements OnInit {
 
   listing = signal<Listing | null>(null);
   existingImages = signal<string[]>([]);
+  states = signal<City[]>([]);
   loading = signal(false);
 
   title = '';
   description = '';
   price = 0;
   city = '';
+  area = '';
+
   newFiles: File[] = [];
   removedImages: string[] = [];
 
+  /** Список городов зависит от штата — при смене штата прежний город недействителен. */
+  onStateChange(): void {
+    this.area = '';
+  }
+
   ngOnInit(): void {
+    this.api.getCities().subscribe({
+      next: (data) => this.states.set(data || []),
+      error: () => this.states.set([])
+    });
+
     const id = Number(this.route.snapshot.paramMap.get('id'));
     if (id) {
       this.api.getListing(id).subscribe({
@@ -102,6 +127,7 @@ export class EditListingComponent implements OnInit {
           this.description = data.description || '';
           this.price = data.price;
           this.city = data.location;
+          this.area = data.area || '';
           this.existingImages.set(data.images || []);
         }
       });
@@ -145,6 +171,7 @@ export class EditListingComponent implements OnInit {
     formData.append('description', this.description);
     formData.append('price', String(this.price));
     formData.append('location', this.city);
+    formData.append('area', this.area);
     this.removedImages.forEach(img => formData.append('removed_images', img));
     uploadFiles.forEach(f => formData.append('images', f));
 

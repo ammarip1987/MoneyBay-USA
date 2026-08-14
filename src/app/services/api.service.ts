@@ -12,6 +12,12 @@ export interface ListingSuggestion {
   image: string | null;
 }
 
+export interface UsCitySuggestion {
+  name: string;
+  state_code: string;
+  population: number;
+}
+
 export interface SimilarListings {
   same_location: Listing[];
   similar_price: Listing[];
@@ -94,6 +100,15 @@ export class ApiService {
 
   getSubcategoryChildren(subcategoryId: number): Observable<any[]> {
     return this.http.get<any[]>(`${this.baseUrl}/api/subcategories/${subcategoryId}/children`);
+  }
+
+  /** Города выбранного штата для автоподстановки в поле City / Area. */
+  suggestUsCities(state: string, q = '', limit = 10): Observable<UsCitySuggestion[]> {
+    const params = new HttpParams()
+      .set('state', state)
+      .set('q', q)
+      .set('limit', String(limit));
+    return this.http.get<UsCitySuggestion[]>(`${this.baseUrl}/api/us-cities`, { params });
   }
 
   getProfile(): Observable<User> {
