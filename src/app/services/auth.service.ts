@@ -100,7 +100,7 @@ export class AuthService {
     }
   }
 
-  private setSession(res: LoginResponse): void {
+  setSession(res: LoginResponse): void {
     if (this.isBrowser()) {
       localStorage.setItem(this.tokenKey, res.token);
       localStorage.setItem(this.userKey, JSON.stringify(res.user));
