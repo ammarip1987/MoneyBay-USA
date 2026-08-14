@@ -5,7 +5,7 @@ import { Router } from '@angular/router';
 import { ApiService, UsState, UsCitySuggestion } from '../../services/api.service';
 import { NotificationService } from '../../services/notification.service';
 import { ImageCompressionService } from '../../services/image-compression.service';
-import { Category, City } from '../../models/listing.model';
+import { Category } from '../../models/listing.model';
 import { ImageUploadComponent } from '../../components/image-upload/image-upload.component';
 import { CityAutocompleteComponent } from '../../components/city-autocomplete/city-autocomplete.component';
 
@@ -56,20 +56,12 @@ import { CityAutocompleteComponent } from '../../components/city-autocomplete/ci
           </div>
         </div>
 
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <div class="form-group">
-            <label class="form-label">City *</label>
-            <app-city-autocomplete [state]="state" [value]="cityName"
-                                   (valueChange)="cityName = $event"
-                                   (citySelected)="onCityPicked($event)"
-                                   placeholder="Start typing a city" />
-          </div>
-
-          <div class="form-group">
-            <label class="form-label">Area / District</label>
-            <input type="text" [(ngModel)]="area" name="area" class="form-input"
-                   placeholder="Optional - neighborhood, district">
-          </div>
+        <div class="form-group">
+          <label class="form-label">City / Town *</label>
+          <app-city-autocomplete [state]="state" [value]="cityName"
+                                 (valueChange)="cityName = $event"
+                                 (citySelected)="onCityPicked($event)"
+                                 placeholder="Start typing a city" />
         </div>
 
         <div class="form-group">
@@ -103,7 +95,6 @@ export class NewListingComponent implements OnInit {
   /** Двухбуквенный код выбранного штата. */
   state = '';
   cityName = '';
-  area = '';
   states = signal<UsState[]>([]);
 
   /** Список городов зависит от штата — при смене штата прежний город недействителен. */
@@ -176,7 +167,6 @@ export class NewListingComponent implements OnInit {
     formData.append('description', this.description);
     formData.append('price', String(this.price));
     formData.append('location', this.composeLocation());
-    if (this.area) formData.append('area', this.area);
     compressedFiles.forEach(f => formData.append('images', f));
 
     this.api.createListing(formData).subscribe({

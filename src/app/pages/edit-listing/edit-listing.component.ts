@@ -47,20 +47,12 @@ import { environment } from '../../../environments/environment';
             </div>
           </div>
 
-          <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div class="form-group">
-              <label class="form-label">City</label>
-              <app-city-autocomplete [state]="state" [value]="cityName"
-                                     (valueChange)="cityName = $event"
-                                     (citySelected)="cityName = $event.name"
-                                     placeholder="Start typing a city" />
-            </div>
-
-            <div class="form-group">
-              <label class="form-label">Area / District</label>
-              <input type="text" [(ngModel)]="area" name="area" class="form-input"
-                     placeholder="Optional - neighborhood, district">
-            </div>
+          <div class="form-group">
+            <label class="form-label">City / Town</label>
+            <app-city-autocomplete [state]="state" [value]="cityName"
+                                   (valueChange)="cityName = $event"
+                                   (citySelected)="cityName = $event.name"
+                                   placeholder="Start typing a city" />
           </div>
 
           @if (existingImages().length > 0) {
@@ -113,7 +105,6 @@ export class EditListingComponent implements OnInit {
   price = 0;
   state = '';
   cityName = '';
-  area = '';
 
   newFiles: File[] = [];
   removedImages: string[] = [];
@@ -151,7 +142,6 @@ export class EditListingComponent implements OnInit {
           this.description = data.description || '';
           this.price = data.price;
           this.splitLocation(data.location);
-          this.area = data.area || '';
           this.existingImages.set(data.images || []);
         }
       });
@@ -195,7 +185,6 @@ export class EditListingComponent implements OnInit {
     formData.append('description', this.description);
     formData.append('price', String(this.price));
     formData.append('location', this.composeLocation());
-    formData.append('area', this.area);
     this.removedImages.forEach(img => formData.append('removed_images', img));
     uploadFiles.forEach(f => formData.append('images', f));
 
