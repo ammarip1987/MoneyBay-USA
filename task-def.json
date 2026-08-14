@@ -31,6 +31,10 @@
                     "value": "production"
                 },
                 {
+                    "name": "GOOGLE_CLIENT_ID",
+                    "value": "755478741339-adaamehn3di26aj2jgth4odpuh7dcqmq.apps.googleusercontent.com"
+                },
+                {
                     "name": "STRIPE_SECRET_KEY",
                     "value": "sk_test_dummy"
                 },
@@ -49,6 +53,10 @@
                 {
                     "name": "JWT_SECRET",
                     "valueFrom": "arn:aws:secretsmanager:eu-north-1:172575865299:secret:moneybay/jwt-secret-Iyi55d"
+                },
+                {
+                    "name": "GOOGLE_CLIENT_SECRET",
+                    "valueFrom": "arn:aws:secretsmanager:eu-north-1:172575865299:secret:moneybay/oauth-WybPmy:GOOGLE_CLIENT_SECRET::"
                 }
             ],
             "logConfiguration": {
