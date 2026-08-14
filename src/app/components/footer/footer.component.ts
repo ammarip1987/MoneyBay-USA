@@ -16,7 +16,7 @@ import { AuthService } from '../../services/auth.service';
               <img src="icons/icons8-m-50.png" alt="" class="w-8 h-8" width="32" height="32" loading="lazy" decoding="async">
               <span>oneyBay</span>
             </a>
-            <p class="text-sm text-gray-400 mb-4">Modern marketplace across 51 US cities.</p>
+            <p class="text-sm text-gray-400 mb-4">Modern marketplace across 50 US states.</p>
             <div class="flex gap-3">
               <a href="#" class="w-9 h-9 bg-gray-700 hover:bg-mb-blue rounded-full flex items-center justify-center transition">
                 <i class="fab fa-facebook-f"></i>
