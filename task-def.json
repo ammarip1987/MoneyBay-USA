@@ -1,0 +1,77 @@
+{
+    "family": "default-moneybay-backend",
+    "containerDefinitions": [
+        {
+            "name": "Main",
+            "image": "172575865299.dkr.ecr.eu-north-1.amazonaws.com/moneybay-usa:latest",
+            "cpu": 256,
+            "memory": 512,
+            "memoryReservation": 512,
+            "portMappings": [
+                {
+                    "containerPort": 8080,
+                    "hostPort": 8080,
+                    "protocol": "tcp",
+                    "name": "main-8080-tcp"
+                }
+            ],
+            "essential": true,
+            "command": [],
+            "environment": [
+                {
+                    "name": "DATABASE_URL",
+                    "value": "jdbc:postgresql://db-moneybay-usa.c5qkmgi6m2e9.eu-north-1.rds.amazonaws.com:5432/moneybay"
+                },
+                {
+                    "name": "DB_USERNAME",
+                    "value": "moneybayusa"
+                },
+                {
+                    "name": "JWT_SECRET",
+                    "value": "Jv6s9CLn1FmwMtYhqHiPUdcIQbSrao7p"
+                },
+                {
+                    "name": "DB_PASSWORD",
+                    "value": "!CA1987j7!CA1987j7"
+                },
+                {
+                    "name": "SPRING_PROFILES_ACTIVE",
+                    "value": "production"
+                },
+                {
+                    "name": "STRIPE_SECRET_KEY",
+                    "value": "sk_test_dummy"
+                },
+                {
+                    "name": "STRIPE_WEBHOOK_SECRET",
+                    "value": "whsec_dummy"
+                }
+            ],
+            "mountPoints": [],
+            "volumesFrom": [],
+            "secrets": [],
+            "logConfiguration": {
+                "logDriver": "awslogs",
+                "options": {
+                    "awslogs-group": "moneybay-backend",
+                    "awslogs-region": "eu-north-1",
+                    "awslogs-stream-prefix": "moneybay"
+                }
+            },
+            "healthCheck": {
+                "command": ["CMD-SHELL", "exit 0"],
+                "interval": 30,
+                "timeout": 5,
+                "retries": 3,
+                "startPeriod": 180
+            }
+        }
+    ],
+    "taskRoleArn": "arn:aws:iam::172575865299:role/ecsTaskExecutionRole",
+    "executionRoleArn": "arn:aws:iam::172575865299:role/ecsTaskExecutionRole",
+    "networkMode": "awsvpc",
+    "volumes": [],
+    "requiresCompatibilities": ["FARGATE"],
+    "cpu": "256",
+    "memory": "512"
+}
