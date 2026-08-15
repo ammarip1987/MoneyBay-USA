@@ -170,7 +170,9 @@ public class OAuth2Service {
         Optional<SocialAccount> existing =
             socialAccountRepository.findByProviderAndProviderId(provider, profile.providerId());
         if (existing.isPresent()) {
-            return existing.get().getUser();
+            // SocialAccount.user загружается лениво: вернуть прокси нельзя — транзакция
+            // закрывается на выходе отсюда, и контроллер получит LazyInitializationException
+            return userRepository.findById(existing.get().getUser().getId()).orElse(null);
         }
 
         // Тот же email, зашедший ранее паролем или другой соцсетью — привязка к тому же аккаунту
