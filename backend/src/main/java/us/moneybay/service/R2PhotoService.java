@@ -26,12 +26,30 @@ public class R2PhotoService {
     @Value("${aws.r2.endpoint}")
     private String endpoint;
 
+    /**
+     * Публичный домен бакета, например https://photos.moneybay.us.
+     * Задан — фото раздаются напрямую с CDN Cloudflare, минуя backend.
+     * Пуст — путь остаётся /api/photos, как у ранее загруженных файлов.
+     */
+    @Value("${aws.r2.publicUrl:}")
+    private String publicUrl;
+
     private static final java.util.Map<String, String> ALLOWED_TYPES = java.util.Map.of(
         "image/jpeg", "jpg",
         "image/png", "png",
         "image/webp", "webp",
         "image/gif", "gif"
     );
+
+    private String buildPublicUrl(String fileName) {
+        if (publicUrl == null || publicUrl.isBlank()) {
+            return "/api/photos/" + fileName;
+        }
+        String base = publicUrl.endsWith("/")
+            ? publicUrl.substring(0, publicUrl.length() - 1)
+            : publicUrl;
+        return base + "/" + fileName;
+    }
 
     public String uploadPhoto(MultipartFile file) throws IOException {
         String contentType = file.getContentType();
@@ -56,9 +74,8 @@ public class R2PhotoService {
                     file.getSize()
             ));
 
-            String url = "/api/photos/" + fileName;
-            log.info("File uploaded to R2: {}", fileName);
-            log.info("Local URL: {}", url);
+            String url = buildPublicUrl(fileName);
+            log.info("File uploaded to R2: {} -> {}", fileName, url);
             return url;
         } catch (Exception e) {
             log.error("Failed to upload file to R2: {}", fileName, e);
