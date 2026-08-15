@@ -4,11 +4,12 @@ import { FormsModule } from '@angular/forms';
 import { Router, RouterLink } from '@angular/router';
 import { AuthService } from '../../services/auth.service';
 import { NotificationService } from '../../services/notification.service';
+import { OAuthButtonsComponent } from '../../components/oauth-buttons/oauth-buttons.component';
 
 @Component({
   selector: 'app-login',
   standalone: true,
-  imports: [CommonModule, FormsModule, RouterLink],
+  imports: [CommonModule, FormsModule, RouterLink, OAuthButtonsComponent],
   template: `
     <div class="min-h-[calc(100vh-200px)] flex items-center justify-center px-4 py-12">
       <div class="max-w-md w-full">
@@ -53,6 +54,8 @@ import { NotificationService } from '../../services/notification.service';
               {{ loading() ? 'Logging in...' : 'Log in' }}
             </button>
           </form>
+
+          <app-oauth-buttons [disabled]="loading()" />
 
           <div class="text-center text-sm text-gray-600 mt-6 pt-6 border-t border-gray-100">
             New here? <a routerLink="/register" class="text-mb-blue hover:underline font-medium">Create an account</a>

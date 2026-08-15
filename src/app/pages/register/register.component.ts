@@ -4,12 +4,12 @@ import { FormsModule } from '@angular/forms';
 import { Router, RouterLink } from '@angular/router';
 import { AuthService } from '../../services/auth.service';
 import { NotificationService } from '../../services/notification.service';
-import { OAuthService, OAuthProvider } from '../../services/oauth.service';
+import { OAuthButtonsComponent } from '../../components/oauth-buttons/oauth-buttons.component';
 
 @Component({
   selector: 'app-register',
   standalone: true,
-  imports: [CommonModule, FormsModule, RouterLink],
+  imports: [CommonModule, FormsModule, RouterLink, OAuthButtonsComponent],
   template: `
     <div class="min-h-[calc(100vh-200px)] flex items-center justify-center px-4 py-12">
       <div class="max-w-md w-full">
@@ -57,20 +57,7 @@ import { OAuthService, OAuthProvider } from '../../services/oauth.service';
             </button>
           </form>
 
-          @if (providers().length > 0) {
-            <div class="mt-6 pt-6 border-t border-gray-200">
-              <p class="text-xs text-gray-500 text-center mb-4">Or continue with</p>
-              <div class="space-y-3">
-                @for (p of providers(); track p.provider) {
-                  <button type="button" (click)="startOAuth(p)" [disabled]="loading()"
-                          class="w-full py-3 px-4 border border-gray-300 rounded-lg hover:bg-gray-50 transition flex items-center justify-center gap-3 text-sm font-medium text-gray-800 disabled:opacity-50">
-                    <i [class]="iconOf(p.provider)"></i>
-                    {{ oauth.label(p.provider) }}
-                  </button>
-                }
-              </div>
-            </div>
-          }
+          <app-oauth-buttons [disabled]="loading()" />
 
           <p class="text-xs text-gray-500 mt-4 text-center">
             By signing up you agree to our
@@ -90,7 +77,6 @@ export class RegisterComponent {
   private auth = inject(AuthService);
   private router = inject(Router);
   private notification = inject(NotificationService);
-  oauth = inject(OAuthService);
 
   username = '';
   email = '';
@@ -98,26 +84,6 @@ export class RegisterComponent {
   city = '';
   loading = signal(false);
   error = signal<string | null>(null);
-
-  providers = signal<OAuthProvider[]>([]);
-
-  private readonly icons: Record<string, string> = {
-    google: 'fab fa-google text-[#4285F4]',
-    facebook: 'fab fa-facebook text-[#1877F2]',
-    apple: 'fab fa-apple text-black'
-  };
-
-  constructor() {
-    this.oauth.providers$.subscribe(list => this.providers.set(list));
-  }
-
-  iconOf(provider: string): string {
-    return this.icons[provider] || 'fas fa-right-to-bracket';
-  }
-
-  startOAuth(p: OAuthProvider): void {
-    this.oauth.start(p);
-  }
 
   onSubmit(): void {
     this.loading.set(true);
