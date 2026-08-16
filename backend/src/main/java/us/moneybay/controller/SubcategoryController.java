@@ -20,7 +20,7 @@ public class SubcategoryController {
     @GetMapping("/category/{slug}")
     @Transactional(readOnly = true)
     public ResponseEntity<List<SubcategoryDto>> byCategory(@PathVariable String slug) {
-        List<SubcategoryDto> subs = subcategoryRepository.findByCategorySlugAndParentIsNull(slug)
+        List<SubcategoryDto> subs = subcategoryRepository.findByCategorySlugAndParentIsNullOrderBySortOrderAscNameAsc(slug)
             .stream().map(SubcategoryDto::from).toList();
         return ResponseEntity.ok(subs);
     }
@@ -28,7 +28,7 @@ public class SubcategoryController {
     @GetMapping("/{id}/children")
     @Transactional(readOnly = true)
     public ResponseEntity<List<SubcategoryDto>> children(@PathVariable Long id) {
-        List<SubcategoryDto> subs = subcategoryRepository.findByParentId(id)
+        List<SubcategoryDto> subs = subcategoryRepository.findByParentIdOrderBySortOrderAscNameAsc(id)
             .stream().map(SubcategoryDto::from).toList();
         return ResponseEntity.ok(subs);
     }

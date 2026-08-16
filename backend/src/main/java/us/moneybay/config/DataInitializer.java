@@ -40,8 +40,12 @@ public class DataInitializer implements CommandLineRunner {
         upsertCategories();
         syncCities();
         log.info("Cities synced, count: {}", cityRepository.count());
-        // Resync subcategory hierarchy if count differs from expected (41 subs + 36 subsubs = 77)
-        if (subcategoryRepository.count() < 75) {
+        // Пересборка при расхождении с сидом. Порог был "меньше 75" и не срабатывал
+        // при добавлении записей: справочник молча оставался прежним
+        long expected = SUB_DEFS.size() + SUB_SUB_DEFS.size();
+        long actual = subcategoryRepository.count();
+        if (actual != expected) {
+            log.info("Subcategories: {} in database, {} in seed — rebuilding", actual, expected);
             subcategoryRepository.deleteAll();
             initAllSubcategories();
         }
@@ -81,8 +85,11 @@ public class DataInitializer implements CommandLineRunner {
     }
 
     private void initAllSubcategories() {
-        // Subcategories (level 2)
-        List<SubDef> subs = List.of(
+        buildSubcategories(SUB_DEFS, SUB_SUB_DEFS);
+    }
+
+    // Subcategories (level 2)
+    private static final List<SubDef> SUB_DEFS = List.of(
             // Vehicles
             new SubDef("auto", "cars-trucks", "Cars & Trucks", "<i class=\"fa-solid fa-car\"></i>", "#E3F2FD", "New and used cars, trucks, SUVs and vans"),
             new SubDef("auto", "motorcycles", "Motorcycles", "<i class=\"fa-solid fa-motorcycle\"></i>", "#FFF3E0", "Motorcycles, scooters and mopeds"),
@@ -112,21 +119,32 @@ public class DataInitializer implements CommandLineRunner {
             new SubDef("food", "bread", "Bread & Bakery", "<i class=\"fa-solid fa-bread-slice\"></i>", "#FFF8E1", null),
 
             // Cosmetics
-            new SubDef("cosmetics", "pharmacy", "Pharmacy & Medicated Skincare", "<i class=\"fa-solid fa-pills\"></i>", "#F1F8E9", null),
-            new SubDef("cosmetics", "face-basic", "Basic Face Care", "<i class=\"fa-solid fa-face-smile\"></i>", "#FCE4EC", null),
-            new SubDef("cosmetics", "makeup-lips", "Lip Makeup", "<i class=\"fa-solid fa-heart\"></i>", "#EF9A9A", null),
+            // Уход за лицом: прежние face-basic, face-intensive и spf разделены
+            // по действию — очищение против питания, вместо неясного деления
+            // на «базовый» и «интенсивный»
+            new SubDef("cosmetics", "face-cleansing", "Face Cleansing & Toning", "<i class=\"fa-solid fa-droplet\"></i>", "#FCE4EC", null),
+            new SubDef("cosmetics", "face-treatments", "Face Creams, Serums & Treatments", "<i class=\"fa-solid fa-vial\"></i>", "#F8BBD9", null),
             new SubDef("cosmetics", "makeup-face", "Face Makeup & Foundation", "<i class=\"fa-solid fa-wand-magic-sparkles\"></i>", "#F48FB1", null),
             new SubDef("cosmetics", "makeup-eyes", "Eye & Brow Makeup", "<i class=\"fa-solid fa-eye\"></i>", "#CE93D8", null),
-            new SubDef("cosmetics", "hands-nails", "Hands, Feet & Nails", "<i class=\"fa-solid fa-hand-sparkles\"></i>", "#FFF9C4", null),
-            new SubDef("cosmetics", "body-care", "Body Care", "<i class=\"fa-solid fa-soap\"></i>", "#B2EBF2", null),
-            new SubDef("cosmetics", "face-intensive", "Intensive & Special Face Care", "<i class=\"fa-solid fa-droplet\"></i>", "#F8BBD9", null),
-            new SubDef("cosmetics", "hair-care", "Hair Care", "<i class=\"fa-solid fa-scissors\"></i>", "#C8E6C9", null),
-            new SubDef("cosmetics", "spf", "Sun Protection (SPF)", "<i class=\"fa-solid fa-sun\"></i>", "#FFF3E0", null),
+            new SubDef("cosmetics", "makeup-lips", "Lip Makeup", "<i class=\"fa-solid fa-heart\"></i>", "#EF9A9A", null),
+            new SubDef("cosmetics", "perfume", "Perfume & Fragrance", "<i class=\"fa-solid fa-spray-can-sparkles\"></i>", "#E1BEE7", null),
+            new SubDef("cosmetics", "hair-care", "Hair Care", "<i class=\"fa-solid fa-pump-soap\"></i>", "#C8E6C9", null),
+            new SubDef("cosmetics", "hair-coloring", "Hair Coloring", "<i class=\"fa-solid fa-palette\"></i>", "#D1C4E9", null),
             new SubDef("cosmetics", "hair-styling", "Hair Styling", "<i class=\"fa-solid fa-wind\"></i>", "#DCEDC8", null),
-            new SubDef("cosmetics", "mens", "Men's Grooming", "<i class=\"fa-solid fa-user-tie\"></i>", "#BBDEFB", null)
-        );
+            new SubDef("cosmetics", "body-care", "Body Care", "<i class=\"fa-solid fa-soap\"></i>", "#B2EBF2", null),
+            new SubDef("cosmetics", "hands-nails", "Hands, Feet & Nails", "<i class=\"fa-solid fa-hand-sparkles\"></i>", "#FFF9C4", null),
+            new SubDef("cosmetics", "pharmacy", "Pharmacy & Medicated Skincare", "<i class=\"fa-solid fa-pills\"></i>", "#F1F8E9", null),
+            new SubDef("cosmetics", "mens", "Men's Grooming", "<i class=\"fa-solid fa-user-tie\"></i>", "#BBDEFB", null),
+            new SubDef("cosmetics", "beauty-tools", "Beauty Tools & Accessories", "<i class=\"fa-solid fa-brush\"></i>", "#FFE0B2", null),
+            new SubDef("cosmetics", "beauty-devices", "Electric Styling & Beauty Devices", "<i class=\"fa-solid fa-plug\"></i>", "#B3E5FC", null)
+    );
 
+    private void buildSubcategories(List<SubDef> subs, List<SubSubDef> subsubs) {
+        // sortOrder берётся из позиции в списке: порядок объявления здесь
+        // и есть порядок плиток на странице
+        java.util.Map<String, Integer> orderByCategory = new java.util.HashMap<>();
         for (SubDef s : subs) {
+            int order = orderByCategory.merge(s.parentSlug(), 1, Integer::sum);
             categoryRepository.findBySlug(s.parentSlug()).ifPresent(cat -> {
                 Subcategory sub = new Subcategory();
                 sub.setCategory(cat);
@@ -135,20 +153,23 @@ public class DataInitializer implements CommandLineRunner {
                 sub.setIcon(s.icon());
                 sub.setColor(s.color());
                 sub.setDescription(s.desc());
+                sub.setSortOrder(order);
                 subcategoryRepository.save(sub);
             });
         }
+        buildSubSubcategories(subsubs);
+    }
 
-        // Cosmetics sub-subcategories (level 3)
-        List<SubSubDef> subsubs = List.of(
+    // Cosmetics sub-subcategories (level 3)
+    private static final List<SubSubDef> SUB_SUB_DEFS = List.of(
             new SubSubDef("cosmetics", "pharmacy", "cica", "Repair & Recovery (Cica)", "<i class=\"fa-solid fa-seedling\"></i>", "#DCEDC8", "barrier creams, centella, panthenol"),
             new SubSubDef("cosmetics", "pharmacy", "sterile", "Sensitive Skin Care", "<i class=\"fa-solid fa-flask\"></i>", "#F1F8E9", "preservative-free products for sensitive skin"),
             new SubSubDef("cosmetics", "pharmacy", "therapy", "Skin Therapy", "<i class=\"fa-solid fa-stethoscope\"></i>", "#DCEDC8", "acne, rosacea, atopic dermatitis treatments"),
 
-            new SubSubDef("cosmetics", "face-basic", "evening", "Night Care", "<i class=\"fa-solid fa-moon\"></i>", "#F8BBD9", "night creams, sleeping packs"),
-            new SubSubDef("cosmetics", "face-basic", "demaq", "Makeup Removal", "<i class=\"fa-solid fa-eraser\"></i>", "#FCE4EC", "cleansing oils, balms, micellar water"),
-            new SubSubDef("cosmetics", "face-basic", "moistday", "Moisturizing & Protection", "<i class=\"fa-solid fa-shield\"></i>", "#F48FB1", "day creams, emulsions, fluids with SPF"),
-            new SubSubDef("cosmetics", "face-basic", "cleansing", "Cleansing & Washing", "<i class=\"fa-solid fa-droplet\"></i>", "#FFCCBC", "gels, foams, cleansing creams"),
+            new SubSubDef("cosmetics", "face-cleansing", "demaq", "Makeup Removal", "<i class=\"fa-solid fa-eraser\"></i>", "#FCE4EC", "cleansing oils, balms, micellar water"),
+            new SubSubDef("cosmetics", "face-cleansing", "cleansing", "Cleansing & Washing", "<i class=\"fa-solid fa-droplet\"></i>", "#FFCCBC", "gels, foams, cleansing creams"),
+            new SubSubDef("cosmetics", "face-cleansing", "toners", "Toners & Essences", "<i class=\"fa-solid fa-bottle-water\"></i>", "#F8BBD9", "toners, essences, micellar water"),
+            new SubSubDef("cosmetics", "face-cleansing", "peeling", "Exfoliation & Peels", "<i class=\"fa-solid fa-layer-group\"></i>", "#CE93D8", "enzyme powders, acid peels, gentle exfoliants"),
             new SubSubDef("cosmetics", "face-basic", "toning", "Toning", "<i class=\"fa-solid fa-spa\"></i>", "#F8BBD9", "toners, softeners, floral waters"),
 
             new SubSubDef("cosmetics", "makeup-lips", "lip-gloss", "Gloss & Plumpers", "<i class=\"fa-solid fa-star\"></i>", "#F8BBD9", "lip glosses, oils, plumpers"),
@@ -175,33 +196,57 @@ public class DataInitializer implements CommandLineRunner {
             new SubSubDef("cosmetics", "body-care", "shower", "Shower & Bath", "<i class=\"fa-solid fa-shower\"></i>", "#B3E5FC", "shower gels, soaps, bath foams"),
             new SubSubDef("cosmetics", "body-care", "special", "Specialty Body Care", "<i class=\"fa-solid fa-dumbbell\"></i>", "#C8E6C9", "anti-cellulite, deodorants, stretch mark care"),
 
-            new SubSubDef("cosmetics", "face-intensive", "eye-zone", "Eye Area Care", "<i class=\"fa-solid fa-eye\"></i>", "#EF9A9A", "creams, gels, serums, eye patches"),
-            new SubSubDef("cosmetics", "face-intensive", "peeling", "Exfoliation & Peels", "<i class=\"fa-solid fa-layer-group\"></i>", "#CE93D8", "enzyme powders, acid peels, gentle exfoliants"),
-            new SubSubDef("cosmetics", "face-intensive", "masks", "Face Masks", "<i class=\"fa-solid fa-mask\"></i>", "#F48FB1", "sheet, clay, alginate, sleeping masks"),
-            new SubSubDef("cosmetics", "face-intensive", "serums", "Serums & Concentrates", "<i class=\"fa-solid fa-vial\"></i>", "#F8BBD9", "vitamin C, retinol, peptides, actives"),
+            new SubSubDef("cosmetics", "face-treatments", "moistday", "Day Creams & Moisturizers", "<i class=\"fa-solid fa-shield\"></i>", "#F48FB1", "day creams, emulsions, fluids"),
+            new SubSubDef("cosmetics", "face-treatments", "evening", "Night Care", "<i class=\"fa-solid fa-moon\"></i>", "#F8BBD9", "night creams, sleeping packs"),
+            new SubSubDef("cosmetics", "face-treatments", "serums", "Serums & Concentrates", "<i class=\"fa-solid fa-vial\"></i>", "#F8BBD9", "vitamin C, retinol, peptides, actives"),
+            new SubSubDef("cosmetics", "face-treatments", "eye-zone", "Eye Area Care", "<i class=\"fa-solid fa-eye\"></i>", "#EF9A9A", "creams, gels, serums, eye patches"),
+            new SubSubDef("cosmetics", "face-treatments", "masks", "Face Masks & Patches", "<i class=\"fa-solid fa-mask\"></i>", "#F48FB1", "sheet, clay, alginate, sleeping masks, patches"),
+            new SubSubDef("cosmetics", "face-treatments", "spf-face", "Face Sunscreen (SPF)", "<i class=\"fa-solid fa-sun\"></i>", "#FFF3E0", "mineral and chemical SPF creams and sticks"),
 
+            new SubSubDef("cosmetics", "hair-care", "shampoo", "Shampoo", "<i class=\"fa-solid fa-soap\"></i>", "#B2DFDB", "sulfate-free, clarifying, volumizing"),
             new SubSubDef("cosmetics", "hair-care", "rinse-out", "Rinse-Out Care", "<i class=\"fa-solid fa-droplet\"></i>", "#DCEDC8", "conditioners, balms, hair masks"),
             new SubSubDef("cosmetics", "hair-care", "leave-in", "Leave-In Care", "<i class=\"fa-solid fa-bottle-droplet\"></i>", "#C8E6C9", "heat protectants, oils, scalp serums"),
-            new SubSubDef("cosmetics", "hair-care", "shampoo", "Shampoo", "<i class=\"fa-solid fa-soap\"></i>", "#B2DFDB", "sulfate-free, dry shampoo, clarifying"),
 
-            new SubSubDef("cosmetics", "spf", "spf-face", "Face Sunscreen", "<i class=\"fa-solid fa-sun\"></i>", "#FFF3E0", "mineral and chemical SPF creams and sticks"),
-            new SubSubDef("cosmetics", "spf", "spf-body", "Body Sunscreen", "<i class=\"fa-solid fa-umbrella-beach\"></i>", "#FFE0B2", "SPF sprays, lotions, oils"),
-            new SubSubDef("cosmetics", "spf", "after-sun", "After Sun", "<i class=\"fa-solid fa-temperature-low\"></i>", "#FFCCBC", "soothing gels (aloe, panthenol), after-sun milk"),
+            new SubSubDef("cosmetics", "body-care", "spf-body", "Body Sunscreen (SPF)", "<i class=\"fa-solid fa-umbrella-beach\"></i>", "#FFE0B2", "SPF sprays, lotions, oils"),
+            new SubSubDef("cosmetics", "body-care", "after-sun", "After Sun", "<i class=\"fa-solid fa-temperature-low\"></i>", "#FFCCBC", "soothing gels (aloe, panthenol), after-sun milk"),
 
             new SubSubDef("cosmetics", "hair-styling", "volume", "Volume", "<i class=\"fa-solid fa-wind\"></i>", "#C8E6C9", "root powders, volumizing sprays"),
             new SubSubDef("cosmetics", "hair-styling", "texture", "Texture", "<i class=\"fa-solid fa-sliders\"></i>", "#B2DFDB", "waxes, clays, salt sprays"),
             new SubSubDef("cosmetics", "hair-styling", "fixation", "Hold & Finish", "<i class=\"fa-solid fa-spray-can\"></i>", "#DCEDC8", "hairspray, mousse, styling foam"),
+            new SubSubDef("cosmetics", "hair-styling", "dry-shampoo", "Dry Shampoo", "<i class=\"fa-solid fa-spray-can-sparkles\"></i>", "#C5E1A5", "refresh between washes, root volume"),
 
             new SubSubDef("cosmetics", "mens", "beard", "Beard & Mustache", "<i class=\"fa-solid fa-person\"></i>", "#BBDEFB", "beard shampoo, oils, waxes, balms"),
             new SubSubDef("cosmetics", "mens", "shaving", "Shaving", "<i class=\"fa-solid fa-razor\"></i>", "#E3F2FD", "shaving foam, gel, cream"),
-            new SubSubDef("cosmetics", "mens", "aftershave", "Aftershave", "<i class=\"fa-solid fa-bottle-droplet\"></i>", "#BBDEFB", "balms, lotions, aftershave cologne")
-        );
+            new SubSubDef("cosmetics", "mens", "aftershave", "Aftershave", "<i class=\"fa-solid fa-bottle-droplet\"></i>", "#BBDEFB", "balms, lotions, aftershave cologne"),
 
+            new SubSubDef("cosmetics", "perfume", "perfume-women", "Women's Fragrance", "<i class=\"fa-solid fa-spray-can-sparkles\"></i>", "#F8BBD9", "eau de parfum, eau de toilette"),
+            new SubSubDef("cosmetics", "perfume", "perfume-men", "Men's Fragrance", "<i class=\"fa-solid fa-spray-can\"></i>", "#BBDEFB", "eau de toilette, cologne, aftershave scents"),
+            new SubSubDef("cosmetics", "perfume", "perfume-unisex", "Unisex & Niche", "<i class=\"fa-solid fa-flask-vial\"></i>", "#E1BEE7", "niche houses, unisex compositions, samples"),
+            new SubSubDef("cosmetics", "perfume", "home-fragrance", "Home Fragrance", "<i class=\"fa-solid fa-candle-holder\"></i>", "#FFF3E0", "candles, diffusers, room sprays"),
+
+            new SubSubDef("cosmetics", "hair-coloring", "permanent-color", "Permanent Color", "<i class=\"fa-solid fa-palette\"></i>", "#D1C4E9", "permanent dye kits, cream color"),
+            new SubSubDef("cosmetics", "hair-coloring", "semi-permanent", "Semi-Permanent & Tinted", "<i class=\"fa-solid fa-brush\"></i>", "#E1BEE7", "tinted masks, color conditioners, toners"),
+            new SubSubDef("cosmetics", "hair-coloring", "bleach", "Bleach & Lighteners", "<i class=\"fa-solid fa-sun\"></i>", "#FFF9C4", "powder bleach, developers, highlighting kits"),
+            new SubSubDef("cosmetics", "hair-coloring", "color-care", "Color Care", "<i class=\"fa-solid fa-shield\"></i>", "#C8E6C9", "color-safe shampoo, purple shampoo, bond builders"),
+
+            new SubSubDef("cosmetics", "beauty-tools", "makeup-brushes", "Makeup Brushes & Sponges", "<i class=\"fa-solid fa-brush\"></i>", "#FFE0B2", "brush sets, beauty blenders, applicators"),
+            new SubSubDef("cosmetics", "beauty-tools", "hair-brushes", "Combs & Hair Brushes", "<i class=\"fa-solid fa-wind\"></i>", "#DCEDC8", "detangling brushes, combs, round brushes"),
+            new SubSubDef("cosmetics", "beauty-tools", "nail-tools", "Manicure & Pedicure Tools", "<i class=\"fa-solid fa-hand-sparkles\"></i>", "#FFF9C4", "clippers, files, cuticle tools, foot files"),
+            new SubSubDef("cosmetics", "beauty-tools", "mirrors-bags", "Mirrors & Cosmetic Bags", "<i class=\"fa-solid fa-suitcase\"></i>", "#F3E5F5", "makeup bags, organizers, mirrors"),
+
+            new SubSubDef("cosmetics", "beauty-devices", "hair-dryers", "Hair Dryers", "<i class=\"fa-solid fa-wind\"></i>", "#B3E5FC", "dryers, diffusers, brush dryers"),
+            new SubSubDef("cosmetics", "beauty-devices", "stylers", "Straighteners & Curlers", "<i class=\"fa-solid fa-bolt\"></i>", "#E1F5FE", "flat irons, curling wands, multi-stylers"),
+            new SubSubDef("cosmetics", "beauty-devices", "trimmers", "Trimmers & Shavers", "<i class=\"fa-solid fa-razor\"></i>", "#E3F2FD", "beard trimmers, clippers, electric shavers, epilators"),
+            new SubSubDef("cosmetics", "beauty-devices", "skin-devices", "Skincare Devices", "<i class=\"fa-solid fa-wand-sparkles\"></i>", "#F3E5F5", "cleansing brushes, LED masks, microcurrent devices")
+    );
+
+    private void buildSubSubcategories(List<SubSubDef> subsubs) {
+        java.util.Map<String, Integer> orderByParent = new java.util.HashMap<>();
         for (SubSubDef ss : subsubs) {
             Optional<Category> cat = categoryRepository.findBySlug(ss.categorySlug());
             if (cat.isEmpty()) continue;
             // Find parent subcategory by slug
-            Optional<Subcategory> parent = subcategoryRepository.findByCategorySlugAndParentIsNull(ss.categorySlug()).stream()
+            Optional<Subcategory> parent = subcategoryRepository.findByCategorySlugAndParentIsNullOrderBySortOrderAscNameAsc(ss.categorySlug()).stream()
                 .filter(s -> ss.parentSubSlug().equals(s.getSlug()))
                 .findFirst();
             if (parent.isEmpty()) continue;
@@ -214,6 +259,8 @@ public class DataInitializer implements CommandLineRunner {
             sub.setIcon(ss.icon());
             sub.setColor(ss.color());
             sub.setDescription(ss.desc());
+            sub.setSortOrder(orderByParent.merge(
+                ss.categorySlug() + "/" + ss.parentSubSlug(), 1, Integer::sum));
             subcategoryRepository.save(sub);
         }
     }
