@@ -93,6 +93,10 @@
     "networkMode": "awsvpc",
     "volumes": [],
     "requiresCompatibilities": ["FARGATE"],
+    "runtimePlatform": {
+        "cpuArchitecture": "ARM64",
+        "operatingSystemFamily": "LINUX"
+    },
     "cpu": "256",
     "memory": "512"
 }
