@@ -46,7 +46,14 @@ public class DataInitializer implements CommandLineRunner {
         long actual = subcategoryRepository.count();
         if (actual != expected) {
             log.info("Subcategories: {} in database, {} in seed — rebuilding", actual, expected);
-            subcategoryRepository.deleteAll();
+            // Сначала третий уровень: строки ссылаются на родителя через parent_id,
+            // и пакетное удаление одним запросом упирается во внешний ключ.
+            // flush обязателен — иначе вставки уходят раньше удалений и падают
+            // на уникальности пары (category_id, slug)
+            subcategoryRepository.deleteAllByParentIsNotNull();
+            subcategoryRepository.flush();
+            subcategoryRepository.deleteAllInBatch();
+            subcategoryRepository.flush();
             initAllSubcategories();
         }
         keywordFilterService.initializeDefaultKeywords();
