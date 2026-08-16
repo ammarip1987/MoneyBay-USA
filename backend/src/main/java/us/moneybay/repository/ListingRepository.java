@@ -12,6 +12,12 @@ import java.util.List;
 
 public interface ListingRepository extends JpaRepository<Listing, Long> {
 
+    /** Перенос объявлений между категориями: применяется при упразднении Housing. */
+    @Modifying
+    @Transactional
+    @Query("UPDATE Listing l SET l.category.id = :toId WHERE l.category.id = :fromId")
+    int moveToCategory(@Param("fromId") Long fromId, @Param("toId") Long toId);
+
     Page<Listing> findByIsActiveTrueAndIsDeletedFalse(Pageable pageable);
 
     long countByIsTestTrue();

@@ -21,15 +21,18 @@ public class DataInitializer implements CommandLineRunner {
     private final CategoryRepository categoryRepository;
     private final CityRepository cityRepository;
     private final SubcategoryRepository subcategoryRepository;
+    private final us.moneybay.repository.ListingRepository listingRepository;
     private final us.moneybay.service.KeywordFilterService keywordFilterService;
 
     public DataInitializer(CategoryRepository categoryRepository,
                            CityRepository cityRepository,
                            SubcategoryRepository subcategoryRepository,
+                           us.moneybay.repository.ListingRepository listingRepository,
                            us.moneybay.service.KeywordFilterService keywordFilterService) {
         this.categoryRepository = categoryRepository;
         this.cityRepository = cityRepository;
         this.subcategoryRepository = subcategoryRepository;
+        this.listingRepository = listingRepository;
         this.keywordFilterService = keywordFilterService;
     }
 
@@ -38,6 +41,7 @@ public class DataInitializer implements CommandLineRunner {
     public void run(String... args) {
         log.info("DataInitializer started");
         upsertCategories();
+        retireHousingCategory();
         syncCities();
         log.info("Cities synced, count: {}", cityRepository.count());
         // Пересборка при расхождении с сидом. Порог был "меньше 75" и не срабатывал
@@ -66,7 +70,7 @@ public class DataInitializer implements CommandLineRunner {
     private void upsertCategories() {
         List<CatDef> cats = List.of(
             new CatDef("kids-baby", "Kids & Baby", "Baby gear, toys, clothing and more", "<i class=\"fas fa-child\"></i>", "#FFE5E5"),
-            new CatDef("realestate", "Real Estate", "Buy, sell and rent property", "<i class=\"fas fa-building\"></i>", "#E5F0FF"),
+            new CatDef("realestate", "Real Estate", "Buy, sell, rent property & accommodation", "<i class=\"fas fa-building\"></i>", "#E5F0FF"),
             new CatDef("auto", "Vehicles", "Cars, trucks and motorcycles", "<i class=\"fas fa-car\"></i>", "#E5FFE5"),
             new CatDef("jobs", "Jobs", "Job listings and resumes", "<i class=\"fas fa-briefcase\"></i>", "#F0E5FF"),
             new CatDef("animals", "Pets", "Animals, pet supplies and services", "<i class=\"fas fa-paw\"></i>", "#FFE5F0"),
@@ -76,8 +80,7 @@ public class DataInitializer implements CommandLineRunner {
             new CatDef("cosmetics", "Beauty & Cosmetics", "Skincare and beauty products", "<i class=\"fas fa-spa\"></i>", "#FCE4EC"),
             new CatDef("business", "Business & Services", "Business equipment and professional services", "<i class=\"fas fa-handshake\"></i>", "#E5FFF5"),
             new CatDef("hobby", "Hobbies & Sports", "Sports gear, tickets and collectibles", "<i class=\"fas fa-football-ball\"></i>", "#E5E5FF"),
-            new CatDef("home", "Home & Garden", "Furniture, appliances and garden", "<i class=\"fas fa-home\"></i>", "#E5FFE5"),
-            new CatDef("rental", "Housing", "Short and long-term rentals", "<i class=\"fas fa-key\"></i>", "#F0E5FF")
+            new CatDef("home", "Home & Garden", "Furniture, appliances and garden", "<i class=\"fas fa-home\"></i>", "#E5FFE5")
         );
 
         for (CatDef c : cats) {
@@ -89,6 +92,31 @@ public class DataInitializer implements CommandLineRunner {
             cat.setColor(c.color());
             categoryRepository.save(cat);
         }
+    }
+
+    /**
+     * Housing упразднена, её содержимое перешло в Real Estate. Объявления
+     * переводятся до удаления категории: иначе внешний ключ не даст её удалить,
+     * а при каскаде они пропали бы вместе с ней.
+     *
+     * У объявления есть только category_id, привязки к подкатегории в модели
+     * нет — назначить конкретную ветку аренды поэтому невозможно, владелец
+     * выберет её при следующей правке объявления.
+     */
+    private void retireHousingCategory() {
+        Optional<Category> housing = categoryRepository.findBySlug("rental");
+        if (housing.isEmpty()) return;
+
+        Optional<Category> realEstate = categoryRepository.findBySlug("realestate");
+        if (realEstate.isEmpty()) {
+            log.warn("Housing kept: realestate category is missing, nothing to move listings to");
+            return;
+        }
+
+        int moved = listingRepository.moveToCategory(housing.get().getId(), realEstate.get().getId());
+        subcategoryRepository.deleteByCategoryId(housing.get().getId());
+        categoryRepository.delete(housing.get());
+        log.info("Housing retired: {} listings moved to Real Estate", moved);
     }
 
     private void initAllSubcategories() {
@@ -104,6 +132,14 @@ public class DataInitializer implements CommandLineRunner {
             new SubDef("auto", "boats", "Boats & Watercraft", "<i class=\"fa-solid fa-sailboat\"></i>", "#E1F5FE", "Boats, jet skis and other watercraft"),
             new SubDef("auto", "car-rentals", "Car Rentals", "<i class=\"fa-solid fa-key\"></i>", "#F3E5F5", "Short and long term vehicle rentals"),
             new SubDef("auto", "parts", "Parts & Accessories", "<i class=\"fa-solid fa-screwdriver-wrench\"></i>", "#FBE9E7", "Parts and accessories for vehicles"),
+
+            // Real Estate: аренда и продажа в одной категории, Housing упразднена
+            new SubDef("realestate", "rent-homes", "Apartments & Houses for Rent", "<i class=\"fa-solid fa-key\"></i>", "#E5F0FF", "Long-term rentals: apartments, houses, condos"),
+            new SubDef("realestate", "sale-homes", "Apartments & Houses for Sale", "<i class=\"fa-solid fa-house\"></i>", "#E3F2FD", "Homes, condos and townhouses for sale"),
+            new SubDef("realestate", "commercial", "Commercial Property", "<i class=\"fa-solid fa-building\"></i>", "#ECEFF1", "Offices, retail, warehouses, for lease or sale"),
+            new SubDef("realestate", "land", "Land for Sale", "<i class=\"fa-solid fa-mountain-sun\"></i>", "#E8F5E9", "Lots, acreage and development parcels"),
+            new SubDef("realestate", "rooms-roommates", "Rooms & Roommates", "<i class=\"fa-solid fa-user-group\"></i>", "#FFF3E0", "Rooms for rent, shared housing, roommate wanted"),
+            new SubDef("realestate", "short-term", "Short-Term & Vacation Rentals", "<i class=\"fa-solid fa-umbrella-beach\"></i>", "#FFF9C4", "Nightly, weekly and seasonal stays"),
 
             // Food
             new SubDef("food", "alcohol", "Alcohol & Wine", "<i class=\"fa-solid fa-wine-glass\"></i>", "#F3E5F5", null),
