@@ -277,15 +277,31 @@ export class ListingDetailComponent implements OnInit {
     { value: 'OTHER', label: 'Other' }
   ];
 
+  /**
+   * Объявление, переданное карточкой при переходе. Сверяем id: при возврате
+   * назад или переходе на другое объявление в состоянии может остаться чужое.
+   */
+  private preloadedListing(id: number): Listing | null {
+    if (typeof history === 'undefined') return null;
+    const passed = history.state?.listing as Listing | undefined;
+    return passed && passed.id === id ? passed : null;
+  }
+
   ngOnInit(): void {
     this.route.paramMap.subscribe(params => {
       const id = Number(params.get('id'));
       if (!id) return;
 
       this.currentImage.set(0);
-      this.listing.set(null);
       this.similar.set(null);
-      this.loading.set(true);
+
+      // Карточка передаёт объявление через состояние перехода: те же поля,
+      // что отдаёт лента. Показываем их сразу, без пустого экрана, а ответ
+      // сервера потом обновляет данные на случай, если они устарели.
+      const passed = this.preloadedListing(id);
+      this.listing.set(passed);
+      this.loading.set(passed === null);
+      if (passed) this.isFavorited.set(passed.is_favorited || false);
 
       if (typeof window !== 'undefined') {
         window.scrollTo({ top: 0, behavior: 'smooth' });
@@ -309,9 +325,14 @@ export class ListingDetailComponent implements OnInit {
           this.loadSimilar(id);
         },
         error: () => {
-          this.listing.set(null);
           this.loading.set(false);
-          this.seo.update({ title: 'Listing not found', noindex: true });
+          // Данные из карточки не стираем: показанное объявление остаётся,
+          // «не найдено» выводим только если показывать нечего
+          if (this.listing() === null) {
+            this.seo.update({ title: 'Listing not found', noindex: true });
+          } else {
+            this.loadSimilar(id);
+          }
         }
       });
     });

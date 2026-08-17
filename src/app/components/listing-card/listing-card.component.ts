@@ -38,7 +38,7 @@ import { ApiService } from '../../services/api.service';
 
       <!-- Image carousel -->
       @if (listing.images && listing.images.length > 0) {
-        <a [routerLink]="['/listing', listing.id]" class="block overflow-hidden">
+        <a [routerLink]="['/listing', listing.id]" [state]="{ listing: listing }" class="block overflow-hidden">
           <div class="relative bg-gray-100 h-64 cursor-pointer">
             <img [src]="getImageUrl(listing.images[currentImage()])"
                  [alt]="listing.title"
@@ -74,7 +74,7 @@ import { ApiService } from '../../services/api.service';
           </div>
         </a>
       } @else {
-        <a [routerLink]="['/listing', listing.id]" class="block overflow-hidden bg-gray-100 h-64">
+        <a [routerLink]="['/listing', listing.id]" [state]="{ listing: listing }" class="block overflow-hidden bg-gray-100 h-64">
           <div class="w-full h-full flex items-center justify-center text-gray-400 bg-gray-50">
             <span class="text-center">
               <p class="text-lg font-medium">📷</p>
@@ -85,7 +85,7 @@ import { ApiService } from '../../services/api.service';
       }
 
       <!-- Info -->
-      <a [routerLink]="['/listing', listing.id]" class="block p-4 hover:bg-gray-50 transition">
+      <a [routerLink]="['/listing', listing.id]" [state]="{ listing: listing }" class="block p-4 hover:bg-gray-50 transition">
         <h3 class="font-bold text-mb-dark text-lg mb-2 line-clamp-2">{{ listing.title }}</h3>
         <p class="text-sm text-gray-600 mb-2 line-clamp-1">
           {{ listing.location }}@if (listing.area) { · {{ listing.area }} }
