@@ -1,5 +1,5 @@
 import { ApplicationConfig, isDevMode, provideBrowserGlobalErrorListeners } from '@angular/core';
-import { provideRouter } from '@angular/router';
+import { provideRouter, withInMemoryScrolling } from '@angular/router';
 import { provideHttpClient, withInterceptors, withFetch } from '@angular/common/http';
 import { provideClientHydration, withEventReplay } from '@angular/platform-browser';
 import { provideServiceWorker } from '@angular/service-worker';
@@ -13,7 +13,11 @@ import { errorInterceptor } from './interceptors/error.interceptor';
 export const appConfig: ApplicationConfig = {
   providers: [
     provideBrowserGlobalErrorListeners(),
-    provideRouter(routes),
+    // Возврат из объявления возвращает ленту на прежнее место, а не наверх
+    provideRouter(routes, withInMemoryScrolling({
+      scrollPositionRestoration: 'enabled',
+      anchorScrolling: 'enabled'
+    })),
     provideHttpClient(withFetch(), withInterceptors([authInterceptor, cityContextInterceptor, errorInterceptor])),
     provideClientHydration(withEventReplay()),
     provideServiceWorker('ngsw-worker.js', {

@@ -1,6 +1,7 @@
 import { Injectable, inject } from '@angular/core';
 import { HttpClient, HttpParams } from '@angular/common/http';
-import { Observable } from 'rxjs';
+import { Observable, of } from 'rxjs';
+import { tap } from 'rxjs/operators';
 import { environment } from '../../environments/environment';
 import { Listing, Category, City, User, Message, PaginatedListings } from '../models/listing.model';
 
@@ -36,6 +37,27 @@ export class ApiService {
   private http = inject(HttpClient);
   private readonly baseUrl = environment.apiUrl;
 
+  /**
+   * Короткоживущий кэш для запросов, которые повторяются при возврате из
+   * объявления: лента, фасеты, справочники. Тридцати секунд хватает, чтобы
+   * переход назад был мгновенным, и мало, чтобы данные успели устареть.
+   */
+  private readonly cache = new Map<string, { at: number; value: unknown }>();
+  private readonly cacheTtlMs = 20_000;
+
+  private cached<T>(key: string, request: () => Observable<T>): Observable<T> {
+    const hit = this.cache.get(key);
+    if (hit && Date.now() - hit.at < this.cacheTtlMs) {
+      return of(hit.value as T);
+    }
+    return request().pipe(tap(value => this.cache.set(key, { at: Date.now(), value })));
+  }
+
+  /** Сбрасывает кэш: вызывается после создания, правки или удаления объявления. */
+  invalidateListingsCache(): void {
+    this.cache.clear();
+  }
+
   getListings(params: {
     page?: number;
     q?: string;
@@ -53,14 +75,16 @@ export class ApiService {
         httpParams = httpParams.set(key, String(value));
       }
     });
-    return this.http.get<PaginatedListings>(`${this.baseUrl}/api/listings`, { params: httpParams });
+    return this.cached(`listings?${httpParams.toString()}`, () =>
+      this.http.get<PaginatedListings>(`${this.baseUrl}/api/listings`, { params: httpParams }));
   }
 
   getFacets(category?: string, city?: string): Observable<any> {
     let httpParams = new HttpParams();
     if (category) httpParams = httpParams.set('category', category);
     if (city) httpParams = httpParams.set('city', city);
-    return this.http.get<any>(`${this.baseUrl}/api/listings/facets`, { params: httpParams });
+    return this.cached(`facets?${httpParams.toString()}`, () =>
+      this.http.get<any>(`${this.baseUrl}/api/listings/facets`, { params: httpParams }));
   }
 
   getListing(id: number): Observable<Listing> {
@@ -78,14 +102,17 @@ export class ApiService {
   }
 
   createListing(data: FormData): Observable<Listing> {
+    this.invalidateListingsCache();
     return this.http.post<Listing>(`${this.baseUrl}/api/listings`, data);
   }
 
   updateListing(id: number, data: FormData): Observable<Listing> {
+    this.invalidateListingsCache();
     return this.http.put<Listing>(`${this.baseUrl}/api/listings/${id}`, data);
   }
 
   deleteListing(id: number): Observable<{ success: boolean }> {
+    this.invalidateListingsCache();
     return this.http.delete<{ success: boolean }>(`${this.baseUrl}/api/listings/${id}`);
   }
 
@@ -94,15 +121,18 @@ export class ApiService {
   }
 
   getCategories(): Observable<Category[]> {
-    return this.http.get<Category[]>(`${this.baseUrl}/api/categories`);
+    return this.cached('categories', () =>
+      this.http.get<Category[]>(`${this.baseUrl}/api/categories`));
   }
 
   getCities(): Observable<City[]> {
-    return this.http.get<City[]>(`${this.baseUrl}/api/cities`);
+    return this.cached('cities', () =>
+      this.http.get<City[]>(`${this.baseUrl}/api/cities`));
   }
 
   getSubcategories(categorySlug: string): Observable<any[]> {
-    return this.http.get<any[]>(`${this.baseUrl}/api/subcategories/category/${categorySlug}`);
+    return this.cached(`subcategories/${categorySlug}`, () =>
+      this.http.get<any[]>(`${this.baseUrl}/api/subcategories/category/${categorySlug}`));
   }
 
   getSubcategoryChildren(subcategoryId: number): Observable<any[]> {
