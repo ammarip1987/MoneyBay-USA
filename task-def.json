@@ -69,6 +69,14 @@
                 {
                     "name": "FACEBOOK_APP_SECRET",
                     "valueFrom": "arn:aws:secretsmanager:us-east-2:172575865299:secret:moneybay/oauth-PgrAzv:FACEBOOK_APP_SECRET::"
+                },
+                {
+                    "name": "R2_ACCESS_KEY_ID",
+                    "valueFrom": "arn:aws:secretsmanager:us-east-2:172575865299:secret:moneybay/oauth-PgrAzv:R2_ACCESS_KEY_ID::"
+                },
+                {
+                    "name": "R2_SECRET_ACCESS_KEY",
+                    "valueFrom": "arn:aws:secretsmanager:us-east-2:172575865299:secret:moneybay/oauth-PgrAzv:R2_SECRET_ACCESS_KEY::"
                 }
             ],
             "logConfiguration": {
