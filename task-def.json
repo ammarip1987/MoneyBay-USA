@@ -3,7 +3,7 @@
     "containerDefinitions": [
         {
             "name": "Main",
-            "image": "172575865299.dkr.ecr.eu-north-1.amazonaws.com/moneybay-usa:latest",
+            "image": "172575865299.dkr.ecr.us-east-2.amazonaws.com/moneybay-usa:latest",
             "cpu": 256,
             "memory": 512,
             "memoryReservation": 512,
@@ -20,7 +20,7 @@
             "environment": [
                 {
                     "name": "DATABASE_URL",
-                    "value": "jdbc:postgresql://db-moneybay-usa.c5qkmgi6m2e9.eu-north-1.rds.amazonaws.com:5432/moneybay"
+                    "value": "jdbc:postgresql://db-moneybay-usa.c18o4s6gatg6.us-east-2.rds.amazonaws.com:5432/moneybay"
                 },
                 {
                     "name": "DB_USERNAME",
@@ -56,26 +56,26 @@
             "secrets": [
                 {
                     "name": "DB_PASSWORD",
-                    "valueFrom": "arn:aws:secretsmanager:eu-north-1:172575865299:secret:moneybay/db-password-GjHssp"
+                    "valueFrom": "arn:aws:secretsmanager:us-east-2:172575865299:secret:moneybay/db-password-OGoHjR"
                 },
                 {
                     "name": "JWT_SECRET",
-                    "valueFrom": "arn:aws:secretsmanager:eu-north-1:172575865299:secret:moneybay/jwt-secret-Iyi55d"
+                    "valueFrom": "arn:aws:secretsmanager:us-east-2:172575865299:secret:moneybay/jwt-secret-0gwTY8"
                 },
                 {
                     "name": "GOOGLE_CLIENT_SECRET",
-                    "valueFrom": "arn:aws:secretsmanager:eu-north-1:172575865299:secret:moneybay/oauth-WybPmy:GOOGLE_CLIENT_SECRET::"
+                    "valueFrom": "arn:aws:secretsmanager:us-east-2:172575865299:secret:moneybay/oauth-PgrAzv:GOOGLE_CLIENT_SECRET::"
                 },
                 {
                     "name": "FACEBOOK_APP_SECRET",
-                    "valueFrom": "arn:aws:secretsmanager:eu-north-1:172575865299:secret:moneybay/oauth-WybPmy:FACEBOOK_APP_SECRET::"
+                    "valueFrom": "arn:aws:secretsmanager:us-east-2:172575865299:secret:moneybay/oauth-PgrAzv:FACEBOOK_APP_SECRET::"
                 }
             ],
             "logConfiguration": {
                 "logDriver": "awslogs",
                 "options": {
                     "awslogs-group": "moneybay-backend",
-                    "awslogs-region": "eu-north-1",
+                    "awslogs-region": "us-east-2",
                     "awslogs-stream-prefix": "moneybay"
                 }
             },

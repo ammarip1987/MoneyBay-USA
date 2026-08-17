@@ -6,7 +6,7 @@ on:
   workflow_dispatch:
 
 env:
-  AWS_REGION: eu-north-1
+  AWS_REGION: us-east-2
   ECR_REPOSITORY: moneybay-usa
   ECS_SERVICE: moneybay-api
   ECS_CLUSTER: default
