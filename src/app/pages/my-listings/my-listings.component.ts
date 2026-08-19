@@ -121,7 +121,8 @@ export class MyListingsComponent implements OnInit {
   private api = inject(ApiService);
 
   listings = signal<Listing[]>([]);
-  loading = signal(false);
+  // Начинаем с true: иначе пустое состояние мелькает до первого запроса
+  loading = signal(true);
 
   totalViews = () => this.listings().reduce((sum, l) => sum + (l.views || 0), 0);
   activeCount = () => this.listings().filter(l => l.is_active).length;

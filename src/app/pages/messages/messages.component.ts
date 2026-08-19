@@ -57,7 +57,9 @@ export class MessagesComponent implements OnInit {
   private api = inject(ApiService);
 
   conversations = signal<Conversation[]>([]);
-  loading = signal(false);
+  // Начинаем с true: иначе до первого запроса выполняется условие пустого
+  // состояния и «No messages yet» мелькает у тех, у кого переписки есть
+  loading = signal(true);
 
   ngOnInit(): void {
     this.loading.set(true);

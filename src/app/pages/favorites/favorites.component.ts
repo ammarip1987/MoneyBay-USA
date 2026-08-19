@@ -36,7 +36,8 @@ export class FavoritesComponent implements OnInit {
   private api = inject(ApiService);
 
   favorites = signal<Listing[]>([]);
-  loading = signal(false);
+  // Начинаем с true: иначе пустое состояние мелькает до первого запроса
+  loading = signal(true);
 
   ngOnInit(): void {
     this.loading.set(true);
