@@ -42,7 +42,7 @@ import { NotificationsService } from '../../services/notifications.service';
               }
               <span class="text-gray-300">{{ auth.currentUser()?.username }}</span>
               <button (click)="logout()" class="hover:text-mb-cyan transition">Log out</button>
-            } @else {
+            } @else if (authReady()) {
               <a routerLink="/login" class="hover:text-mb-cyan transition">Log in</a>
               <a routerLink="/register" class="btn btn-primary">Sign up</a>
             }
@@ -72,7 +72,7 @@ import { NotificationsService } from '../../services/notifications.service';
               }
               <span class="text-gray-300 py-2 border-t border-gray-700">{{ auth.currentUser()?.username }}</span>
               <button (click)="logout()" class="hover:text-mb-cyan transition py-2 text-left">Log out</button>
-            } @else {
+            } @else if (authReady()) {
               <a routerLink="/login" (click)="closeMobileMenu()" class="hover:text-mb-cyan transition py-2">Log in</a>
               <a routerLink="/register" (click)="closeMobileMenu()" class="btn btn-primary self-start">Sign up</a>
             }
@@ -94,11 +94,19 @@ export class HeaderComponent implements OnDestroy {
   private pollTimer: any = null;
   private lastSeenCount = 0;
 
+  /**
+   * На сервере признак входа неизвестен — он в localStorage. Пока состояние
+   * не установлено, гостевые ссылки не показываются: иначе «Log in» и
+   * «Sign up» мелькают у вошедшего пользователя при обновлении страницы.
+   */
+  authReady = signal(false);
+
   private isBrowser = false;
 
   constructor() {
     afterNextRender(() => {
       this.isBrowser = true;
+      this.authReady.set(true);
       this.syncPolling();
     });
     // Реагирует на login/logout в течение сессии, не только на первый рендер
