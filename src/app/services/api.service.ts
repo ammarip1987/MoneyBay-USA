@@ -58,6 +58,22 @@ export class ApiService {
     this.cache.clear();
   }
 
+  /**
+   * Лежит ли ответ в кэше. Попадание отдаётся синхронно, поэтому вызывающему
+   * не нужно поднимать флаг загрузки: скелет иначе вставляется и убирается в
+   * пределах одного тика и виден как мельк.
+   */
+  hasCachedListings(params: Record<string, unknown> = {}): boolean {
+    let httpParams = new HttpParams();
+    Object.entries(params).forEach(([key, value]) => {
+      if (value !== undefined && value !== '' && value !== false && value !== null) {
+        httpParams = httpParams.set(key, String(value));
+      }
+    });
+    const hit = this.cache.get(`listings?${httpParams.toString()}`);
+    return !!hit && Date.now() - hit.at < this.cacheTtlMs;
+  }
+
   getListings(params: {
     page?: number;
     q?: string;
@@ -166,7 +182,19 @@ export class ApiService {
   }
 
   getConversations(): Observable<any[]> {
-    return this.http.get<any[]>(`${this.baseUrl}/api/conversations`);
+    return this.cached('conversations', () =>
+      this.http.get<any[]>(`${this.baseUrl}/api/conversations`));
+  }
+
+  /** Лежит ли список переписок в кэше — см. hasCachedListings. */
+  hasCachedConversations(): boolean {
+    const hit = this.cache.get('conversations');
+    return !!hit && Date.now() - hit.at < this.cacheTtlMs;
+  }
+
+  /** Сбрасывает список переписок: новое сообщение меняет порядок и счётчики. */
+  invalidateConversationsCache(): void {
+    this.cache.delete('conversations');
   }
 
   getChatMessages(otherUserId: number): Observable<Message[]> {
@@ -174,7 +202,10 @@ export class ApiService {
   }
 
   sendMessage(otherUserId: number, content: string): Observable<Message> {
-    return this.http.post<Message>(`${this.baseUrl}/api/chats/${otherUserId}/messages`, { content });
+    return this.http.post<Message>(`${this.baseUrl}/api/chats/${otherUserId}/messages`, { content }).pipe(
+      // Отправка меняет порядок переписок и последнее сообщение в списке
+      tap(() => this.invalidateConversationsCache())
+    );
   }
 
   uploadChatPhoto(file: File): Observable<string> {

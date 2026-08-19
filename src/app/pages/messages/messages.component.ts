@@ -62,7 +62,9 @@ export class MessagesComponent implements OnInit {
   loading = signal(true);
 
   ngOnInit(): void {
-    this.loading.set(true);
+    // Попадание в кэш отдаётся синхронно: подъём флага вставил бы пустое
+    // состояние на один тик, и список мелькал бы при каждом входе
+    if (!this.api.hasCachedConversations()) this.loading.set(true);
     this.api.getConversations().subscribe({
       next: (data) => {
         this.conversations.set(data || []);

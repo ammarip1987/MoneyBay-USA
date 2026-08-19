@@ -29,6 +29,7 @@ interface Subcategory {
   standalone: true,
   imports: [CommonModule, FormsModule, RouterLink, ListingCardComponent, SearchAutocompleteComponent, SkeletonLoaderComponent, FilterChipsBarComponent, FilterDrawerComponent],
   template: `
+    <div class="min-page">
     <!-- Hero Section (only on main page) -->
     @if (!selectedCategory()) {
       <div class="relative overflow-hidden rounded-2xl mb-8 -mx-4 sm:mx-0">
@@ -228,6 +229,7 @@ interface Subcategory {
     @if (!loading() && listings().length === 0) {
       <div class="text-center py-12"><p class="text-gray-500 text-lg">No listings found.</p></div>
     }
+    </div>
   `
 })
 export class HomeComponent implements OnInit, OnDestroy, AfterViewInit {
@@ -462,15 +464,9 @@ export class HomeComponent implements OnInit, OnDestroy, AfterViewInit {
   }
 
   loadListings(append = false): void {
-    if (append) {
-      if (this.loadingMore() || !this.hasMore()) return;
-      this.loadingMore.set(true);
-    } else {
-      this.currentPage.set(1);
-      this.hasMore.set(true);
-      this.loading.set(true);
-    }
-
+    // Параметры считаются до флага загрузки: по ним видно, лежит ли ответ в
+    // кэше. Возврат на главную отдаётся синхронно, и подъём флага вставил бы
+    // скелет на один тик — он и виден как мельк.
     const params: any = { page: append ? this.currentPage() : 1 };
     if (this.searchQuery) params.q = this.searchQuery;
     if (this.selectedCategory()) params.category = this.selectedCategory();
@@ -482,6 +478,15 @@ export class HomeComponent implements OnInit, OnDestroy, AfterViewInit {
     if (adv.price_max !== undefined) params.price_max = adv.price_max;
     if (adv.has_image) params.has_image = true;
     if (adv.posted_within) params.posted_within = adv.posted_within;
+
+    if (append) {
+      if (this.loadingMore() || !this.hasMore()) return;
+      this.loadingMore.set(true);
+    } else {
+      this.currentPage.set(1);
+      this.hasMore.set(true);
+      if (!this.api.hasCachedListings(params)) this.loading.set(true);
+    }
 
     this.api.getListings(params).subscribe({
       next: (data) => {
