@@ -1,6 +1,6 @@
 import { Component, OnInit, inject, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { ActivatedRoute, RouterLink } from '@angular/router';
+import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { FormsModule } from '@angular/forms';
 import { ApiService, SimilarListings } from '../../services/api.service';
 import { AuthService } from '../../services/auth.service';
@@ -15,7 +15,7 @@ import { ListingCardComponent } from '../../components/listing-card/listing-card
   template: `
     @if (listing()) {
       <div class="max-w-6xl mx-auto px-4 py-8">
-        <a routerLink="/" class="text-mb-blue hover:underline mb-4 inline-block">← Back to listings</a>
+        <a href="/" (click)="goBackToListings($event)" class="text-mb-blue hover:underline mb-4 inline-block">← Back to listings</a>
 
         <div class="grid grid-cols-1 lg:grid-cols-2 gap-0 rounded-none">
             <div class="flex flex-col gap-px rounded-none">
@@ -252,6 +252,7 @@ import { ListingCardComponent } from '../../components/listing-card/listing-card
 export class ListingDetailComponent implements OnInit {
   private api = inject(ApiService);
   private route = inject(ActivatedRoute);
+  private router = inject(Router);
   private seo = inject(SeoService);
   auth = inject(AuthService);
 
@@ -281,6 +282,20 @@ export class ListingDetailComponent implements OnInit {
    * Объявление, переданное карточкой при переходе. Сверяем id: при возврате
    * назад или переходе на другое объявление в состоянии может остаться чужое.
    */
+
+  /**
+   * Возврат в ленту через историю браузера: сохраняет фильтры, страницу и
+   * положение прокрутки. Прежняя ссылка вела на «/» и всё это теряла.
+   * При заходе по прямой ссылке истории нет — уходим на главную.
+   */
+  goBackToListings(event: Event): void {
+    event.preventDefault();
+    if (typeof history !== 'undefined' && history.length > 1) {
+      history.back();
+    } else {
+      this.router.navigateByUrl('/');
+    }
+  }
   private preloadedListing(id: number): Listing | null {
     if (typeof history === 'undefined') return null;
     const passed = history.state?.listing as Listing | undefined;
