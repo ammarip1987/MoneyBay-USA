@@ -76,7 +76,8 @@ export class ChatComponent implements OnInit, OnDestroy, AfterViewChecked {
 
   messages = signal<Message[]>([]);
   otherUser = signal('User');
-  loading = signal(false);
+  // Начинаем с true: иначе пустое состояние мелькает до первого запроса
+  loading = signal(true);
   sending = signal(false);
   connected = signal(false);
   newMessage = '';

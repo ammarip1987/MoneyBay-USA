@@ -230,7 +230,8 @@ export class ProfileComponent implements OnInit {
 
   user = signal<User | null>(null);
   myListings = signal<Listing[]>([]);
-  loading = signal(false);
+  // Начинаем с true: иначе пустое состояние мелькает до первого запроса
+  loading = signal(true);
 
   totalViews = () => this.myListings().reduce((sum, l) => sum + (l.views || 0), 0);
   activeCount = () => this.myListings().filter(l => l.is_active).length;

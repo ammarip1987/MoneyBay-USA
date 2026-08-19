@@ -258,7 +258,8 @@ export class HomeComponent implements OnInit, OnDestroy, AfterViewInit {
   cities = signal<City[]>([]);
   subcategories = signal<Subcategory[]>([]);
   subsubcategories = signal<Subcategory[]>([]);
-  loading = signal(false);
+  // Начинаем с true: иначе пустое состояние мелькает до первого запроса
+  loading = signal(true);
   loadingMore = signal(false);
   hasMore = signal(true);
   currentPage = signal(1);
