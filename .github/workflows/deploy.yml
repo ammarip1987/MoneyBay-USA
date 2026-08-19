@@ -60,10 +60,60 @@ jobs:
           container-name: ${{ env.CONTAINER_NAME }}
           image: ${{ steps.login-ecr.outputs.registry }}/${{ env.ECR_REPOSITORY }}:${{ github.sha }}
 
+      # Ожидание отключено намеренно. Действие следит за идентификатором
+      # развёртывания, а балансировка Fargate по зонам доступности заменяет
+      # отслеживаемый taskSet: идентификатор исчезает, и шаг сообщает
+      # "not found after stabilization", хотя развёртывание доходит. Circuit
+      # breaker при этом отключён (enable: false), откатывать некому.
+      # Проверка перенесена в следующий шаг — по ревизии задачи и здоровью
+      # целей, эти признаки от подмены taskSet не зависят.
       - name: Deploy task definition to ECS service
+        id: deploy
         uses: aws-actions/amazon-ecs-deploy-task-definition@v2
         with:
           task-definition: ${{ steps.render-task-def.outputs.task-definition }}
           service: ${{ env.ECS_SERVICE }}
           cluster: ${{ env.ECS_CLUSTER }}
-          wait-for-service-stability: true
+          wait-for-service-stability: false
+
+      - name: Wait for the new revision to take traffic
+        env:
+          EXPECTED_TASK_DEF: ${{ steps.deploy.outputs.task-definition-arn }}
+        run: |
+          set -uo pipefail
+
+          describe() {
+            aws ecs describe-services --cluster "$ECS_CLUSTER" --services "$ECS_SERVICE" \
+              --query "services[0].$1" --output text
+          }
+
+          TG_ARN=$(describe 'loadBalancers[0].targetGroupArn')
+          echo "Ожидаем ревизию: ${EXPECTED_TASK_DEF##*/}"
+          echo "Целевая группа:  ${TG_ARN##*/}"
+
+          # 40 проверок по 30 секунд — 20 минут. Запуск задачи на ARM64 вместе
+          # с прогревом JVM и проверками балансировщика укладывается в
+          # несколько минут, остальное запас.
+          for i in $(seq 1 40); do
+            read -r RUNNING_DEF RUNNING DESIRED <<<"$(describe '[taskDefinition,runningCount,desiredCount]')"
+
+            STATES=$(aws elbv2 describe-target-health --target-group-arn "$TG_ARN" \
+              --query 'TargetHealthDescriptions[].TargetHealth.State' --output text)
+            HEALTHY=$(printf '%s\n' $STATES | grep -c '^healthy$' || true)
+
+            echo "[$i/40] ревизия=${RUNNING_DEF##*/} задачи=$RUNNING/$DESIRED цели=[${STATES:-нет}]"
+
+            if [ "$RUNNING_DEF" = "$EXPECTED_TASK_DEF" ] \
+               && [ "$RUNNING" = "$DESIRED" ] \
+               && [ "$HEALTHY" -ge 1 ]; then
+              echo "Готово: новая ревизия принимает трафик."
+              exit 0
+            fi
+
+            sleep 30
+          done
+
+          echo "Новая ревизия не приняла трафик за 20 минут. Последние события сервиса:"
+          aws ecs describe-services --cluster "$ECS_CLUSTER" --services "$ECS_SERVICE" \
+            --query 'services[0].events[0:5].message' --output text | tr '\t' '\n'
+          exit 1
