@@ -6,30 +6,109 @@ MoneyBay project is built in Enterprise using strict typing and preserving inher
 
 Проэкт сделан по типу Enterprise используя строгую типизацию и сохраняя наследсвенность для програмистов.
 
-## Stack
+## Технологический стек
 
-**Frontend:**
-- Angular 21 (TypeScript)
-- Tailwind CSS (utility-first для компонентов)
-- @tailwindcss/typography (prose класс для UGC контента из базы)
-- FontAwesome 6.5 (via CDN)
-- @stomp/stompjs + sockjs-client (WebSocket)
-- @angular/ssr 21 (Angular Universal Server-Side Rendering)
-- JWT auth via HTTP Interceptor
+### Backend (Java)
 
-**Backend:**
-- Java 25 (Eclipse Temurin)
-- Spring Boot 3.5
-- Spring Data JPA + Hibernate
-- Spring Security + JWT (jjwt 0.12.6)
-- Spring WebSocket (STOMP)
-- Spring Boot Mail (SMTP — Mailtrap dev, SendGrid/SES prod)
-- Spring Boot DevTools (hot reload)
-- Stripe Java SDK 26.6
-- Bucket4j (rate limiting)
-- Springdoc OpenAPI (Swagger UI)
-- PostgreSQL 18
-- Lombok
+- **Java 25** (Eclipse Temurin) — язык
+- **Spring Boot 3.5.0** — каркас приложения
+- **Spring Data JPA + Hibernate** — доступ к базе
+- **Spring Security** — вход и права
+- **jjwt 0.12.6** — токены JWT
+- **Spring WebSocket (STOMP)** — обмен сообщениями в реальном времени
+- **Spring Boot Mail** — отправка почты
+- **Spring Boot Actuator** — проверки состояния для балансировщика
+- **Bucket4j 8.14.0** — ограничение частоты запросов
+- **Springdoc OpenAPI 2.7.0** — описание API, Swagger UI
+- **Stripe Java 26.6.0** — приём платежей
+- **AWS SDK S3 2.25.0** — загрузка фотографий в Cloudflare R2 по протоколу S3
+- **Lombok 1.18.38** — сокращение шаблонного кода
+- **Maven** — сборка
+
+### Frontend (TypeScript)
+
+- **Angular 21.2** — каркас, отдельно стоящие компоненты и сигналы
+- **TypeScript 5.9** — типизация
+- **@angular/ssr 21.2** — отрисовка на сервере
+- **@angular/service-worker 21.2** — Progressive Web App
+- **Tailwind CSS 3.4** — оформление управляемого интерфейса
+- **@tailwindcss/typography 0.5** — класс `prose` для содержимого из базы
+- **SASS 1.99** — оформление пользовательского содержимого
+- **PostCSS 8.5 + Autoprefixer 10.5** — обработка стилей
+- **RxJS 7.8** — потоки данных
+- **@stomp/stompjs 7.3 + sockjs-client 1.6** — WebSocket
+- **FontAwesome 6.5** — значки
+- **JWT через HTTP-перехватчик** — вход
+
+### База и хранилище
+
+- **PostgreSQL 18.3** — база на AWS RDS (`db.t4g.micro`)
+- **H2** — база в памяти для тестов
+- **Cloudflare R2** — фотографии объявлений, корзина `moneybayts-photos`, отдача
+  напрямую через CDN
+
+### Инфраструктура (AWS, регион us-east-2)
+
+- **ECS Fargate** — backend, платформа ARM64 (Graviton)
+- **ECR** — хранилище образов
+- **CodeBuild** — сборка образа на нативном ARM (Amazon Linux 2023)
+- **RDS PostgreSQL** — база
+- **Application Load Balancer** — приём трафика, проверки состояния
+- **Secrets Manager** — пароли, ключи, секреты OAuth
+- **CloudWatch Logs** — журналы задачи и сборки
+- **EC2** — bastion для доступа к базе (t4g.small, arm64)
+- **IAM** — роли `ecsTaskExecutionRole`, `MoneybayCodeBuildRole`
+
+### Инфраструктура (Cloudflare)
+
+- **Workers** — отрисовка frontend на сервере, воркер `moneybay-usa`
+- **R2** — хранилище фотографий
+- **DNS** — домен `moneybay.us`
+- **SSL/TLS** — сквозное шифрование
+
+### Платежи и внешние службы
+
+- **Stripe Checkout** — продвижение объявлений
+- **Google OAuth2** — вход через Google
+- **Facebook Login** — вход через Facebook
+- **Google reCAPTCHA** — защита форм (на сервере; виджета на клиенте нет)
+- **SMTP** — Mailtrap при разработке, SendGrid или SES на production
+
+### Тестирование и CI/CD
+
+- **JUnit + Spring Boot Test** — 9 методов в 3 файлах
+- **Vitest 4.0** — тесты frontend (1 файл)
+- **GitHub Actions** — запуск сборки и обновление сервиса ECS
+- **AWS CodeBuild** — сборка образа
+- **Docker** — многостадийная сборка (Temurin 25 JDK → JRE Alpine)
+
+### Устройство CSS
+
+Смешанный подход:
+
+- **Tailwind CSS** — управляемый интерфейс: навигация, кнопки, фильтры,
+  выдвижные панели. Utility-first ускоряет работу над компонентами.
+- **SASS** (`src/ugc.scss`) — содержимое, пришедшее от пользователей: описания
+  объявлений, отзывы. Оформление по селекторам, поскольку разметка приходит из
+  базы и классов не имеет.
+
+### Устройство приложения
+
+- Отдельно стоящие компоненты Angular и сигналы вместо модулей и зависимостей от
+  зон
+- Слои backend: `controller`, `service`, `repository`, `model`, `dto`, `config`,
+  `security`
+- Отрисовка на сервере с разбором по маршрутам: открытые страницы на сервере,
+  страницы за входом на клиенте
+- Поддомены по городам в духе Craigslist: `CityContextFilter` на сервере,
+  `CityContextService` на клиенте
+- Кэш запросов на клиенте: свежий ответ до 20 секунд, просроченный отдаётся сразу
+  с обновлением в фоне
+- Датировка в UTC с учётом часового пояса
+- Обработка webhook Stripe с проверкой подписи
+- Progressive Web App с работой без сети
+- Отзывчивое оформление для настольных компьютеров и телефонов
+- Сквозное шифрование HTTPS
 
 ## Competitive Position
 
@@ -211,16 +290,16 @@ Moneybay/
         └── server/                   # SSR сервер
 ```
 
-### основные технологии
+### Слои и порты
 
-| Шар | Технологія | Порт | Деплой |
+| Слой | Технология | Порт | Где размещено |
 |------|-----------|------|---------|
 | Frontend | Angular 21 + Tailwind CSS | 1100 (dev), 443 (prod) | Cloudflare Workers (SSR) |
 | Backend | Spring Boot 3.5 + Spring Security | 8080 | AWS ECS Fargate (ARM64) |
-| Database | PostgreSQL 18 | 5432 | AWS RDS |
-| Real-time | WebSocket STOMP | 8080 | AWS ECS Express Mode |
-| CDN фото | Cloudflare R2 | - | Cloudflare R2 |
-| Платежі | Stripe | - | Stripe API |
+| База | PostgreSQL 18 | 5432 | AWS RDS |
+| Обмен сообщениями | WebSocket STOMP | 8080 | AWS ECS Fargate (ARM64) |
+| Фотографии | Cloudflare R2 | - | Cloudflare CDN |
+| Платежи | Stripe | - | Stripe API |
 
 ### Flow запросов
 
