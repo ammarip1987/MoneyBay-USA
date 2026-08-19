@@ -38,18 +38,42 @@ export class ApiService {
   private readonly baseUrl = environment.apiUrl;
 
   /**
-   * Короткоживущий кэш для запросов, которые повторяются при возврате из
-   * объявления: лента, фасеты, справочники. Тридцати секунд хватает, чтобы
-   * переход назад был мгновенным, и мало, чтобы данные успели устареть.
+   * Кэш для запросов, которые повторяются при возврате из объявления: лента,
+   * фасеты, справочники.
+   *
+   * Двухступенчатый. До cacheTtlMs ответ считается свежим и отдаётся как есть.
+   * Дальше и до staleTtlMs — отдаётся сразу же, а запрос уходит в фоне и
+   * обновляет значение к следующему разу. Возврат на главную поэтому мгновенный
+   * при любой давности, а не только в первые секунды: запрос ленты идёт около
+   * полусекунды, и всё это время под плитками висели бы заглушки.
    */
   private readonly cache = new Map<string, { at: number; value: unknown }>();
   private readonly cacheTtlMs = 20_000;
+  private readonly staleTtlMs = 5 * 60_000;
+  private readonly refreshing = new Set<string>();
 
   private cached<T>(key: string, request: () => Observable<T>): Observable<T> {
     const hit = this.cache.get(key);
-    if (hit && Date.now() - hit.at < this.cacheTtlMs) {
+    const age = hit ? Date.now() - hit.at : Infinity;
+
+    if (hit && age < this.cacheTtlMs) {
       return of(hit.value as T);
     }
+
+    if (hit && age < this.staleTtlMs) {
+      // Один фоновый запрос на ключ: без этого частые переходы туда-обратно
+      // порождают их пачками
+      if (!this.refreshing.has(key)) {
+        this.refreshing.add(key);
+        request().subscribe({
+          next: value => this.cache.set(key, { at: Date.now(), value }),
+          error: () => {},
+          complete: () => this.refreshing.delete(key)
+        });
+      }
+      return of(hit.value as T);
+    }
+
     return request().pipe(tap(value => this.cache.set(key, { at: Date.now(), value })));
   }
 
@@ -71,7 +95,7 @@ export class ApiService {
       }
     });
     const hit = this.cache.get(`listings?${httpParams.toString()}`);
-    return !!hit && Date.now() - hit.at < this.cacheTtlMs;
+    return !!hit && Date.now() - hit.at < this.staleTtlMs;
   }
 
   getListings(params: {
@@ -139,7 +163,7 @@ export class ApiService {
 
   hasCached(key: string): boolean {
     const hit = this.cache.get(key);
-    return !!hit && Date.now() - hit.at < this.cacheTtlMs;
+    return !!hit && Date.now() - hit.at < this.staleTtlMs;
   }
 
   /**
@@ -151,8 +175,11 @@ export class ApiService {
   readonly categories = signal<Category[]>([]);
 
   getCategories(): Observable<Category[]> {
+    // Запись в сигнал внутри запроса, а не после cached: фоновое обновление
+    // подписывается на запрос напрямую и внешний tap не выполнило бы
     return this.cached('categories', () =>
       this.http.get<Category[]>(`${this.baseUrl}/api/categories`)
+        .pipe(tap(list => this.categories.set(list)))
     ).pipe(tap(list => this.categories.set(list)));
   }
 
@@ -206,7 +233,7 @@ export class ApiService {
   /** Лежит ли список переписок в кэше — см. hasCachedListings. */
   hasCachedConversations(): boolean {
     const hit = this.cache.get('conversations');
-    return !!hit && Date.now() - hit.at < this.cacheTtlMs;
+    return !!hit && Date.now() - hit.at < this.staleTtlMs;
   }
 
   /** Сбрасывает список переписок: новое сообщение меняет порядок и счётчики. */

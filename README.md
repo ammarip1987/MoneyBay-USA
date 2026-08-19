@@ -832,9 +832,8 @@ GCP и Cloud Run не применяются.
 git push origin main
 ```
 
-GitHub Actions (`.github/workflows/deploy.yml`) собирает образ под linux/arm64,
-кладёт в ECR и обновляет сервис ECS. Сборка ARM64 идёт через эмуляцию QEMU на
-раннере x86, поэтому занимает около 20 минут.
+GitHub Actions (`.github/workflows/deploy.yml`) запускает сборку в AWS CodeBuild,
+затем обновляет сервис ECS. Сам образ собирается не на раннере.
 
 **Frontend — вручную:**
 
@@ -844,6 +843,60 @@ npx wrangler deploy
 ```
 
 Каждый деплой отдаёт Version ID; предыдущие версии остаются для отката.
+
+### Сборка образа в AWS CodeBuild (ARM)
+
+Образ backend собирается не на раннере GitHub, а в CodeBuild. Раннеры GitHub на
+x86, а задача ECS на ARM64: сборка через эмуляцию QEMU занимала 20-25 минут на
+холодном кэше слоёв. Среда CodeBuild нативно aarch64, эмуляции нет.
+
+| Ресурс | Значение |
+|---|---|
+| Проект | `moneybay-backend` (us-east-2) |
+| Среда | `ARM_CONTAINER`, `aws/codebuild/amazonlinux-aarch64-standard:3.0` |
+| Класс | `BUILD_GENERAL1_LARGE`, `privilegedMode: true` (нужен для Docker) |
+| Ограничение | 30 минут |
+| Роль | `MoneybayCodeBuildRole` |
+| Группа логов | `/aws/codebuild/moneybay-backend` |
+| Описание сборки | `buildspec.yml` в корне репозитория |
+
+**Права по наименьшему набору:**
+
+- `MoneybayCodeBuildRole` — запись только в репозиторий ECR `moneybay-usa` и
+  только в свою группу логов; плюс `ecr:GetAuthorizationToken`, который по
+  требованию AWS задаётся на `*`.
+- `MoneybayRunCodeBuild` — встроенная политика на пользователе CI
+  (`moneybay-user`): `codebuild:StartBuild` и `codebuild:BatchGetBuilds` только
+  для этого проекта, `logs:GetLogEvents` только для его потоков.
+
+**Как запускается:** шаг workflow `aws-actions/aws-codebuild-run-build@v1`
+стартует сборку и ждёт результат. Логи CloudWatch стримятся в консоль Actions по
+умолчанию — шаг читается как обычная сборка, хотя идёт в AWS. Отключаются
+параметром `hide-cloudwatch-logs: true` (параметра `disable-logs-streaming` в
+этом действии нет).
+
+Тег образа передаётся переменной `IMAGE_TAG` (git SHA) через
+`env-vars-for-codebuild`, чтобы ревизия ECS ссылалась на образ этой же сборки.
+
+**Кэш слоёв:** `buildspec.yml` тянет образ `latest` перед сборкой и передаёт его
+в `--cache-from`, поэтому Maven не перекачивает зависимости при неизменном
+`pom.xml`.
+
+**Замер по стадиям** (первая сборка, кэша ещё не было):
+
+| Стадия | Секунд |
+|---|---|
+| PROVISIONING | 6 |
+| DOWNLOAD_SOURCE | 2 |
+| PRE_BUILD | 8 |
+| BUILD | меньше минуты |
+| POST_BUILD | 4 |
+
+Весь запуск вместе с деплоем и проверкой — 3 мин 22 сек против 20-25 минут на
+эмуляции.
+
+**Тариф:** поминутный, с округлением вверх. `BUILD_GENERAL1_LARGE` на ARM —
+около 1,4 цента за сборку.
 
 **Проверка после деплоя:**
 
@@ -1650,8 +1703,9 @@ ng serve
 | CPU | 256 |
 | Memory | 512 |
 
-Graviton дешевле x86 при той же нагрузке. Образ собирается под `linux/arm64`
-через buildx с QEMU, отсюда время сборки в CI около 20 минут.
+Graviton дешевле x86 при той же нагрузке. Образ собирается под `linux/arm64` в
+AWS CodeBuild на нативной среде aarch64 — см.
+[Сборка образа в AWS CodeBuild](#сборка-образа-в-aws-codebuild-arm).
 
 **Настройки развёртывания:** `minimumHealthyPercent: 50` — при 100 обновление не
 может остановить ни одну задачу и висит. Автоматический откат отключён.
@@ -1694,15 +1748,15 @@ Git push → GitHub Actions → Docker build → ECR push → ECS update
 **Workflow шаги:**
 1. Checkout code
 2. Configure AWS credentials (регион `us-east-2`)
-3. Login to Amazon ECR
-4. Set up QEMU + buildx (эмуляция ARM64 на раннере x86)
-5. Build Docker image под `linux/arm64` (Java 25, Alpine)
-6. Push to ECR (`moneybay-usa:latest` + git SHA)
-7. Update ECS service (`moneybay-api` в кластере `default`)
-8. Дождаться, пока новая ревизия примет трафик — своя проверка вместо
+3. Запустить сборку в CodeBuild и дождаться её — образ собирается там, на
+   нативном ARM64; логи стримятся в консоль Actions
+4. Login to Amazon ECR
+5. Render task definition с образом по тегу git SHA
+6. Update ECS service (`moneybay-api` в кластере `default`)
+7. Дождаться, пока новая ревизия примет трафик — своя проверка вместо
    штатного ожидания, см. [Deploy](#deploy)
 
-Время прохождения — около 20 минут, почти всё уходит на эмуляцию ARM64.
+Время прохождения — около 3 минут, из них сборка образа меньше минуты.
 
 Только backend. Frontend деплоится вручную через `npx wrangler deploy`.
 
