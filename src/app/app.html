@@ -1,9 +1,16 @@
-<app-header></app-header>
+<!-- Колонка на всю высоту окна: main растягивается, подвал прижат к низу.
+     Иначе на короткой странице подвал стоит посреди экрана и уезжает вниз,
+     когда приходят данные. -->
+<div class="min-h-screen flex flex-col">
+  <app-header></app-header>
 
-<main class="max-w-7xl mx-auto px-4 py-8">
-  <router-outlet />
-</main>
+  <!-- flex-col на main: страница внутри получает h-full от растянутой
+       колонки, поэтому короткая страница не поднимает подвал -->
+  <main class="flex-1 flex flex-col w-full max-w-7xl mx-auto px-4 py-8">
+    <router-outlet />
+  </main>
 
-<app-footer></app-footer>
+  <app-footer></app-footer>
+</div>
 
 <app-toast></app-toast>
