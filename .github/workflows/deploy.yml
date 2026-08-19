@@ -12,14 +12,13 @@ env:
   ECS_CLUSTER: default
   ECS_TASK_DEFINITION: task-def.json
   CONTAINER_NAME: Main
+  # Тег образа передаётся в CodeBuild и используется при обновлении задачи:
+  # ревизия ECS должна ссылаться на тот же образ, что собрала эта сборка
+  IMAGE_TAG: ${{ github.sha }}
 
 jobs:
   build-and-deploy:
-    # Раннер ARM64: задача ECS тоже ARM64, поэтому сборка идёт нативно.
-    # На x86-раннере тот же образ собирался через эмуляцию QEMU и занимал
-    # около 20 минут — почти всё время уходило на компиляцию Maven под
-    # эмулятором. Для публичных репозиториев ARM-раннеры бесплатны.
-    runs-on: ubuntu-24.04-arm
+    runs-on: ubuntu-latest
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -31,27 +30,20 @@ jobs:
           aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
           aws-region: ${{ env.AWS_REGION }}
 
+      # Образ собирается в AWS CodeBuild на нативном ARM64 (Amazon Linux 2023,
+      # aarch64), а не здесь: раннер на x86, задача ECS на ARM64, и сборка через
+      # эмуляцию QEMU занимала 20-25 минут на холодном кэше.
+      # Логи CloudWatch стримятся в консоль Actions по умолчанию; отключаются
+      # параметром hide-cloudwatch-logs, здесь он не нужен.
+      - name: Build image on ARM (AWS CodeBuild)
+        uses: aws-actions/aws-codebuild-run-build@v1
+        with:
+          project-name: moneybay-backend
+          env-vars-for-codebuild: IMAGE_TAG
+
       - name: Login to Amazon ECR
         id: login-ecr
         uses: aws-actions/amazon-ecr-login@v2
-
-      # setup-qemu больше не нужен: раннер сам на ARM64, эмулировать нечего.
-      # buildx оставлен ради кэша слоёв type=gha.
-      - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@v3
-
-      - name: Build and push image (linux/arm64)
-        uses: docker/build-push-action@v6
-        with:
-          context: ./backend
-          platforms: linux/arm64
-          provenance: false
-          push: true
-          tags: |
-            ${{ steps.login-ecr.outputs.registry }}/${{ env.ECR_REPOSITORY }}:${{ github.sha }}
-            ${{ steps.login-ecr.outputs.registry }}/${{ env.ECR_REPOSITORY }}:latest
-          cache-from: type=gha
-          cache-to: type=gha,mode=max
 
       - name: Render task definition with new image
         id: render-task-def

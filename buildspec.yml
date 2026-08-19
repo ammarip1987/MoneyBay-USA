@@ -1,0 +1,47 @@
+version: 0.2
+
+# Сборка образа backend на ARM64 в AWS CodeBuild.
+#
+# Раннер GitHub на x86, а задача ECS на ARM64: сборка там шла через эмуляцию
+# QEMU и на холодном кэше занимала 20-25 минут. Здесь среда нативно ARM
+# (Amazon Linux 2023, aarch64), эмуляции нет.
+#
+# GitHub Actions только запускает эту сборку и ждёт результат; логи стримятся
+# в консоль Actions из CloudWatch.
+
+env:
+  variables:
+    AWS_REGION: us-east-2
+    ECR_REPOSITORY: moneybay-usa
+    AWS_ACCOUNT_ID: "172575865299"
+
+phases:
+  pre_build:
+    commands:
+      - REGISTRY="$AWS_ACCOUNT_ID.dkr.ecr.$AWS_REGION.amazonaws.com"
+      - echo "Вход в ECR - $REGISTRY"
+      - aws ecr get-login-password --region "$AWS_REGION" | docker login --username AWS --password-stdin "$REGISTRY"
+      # IMAGE_TAG передаётся из workflow как git SHA; на ручном запуске берётся
+      # идентификатор сборки CodeBuild
+      - IMAGE_TAG="${IMAGE_TAG:-${CODEBUILD_RESOLVED_SOURCE_VERSION:-$CODEBUILD_BUILD_NUMBER}}"
+      - echo "Тег образа - $IMAGE_TAG"
+
+  build:
+    commands:
+      - echo "Сборка $(uname -m), эмуляция не применяется"
+      # Кэш слоёв из образа latest: Maven не перекачивает зависимости, если
+      # pom.xml не менялся
+      - docker pull "$REGISTRY/$ECR_REPOSITORY:latest" || true
+      - |
+        docker build \
+          --cache-from "$REGISTRY/$ECR_REPOSITORY:latest" \
+          --build-arg BUILDKIT_INLINE_CACHE=1 \
+          -t "$REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG" \
+          -t "$REGISTRY/$ECR_REPOSITORY:latest" \
+          ./backend
+
+  post_build:
+    commands:
+      - docker push "$REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG"
+      - docker push "$REGISTRY/$ECR_REPOSITORY:latest"
+      - echo "Образ в ECR - $REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG"
