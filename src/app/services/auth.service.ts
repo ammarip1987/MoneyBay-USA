@@ -24,6 +24,15 @@ export class AuthService {
   currentUser = signal<User | null>(this.loadUser());
   isAuthenticated = signal<boolean>(!!this.getToken());
 
+
+  constructor() {
+    // Вход мог появиться до введения метки: приводим cookie в соответствие
+    // с localStorage при запуске, иначе сервер считает вошедшего гостем
+    // и шапка меняется после гидратации
+    if (this.isBrowser()) {
+      this.setAuthHint(this.isAuthenticated());
+    }
+  }
   private isBrowser(): boolean {
     return isPlatformBrowser(this.platformId);
   }
