@@ -87,26 +87,34 @@ jobs:
               --query "services[0].$1" --output text
           }
 
-          TG_ARN=$(describe 'loadBalancers[0].targetGroupArn')
           echo "Ожидаем ревизию: ${EXPECTED_TASK_DEF##*/}"
-          echo "Целевая группа:  ${TG_ARN##*/}"
 
           # 40 проверок по 30 секунд — 20 минут. Запуск задачи на ARM64 вместе
-          # с прогревом JVM и проверками балансировщика укладывается в
-          # несколько минут, остальное запас.
+          # с прогревом JVM и проверками состояния укладывается в несколько
+          # минут, остальное запас.
           for i in $(seq 1 40); do
             read -r RUNNING_DEF RUNNING DESIRED <<<"$(describe '[taskDefinition,runningCount,desiredCount]')"
 
-            STATES=$(aws elbv2 describe-target-health --target-group-arn "$TG_ARN" \
-              --query 'TargetHealthDescriptions[].TargetHealth.State' --output text)
-            HEALTHY=$(printf '%s\n' $STATES | grep -c '^healthy$' || true)
+            # healthStatus задачи выставляется по тем же проверкам, что решают,
+            # пускать ли на неё трафик. Берётся из ECS, а не из elbv2: у
+            # пользователя CI нет права elasticloadbalancing:DescribeTargetHealth.
+            TASKS=$(aws ecs list-tasks --cluster "$ECS_CLUSTER" \
+              --service-name "$ECS_SERVICE" --query 'taskArns' --output text)
+            if [ -n "$TASKS" ] && [ "$TASKS" != "None" ]; then
+              STATES=$(aws ecs describe-tasks --cluster "$ECS_CLUSTER" --tasks $TASKS \
+                --query "tasks[?taskDefinitionArn=='$EXPECTED_TASK_DEF'].healthStatus" \
+                --output text)
+            else
+              STATES=""
+            fi
+            HEALTHY=$(printf '%s\n' $STATES | grep -c '^HEALTHY$' || true)
 
-            echo "[$i/40] ревизия=${RUNNING_DEF##*/} задачи=$RUNNING/$DESIRED цели=[${STATES:-нет}]"
+            echo "[$i/40] ревизия=${RUNNING_DEF##*/} задачи=$RUNNING/$DESIRED состояние=[${STATES:-нет}]"
 
             if [ "$RUNNING_DEF" = "$EXPECTED_TASK_DEF" ] \
                && [ "$RUNNING" = "$DESIRED" ] \
                && [ "$HEALTHY" -ge 1 ]; then
-              echo "Готово: новая ревизия принимает трафик."
+              echo "Готово: новая ревизия запущена и проходит проверки состояния."
               exit 0
             fi
 

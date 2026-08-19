@@ -871,10 +871,17 @@ curl -s https://moneybay.us/ | grep -c 'ng-server-context="ssr"'
 |---|---|
 | `taskDefinition` сервиса равен ревизии из шага деплоя | развернулась ожидаемая сборка, а не предыдущая |
 | `runningCount` равен `desiredCount` | все задачи запустились |
-| в целевой группе есть хотя бы одна цель `healthy` | балансировщик пустил трафик |
+| хотя бы одна задача этой ревизии в состоянии `HEALTHY` | контейнер прошёл проверки состояния |
 
 Ни один из признаков не зависит от подмены taskSet, поэтому красный статус
 означает настоящий сбой. По таймауту шаг печатает последние пять событий сервиса.
+
+Состояние берётся из `ecs describe-tasks`, а не из `elbv2 describe-target-health`:
+у пользователя CI (`moneybay-user`) есть `AmazonECS_FullAccess` и
+`AmazonEC2ContainerRegistryPowerUser`, но права
+`elasticloadbalancing:DescribeTargetHealth` среди них нет. Признак тот же —
+`healthStatus` задачи выставляется по тем же проверкам, что решают, пускать ли
+на неё трафик.
 
 ## CSS Architecture
 
