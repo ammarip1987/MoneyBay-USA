@@ -1,8 +1,11 @@
 {
   "name": "moneybay-usa",
   "compatibility_date": "2026-08-03",
+  "main": "./dist/moneybay-angular/server/server.mjs",
   "assets": {
+    // Файл ищется первым; до серверной отрисовки доходят только адреса,
+    // для которых статики нет
     "directory": "./dist/moneybay-angular/browser",
-    "not_found_handling": "single-page-application"
+    "binding": "ASSETS"
   }
 }
