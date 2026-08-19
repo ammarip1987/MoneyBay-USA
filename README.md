@@ -11,103 +11,104 @@ MoneyBay project is built in Enterprise using strict typing and preserving inher
 ### Backend (Java)
 
 Java 25 — язык (сборка Amazon Corretto)  
-Spring Boot 3.5.0 — каркас приложения  
-Spring Data JPA + Hibernate — ORM для базы данных  
-Spring Security — вход и права доступа  
-jjwt 0.12.6 — токены JWT  
-Spring WebSocket (STOMP) — обмен сообщениями в реальном времени  
-Spring Boot Mail — отправка почты  
-Spring Boot Actuator — проверки состояния для балансировщика  
-Bucket4j 8.14.0 — ограничение частоты запросов  
-Springdoc OpenAPI 2.7.0 — описание API, Swagger UI  
-Stripe Java 26.6.0 — приём платежей  
-AWS SDK S3 2.25.0 — загрузка фотографий в Cloudflare R2  
-Lombok — обработчик аннотаций, дописывает геттеры и конструкторы при компиляции  
-Maven — сборка  
+Spring Boot 3.5.0 — web framework  
+Spring Data JPA + Hibernate 6 — ORM для базы данных  
+Spring Security — аутентификация и авторизация  
+jjwt 0.12.6 — JWT токены  
+Spring WebSocket (STOMP) — real-time messaging (чат)  
+Spring Boot Mail — SMTP отправка почты  
+Spring Boot Actuator — health checks для балансировщика  
+Bucket4j 8.14.0 — rate limiting  
+Springdoc OpenAPI 2.7.0 — API documentation, Swagger UI  
+Stripe Java 26.6.0 — payment processing (boost listings)  
+AWS SDK S3 2.25.0 — загрузка фото в Cloudflare R2 (S3-совместимый API)  
+Lombok — annotation processor (геттеры, сеттеры, конструкторы при компиляции)  
+Maven — build tool  
 
 ### Frontend (TypeScript)
 
-TypeScript 5.9 — язык, JavaScript с проверкой типов  
-Angular 21.2 — каркас: отдельно стоящие компоненты, сигналы, отрисовка на сервере, Service Worker  
-Tailwind CSS 3.4 — utility-first CSS для управляемого интерфейса  
-SASS 1.99 — препроцессор CSS для пользовательского содержимого  
-PostCSS 8.5 — преобразование стилей  
-Autoprefixer 10.5 — префиксы браузеров  
-RxJS 7.8 — потоки данных  
-STOMP поверх SockJS — WebSocket  
-FontAwesome 6.5 — значки  
-JWT через HTTP-перехватчик — вход  
+TypeScript 5.9 — type-safe JavaScript  
+Angular 21.2 — SPA framework (standalone components, signals, SSR, Service Worker)  
+Tailwind CSS 3.4 — utility-first CSS framework  
+SASS 1.99 — CSS preprocessor для UGC контента  
+PostCSS 8.5 — CSS transformations  
+Autoprefixer 10.5 — browser prefixes  
+RxJS 7.8 — reactive streams  
+STOMP over SockJS — WebSocket клиент  
+FontAwesome 6.5 — иконки  
+JWT через HTTP Interceptor — аутентификация  
 
-### База и хранилище
+### Database & Storage
 
-PostgreSQL 18.3 — база на AWS RDS, класс db.t4g.micro  
-H2 — база в памяти для тестов  
-Cloudflare R2 — фотографии объявлений, корзина moneybayts-photos, отдача через CDN  
+PostgreSQL 18.3 — production database (AWS RDS, db.t4g.micro)  
+H2 — in-memory database для тестов  
+Cloudflare R2 — image uploads, S3-совместимое хранилище (bucket moneybayts-photos)  
 
-### Облачные службы (AWS, us-east-2)
+### Cloud Services (AWS)
 
-ECS Fargate — backend на ARM64 (Graviton), автомасштабирование  
-ECR — хранилище образов  
-CodeBuild — сборка образа на нативном ARM (Amazon Linux 2023)  
-RDS PostgreSQL — управляемая база  
-Application Load Balancer — приём трафика, проверки состояния  
-Secrets Manager — пароли, ключи, секреты OAuth  
-CloudWatch Logs — журналы задачи и сборки  
-EC2 — bastion для доступа к базе, t4g.small на arm64  
-IAM — роли ecsTaskExecutionRole и MoneybayCodeBuildRole  
+AWS ECS Fargate — serverless deployment (us-east-2, ARM64/Graviton, автомасштабирование)  
+AWS RDS — PostgreSQL 18.3 managed database  
+AWS ECR — container registry для образов backend  
+AWS CodeBuild — native ARM image build (Amazon Linux 2023)  
+AWS Application Load Balancer — traffic routing + health checks  
+AWS Secrets Manager — secrets storage (пароли, JWT, ключи OAuth и R2)  
+AWS CloudWatch Logs — application logging  
+AWS EC2 — bastion host для доступа к базе (t4g.small, arm64)  
+AWS IAM — access control  
+AWS VPC — networking + security groups  
 
-### Облачные службы (Cloudflare)
+### Cloud Services (Cloudflare)
 
-Workers — отрисовка frontend на сервере, воркер moneybay-usa  
-R2 — хранилище фотографий  
-DNS — домен moneybay.us  
-SSL/TLS — сквозное шифрование, постоянный HTTPS  
+Cloudflare Workers — SSR frontend rendering  
+Cloudflare R2 — file storage для фото объявлений  
+Cloudflare DNS — domain management (moneybay.us)  
+Cloudflare CDN — DDoS защита, Full Strict SSL, Always HTTPS  
 
-### Платежи и внешние службы
+### Payments & Integrations
 
-Stripe Checkout — оплата продвижения объявлений  
-Google OAuth2 — вход через Google  
-Facebook Login — вход через Facebook  
-Google reCAPTCHA — защита форм, проверка на сервере  
-SMTP — Mailtrap при разработке, SendGrid или SES на production  
+Stripe Checkout — payment processing (boost listings)  
+Google OAuth2 — social sign-in  
+Facebook Login — social sign-in  
+Google reCAPTCHA — bot protection (проверка на сервере)  
+SMTP — Mailtrap (dev), SendGrid / SES (production)  
 
-### Тестирование и CI/CD
+### Testing & CI/CD
 
-JUnit + Spring Boot Test — 9 методов в трёх файлах  
+JUnit + Spring Boot Test — unit & integration тесты backend  
 Vitest 4.0 — тесты frontend  
-GitHub Actions — запуск сборки и обновление сервиса ECS  
-AWS CodeBuild — сборка образа на ARM  
-Docker — многостадийная сборка: Corretto JDK для компиляции, headless для запуска  
+GitHub Actions — CI/CD pipeline с автодеплоем  
+AWS CodeBuild — native ARM64 image build  
+Docker — multi-stage build (Corretto JDK для компиляции, headless для запуска)  
 
-### DevOps и безопасность
+### DevOps & Security
 
-Docker — контейнеризация  
-Cloudflare — защита от перегрузки, сквозное шифрование, постоянный HTTPS  
-AWS ECS Fargate — управляемая среда с масштабированием и проверками состояния  
-GitHub — хранение кода и Actions  
-Группы безопасности — база открыта только задаче и bastion, задача только балансировщику  
-Secrets Manager — значения секретов вне репозитория, только ссылки по ARN  
+Docker — контейнеризация (Stage 1: Corretto JDK, Stage 2: Corretto headless)  
+Cloudflare — DDoS защита, Full Strict SSL, Always HTTPS  
+AWS ECS Fargate — managed platform (scaling, health checks, rolling deploy)  
+GitHub — version control + Actions  
+Security Groups — база доступна только задаче и bastion, задача только балансировщику  
+AWS Secrets Manager — секреты вне репозитория, в task definition только ARN  
 
-### Устройство CSS
+### CSS Architecture for Scale
 
-Смешанный подход:
+Hybrid подход (используется в Google, Meta, Amazon):
 
-Tailwind CSS — управляемый интерфейс: навигация, кнопки, фильтры, выдвижные панели. Utility-first ускоряет работу над компонентами.  
-SASS (src/ugc.scss) — содержимое от пользователей: описания объявлений, отзывы. Оформление по селекторам, поскольку разметка приходит из базы и классов не имеет.  
+Tailwind CSS — контролируемый UI (навигация, кнопки, фильтры, выдвижные панели). Utility-first для быстрой разработки компонентов.  
+SASS (src/ugc.scss) — UGC контент (описания объявлений, отзывы, HTML из базы). Selector-based для неразмеченного контента.  
 
-Обоснование: Tailwind точен для размеченного интерфейса, SASS — для содержимого, разметку которого мы не задаём.
+Rationale: Масштабируемость, надёжность, производительность. Tailwind эффективен для структурированного UI, SASS — для динамического пользовательского контента.
 
 ### Архитектура
 
-Слои backend: controller, service, repository, model, dto, config, security  
-Отдельно стоящие компоненты Angular и сигналы вместо модулей и зависимости от зон  
-Отрисовка на сервере по маршрутам: открытые страницы на сервере, страницы за входом на клиенте  
-Поддомены по городам в духе Craigslist: CityContextFilter на сервере, CityContextService на клиенте  
-Кэш запросов на клиенте: до 20 секунд ответ свежий, дальше отдаётся сразу с обновлением в фоне  
-Датировка в UTC с учётом часового пояса — важно для платежей и сроков продвижения  
-Обработка webhook Stripe на /webhook/stripe с проверкой подписи  
-Progressive Web App с работой без сети  
-Отзывчивое оформление для настольных компьютеров и телефонов  
+Слоистая структура backend: controller, service, repository, model, dto, config, security  
+Angular standalone components и signals вместо NgModule и zone.js  
+SSR с разбором по маршрутам: публичные страницы на сервере, страницы за авторизацией на клиенте  
+City subdomain routing в духе Craigslist (CityContextFilter на сервере, CityContextService на клиенте)  
+Client-side cache: ответ свежий до 20 секунд, дальше отдаётся сразу с фоновым обновлением  
+Timezone-aware datetime в UTC — для корректности платежей и сроков буста  
+Stripe Webhook обработка с верификацией сигнатуры  
+Progressive Web App с offline-режимом  
+Отзывчивый дизайн (desktop и mobile)  
 Сквозное шифрование HTTPS (TLS 1.2+)  
 
 ## Competitive Position
