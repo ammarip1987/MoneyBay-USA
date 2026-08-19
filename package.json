@@ -6,9 +6,7 @@
     "start": "ng serve --proxy-config proxy.conf.json",
     "build": "ng build",
     "watch": "ng build --watch --configuration development",
-    "test": "ng test",
-    "serve:ssr": "node dist/moneybay-angular/server/server.mjs",
-    "serve:ssr:moneybay-angular": "node dist/moneybay-angular/server/server.mjs"
+    "test": "ng test"
   },
   "private": true,
   "packageManager": "npm@11.12.1",

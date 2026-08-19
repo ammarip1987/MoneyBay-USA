@@ -283,7 +283,7 @@ First run seeds 13 categories + 41 subcategories + 36 subsubcategories + 55 citi
 
 ### Frontend (Angular)
 ```cmd
-cd c:\moneybayts
+cd c:\Moneybay
 ng serve --port 1100
 ```
 Open http://localhost:1100
@@ -302,14 +302,14 @@ Open http://localhost:1100
 
 **Backend (Terminal 1):**
 ```cmd
-cd c:\moneybayts\backend
+cd c:\Moneybay\backend
 .\mvnw spring-boot:run
 ```
 Spring Boot на 5000 + DevTools auto-reload при изменении Java-кода.
 
 **Frontend (Terminal 2):**
 ```cmd
-cd c:\moneybayts
+cd c:\Moneybay
 ng serve
 ```
 Angular на 1100 с HMR — изменения в `.ts/.html/.css` подхватываются за 1-2 секунды.
@@ -322,18 +322,27 @@ PWA Service Worker **отключён** в этом режиме через `ena
 
 **Backend (Terminal 1):**
 ```cmd
-cd c:\moneybayts\backend
+cd c:\Moneybay\backend
 .\mvnw spring-boot:run
 ```
 Spring Boot работает как в Dev режиме.
 
 **Frontend (Terminal 2):**
 ```cmd
-cd c:\moneybayts
+cd c:\Moneybay
 ng build
-npm run serve:ssr
+npx wrangler dev --ip 127.0.0.1 --port 8790
 ```
-Express SSR server на 4000 с production bundle и активным Service Worker.
+Воркер Cloudflare с production-сборкой и включённым Service Worker.
+
+Слушать на `127.0.0.1`, не на `localhost`. Порт от 8790 и выше: 8788 остаётся
+занятым после неудачных запусков. Если локальный wrangler старше
+`compatibility_date` из `wrangler.jsonc`, он не стартует — временно понизить
+дату в конфигурации.
+
+Скрипты `serve:ssr` и `serve:ssr:moneybay-angular` удалены из `package.json`:
+они запускали `node server.mjs`, а `server.mjs` теперь воркер на
+`AngularAppEngine` — `node` его не выполняет.
 
 После каждого изменения кода нужна **пересборка через `ng build`** — это медленно (30-60 секунд). Поэтому этот режим только для финальной проверки, не для разработки.
 
@@ -1219,7 +1228,7 @@ SPA fallback на `/index.html` для всех navigation requests. Исклю�
 **Как проверить PWA локально:**
 
 ```cmd
-cd c:\moneybayts
+cd c:\Moneybay
 ng build
 npm run serve:ssr
 ```
@@ -1287,7 +1296,6 @@ DELETE FROM users WHERE email LIKE '%@test.moneybay.us';
 | WebSocket chat | 80% |
 | Stripe Checkout | 90% (mock webhooks dev) |
 | Image upload | 85% |
-| SSR (Angular Universal) | 100% |
 | PWA Service Worker | 100% |
 | Lazy load images (loading="lazy") | 100% |
 | Tailwind Typography (prose UGC) | 100% |
@@ -1298,251 +1306,90 @@ DELETE FROM users WHERE email LIKE '%@test.moneybay.us';
 | Sitemap.xml + robots.txt | 100% |
 | SEO meta tags (SeoService) | 100% |
 | DevOps files (Docker, CI/CD) | 80% |
+| Жалобы на объявления + фильтры слов | 100% |
+| Рейтинги пользователей | сервис написан, контроллера нет |
+| Сборка образа в CodeBuild (ARM) | 100% |
+| Тёмная тема | сервис написан, переключатель отключён |
 | Tests (Spring Boot Test + Vitest) | 5% |
 
 ## TODO
 
 ### Backend
-- Google OAuth login
-- Google Cloud Storage для файлов (сейчас локально)
-- Google Vision AI для модерации
-- Telegram bot integration
-- Tests (Spring Boot Test) — config готов, нужны Controller/Repository/Service тесты
-- Admin: listing-specific chat
-- Support chat (user → admin)
-- Public view profile endpoint
+- Тесты: конфигурация готова, нужны наборы для контроллеров, хранилищ и сервисов
+- Подключить рейтинги пользователей — сервис написан, контроллера нет
+- Панель администратора для жалоб и фильтров слов
+- Apple Sign-In — обмен кода готов, ждёт учётных данных
 
 ### Frontend
-- Интеграция reCAPTCHA widget (`ng-recaptcha`) в Login/Register формы
-- Angular verify-email страница (приём token из email ссылки)
-- Infinite scroll listings
-- Scroll animations (fade-in-up)
-- Public view profile component
-- Error pages (403/404/500)
-- Tests (Vitest, Playwright)
-- Dark mode toggle
-- i18n (Spanish для US-Latino аудитории)
+- Виджет reCAPTCHA (`ng-recaptcha`) в формы входа и регистрации — на сервере
+  проверка есть, на клиенте виджета нет
+- Тёмная тема: `ThemeService` и `ThemeToggleComponent` написаны, переключатель в
+  шапке закомментирован, классов `dark:` в разметке нет
+- Тесты (Vitest, Playwright)
+- Испанский язык для аудитории US-Latino
+- Оформление пустых состояний
 
 ### DevOps
 - Автоматический деплой frontend в составе CI (сейчас вручную)
 - Замена root-ключей AWS на пользователя IAM
-- Domain mapping (moneybay.us, api.moneybay.us)
-- SSL сертификаты
-- Cloud Secret Manager для JWT_SECRET, STRIPE_*
-- Cloud Logging + Monitoring alerts
+- Правило кэширования для `photos.moneybay.us` — сейчас `cf-cache-status: DYNAMIC`
+- Оповещения CloudWatch по ошибкам задачи
 
-## Trust & Safety (Community-Driven Moderation)
+## Trust & Safety
 
-**Strategy:** Community flagging + simple keyword filters (copy Craigslist free model, improve speed)
+Подход: жалобы сообщества плюс фильтры слов. Дешевле распознавания изображений и
+быстрее ручной предмодерации.
 
-### Phase 1 - User Flagging System (THIS WEEK)
+### Жалобы на объявления — реализовано
 
-**Implementation:**
-- New `ListingFlag` entity (id, listing_id, user_id, reason, created_at, status)
-- Endpoint: `POST /api/listings/{id}/flag` (auth required)
-- Auto-ban after 20 flags (configurable)
-- Admin dashboard to review flagged listings
-
-**Reasons for flagging:**
-- Spam/duplicate
-- Prohibited items
-- Fraud/scam
-- Offensive content
-- Invalid contact info
-
-**Cost:** $0 (community moderation)
-
-### Phase 2 - Keyword Filters (NEXT WEEK)
-
-**Implementation:**
-- `KeywordFilter` entity (id, word, category: SPAM/PROHIBITED/ABUSE)
-- Service to scan listing title + description
-- Auto-hide if matches (notify user)
-- Configurable whitelist (for false positives)
-
-**Categories:**
-```
-SPAM: "free money", "click here", "earn quick cash"
-PROHIBITED: "gun", "drug", "fake id"  
-ABUSE: (optional, for severity)
-```
-
-**Source:**
-- Use existing open-source list (better-profanity)
-- Or create custom list in database
-- Update via admin panel
-
-**Cost:** $0 (no AI needed)
-
-### Phase 3 - Admin Actions (WEEK 2)
+| Составляющая | Файл |
+|---|---|
+| Сущность | `model/ListingFlag.java` |
+| Хранилище | `repository/ListingFlagRepository.java` |
+| Логика | `service/FlagListingService.java` |
+| Контроллер | `controller/FlagController.java` |
 
 **Endpoints:**
-- `DELETE /api/listings/{id}` (remove listing)
-- `POST /api/users/{id}/suspend` (24h timeout)
-- `POST /api/users/{id}/ban` (permanent)
 
-**Metrics:**
-- Flag count per listing
-- Flagged listings per day
-- Ban rate
-- Appeal process (users can contact support)
+```
+POST /api/listings/{id}/flag           # пожаловаться (нужен вход)
+POST /api/listings/{id}/flag/resolve   # снять жалобы (админ)
+```
 
-### Competitive Advantage vs Craigslist
+Один пользователь — одна жалоба на объявление. Порог автоматического скрытия
+задан в `FlagListingService.AUTO_BAN_THRESHOLD`; при его достижении объявление
+переводится в `ListingStatus.BANNED`.
 
-| Feature | Craigslist | MoneyBay |
-|---------|-----------|----------|
-| Flag-to-removal time | 1-3 days | 1 hour |
-| Ban enforcement | Weak, easy to bypass | Strong, automatic |
-| UI for flagging | Hidden, hard to find | Obvious, clear |
-| Appeal process | None (email only) | Automatic (support ticket) |
-| Cost | $0 | $0 |
+**Причины жалоб:** SPAM, PROHIBITED_ITEM, FRAUD_SCAM, OFFENSIVE_CONTENT,
+INVALID_CONTACT, DUPLICATE, OTHER.
 
-### Phase 4 - User Ratings System (WEEK 3)
+### Фильтры слов — реализовано
 
-**Implementation:**
-- `UserRating` entity (1-5 stars, categories: COMMUNICATION, ITEM_QUALITY, SELLER_TRUST, BUYER_TRUST)
-- `UserRatingService` (getStats, rateUser)
-- Endpoints: `POST /api/users/{id}/rate`, `GET /api/users/{id}/ratings`
-- Display average rating on user profile + listing cards
+`model/KeywordFilter.java`, `service/KeywordFilterService.java`. Проверка
+вызывается из `ListingController` при создании и правке объявления. Записи
+загружаются в `DataInitializer`.
 
-**Strategy:**
-- Ratings = reputation incentive (people fear bad reviews)
-- Prevents repeat fraud (bad sellers get 1-2 stars, no one buys)
-- Cost: $0 (community-driven)
+Категории и уровни: SPAM (уровень 2, объявление скрывается), PROHIBITED_ITEM
+(уровень 3, автоматический бан), ABUSE (уровень 1).
 
-### Future (Phase 5+)
+Список кэшируется через `@Cacheable("keywords")`, сбрасывается по `@CacheEvict`
+при изменении записей — иначе проверка каждого объявления била бы в базу.
 
-- AI content scanning (OpenAI Moderation) — only for appeals
-- Photo verification (Hive AI free tier) — optional
-- Trust badge for verified sellers/buyers (once ratings stable)
-- Automated KYC with IDology (when volume grows)
+### Рейтинги пользователей — не подключены
 
-## Roadmap — Spring AI Integration
+`model/UserRating.java`, `repository/UserRatingRepository.java` и
+`service/UserRatingService.java` написаны, но контроллера нет и сервис ниоткуда
+не вызывается. Оценки по шкале 1-5 по четырём признакам: общение, состояние
+товара, доверие к продавцу, доверие к покупателю.
 
-**Status:** Planned (not yet implemented)
+Чтобы включить: контроллер поверх сервиса, вывод оценки в карточке объявления и
+в профиле, запрет повторной оценки одной сделки.
 
-**Purpose:** Add AI capabilities to enhance user experience and automate moderation.
+### Чего нет
 
-### Planned AI Features
-
-**Backend (Spring AI + LLM):**
-- **Listing Description Generation:** AI улучшает или генерирует описания объявлений (GPT-4-mini или Claude)
-- **Auto-Categorization:** Автоматическая категоризация листингов по заголовку/описанию
-- **Content Moderation:** Спам-детекция, проверка на запрещенные товары
-- **Search Semantics:** Семантический поиск via embeddings (понимание intent пользователя)
-- **Seller Ratings Summary:** AI генерирует summary отзывов продавца
-
-**Backend (Embeddings для семантического поиска):**
-- **Embeddings Storage:** PostgreSQL `pgvector` расширение для хранения vector embeddings
-- **Listing Embeddings:** Каждый листинг получает embedding при создании/обновлении
-- **Semantic Search:** Пользователь вводит query → генерируется embedding → поиск по similarity в БД
-
-**Frontend (Angular):**
-- AI-powered search suggestions (как ищут другие пользователи)
-- Listing preview с AI summary
-- Chatbot для поддержки (FAQ)
-
-### Embeddings Model Selection
-
-**Option 1: OpenAI text-embedding-3-small** (Recommended)
-- **Price:** $0.02 per 1M tokens
-- **Dimensions:** 1536
-- **Pros:** Самый безопасный дефолт, надежный, всегда актуален
-- **Cons:** Зависимость от OpenAI API
-
-**Option 2: Jina AI jina-embeddings-v3**
-- **Price:** $0.02 per 1M tokens (одинаковая цена)
-- **Dimensions:** 1024 (configurable до 8192)
-- **Pros:** Отлично работает с длинными текстами (до 8192 токенов), главный конкурент OpenAI
-- **Cons:** Менее популярен, чуть медленнее
-
-**Рекомендация:** Начать с OpenAI, если нужна поддержка длинных текстов — переключиться на Jina AI.
-
-Обе цены идентичны (~$0.02), разница в качестве на длинных текстах (описания листингов часто 500+ слов).
-
-### Implementation Steps
-
-1. Add Spring AI + pgvector dependencies to `pom.xml`:
-   ```xml
-   <!-- Spring AI OpenAI (for LLM + embeddings) -->
-   <dependency>
-       <groupId>org.springframework.ai</groupId>
-       <artifactId>spring-ai-openai-spring-boot-starter</artifactId>
-       <version>0.8.1</version>
-   </dependency>
-   
-   <!-- PostgreSQL pgvector extension (for vector similarity search) -->
-   <dependency>
-       <groupId>org.postgresql</groupId>
-       <artifactId>postgresql</artifactId>
-       <version>42.7.0</version>
-   </dependency>
-   
-   <!-- Alternative: Jina AI embeddings (replace OpenAI if needed) -->
-   <!-- <dependency>
-       <groupId>org.springframework.ai</groupId>
-       <artifactId>spring-ai-jina-embeddings-spring-boot-starter</artifactId>
-       <version>0.8.1</version>
-   </dependency> -->
-   ```
-
-2. Enable pgvector in PostgreSQL:
-   ```sql
-   CREATE EXTENSION IF NOT EXISTS vector;
-   ```
-
-3. Create Listing table with embedding column:
-   ```sql
-   ALTER TABLE listings ADD COLUMN embedding vector(1536);
-   CREATE INDEX ON listings USING ivfflat (embedding vector_cosine_ops);
-   ```
-
-4. Configure API keys in `application.properties`:
-   ```properties
-   spring.ai.openai.api-key=${OPENAI_API_KEY}
-   spring.ai.openai.chat.options.model=gpt-4-mini
-   spring.ai.openai.embedding.options.model=text-embedding-3-small
-   
-   # Alternative for Jina AI:
-   # spring.ai.jina.api-key=${JINA_API_KEY}
-   # spring.ai.jina.embedding.options.model=jina-embeddings-v3
-   ```
-
-5. Create AI service classes:
-   - `EmbeddingService` — генерирует embeddings для листингов (OpenAI или Jina)
-   - `ListingDescriptionService` — улучшение описаний (GPT-4-mini)
-   - `ContentModerationService` — модерация контента
-   - `AutoCategoryService` — автокатегоризация
-   - `SemanticSearchService` — поиск по similarity в pgvector
-
-6. Add REST endpoints:
-   - `POST /api/listings/enhance` — улучшить описание
-   - `POST /api/listings/auto-categorize` — определить категорию
-   - `POST /api/moderation/check` — проверить контент
-   - `POST /api/search/semantic` — семантический поиск (query → embedding → similarity search)
-   - `GET /api/listings/{id}/embedding` — получить embedding листинга
-
-7. Update Listing creation/update flow:
-   - При `POST /api/listings` автоматически генерировать embedding и сохранять в DB
-   - При `PUT /api/listings/{id}` перегенерировать embedding если изменилось описание
-
-8. Frontend integration in Angular components
-   - Search page с "AI-powered search" toggle
-   - Semantic search results vs keyword search
-   - Listing preview с AI summary
-
-### Cost Estimates
-
-- **OpenAI GPT-4-Mini:** ~$0.02 per 1M input tokens, $0.06 per 1M output tokens
-- **Anthropic Claude:** Similar pricing tier
-- **Alternative:** Use free tier Anthropic Claude or open-source LLM (Ollama local)
-
-### Security Considerations
-
-- Never expose API keys in frontend
-- Rate limit AI requests per user (prevent abuse)
-- Implement request validation before sending to AI
-- Cache AI results to reduce API calls
+- Панель администратора для жалоб и фильтров (endpoints `/api/admin/keywords`)
+- Проверка личности при крупных сделках
+- Разбор споров
 
 ## Troubleshooting
 
@@ -1621,14 +1468,14 @@ taskkill /F /PID <PID>
 
 **Терминал 1 — Spring Boot (бэкенд):**
 ```cmd
-cd c:\moneybayts\backend
+cd c:\Moneybay\backend
 .\mvnw spring-boot:run
 ```
 Слушает порт **5000**, отдаёт API (`/api/categories`, `/api/listings`, ...).
 
 **Терминал 2 — Angular (фронтенд):**
 ```cmd
-cd c:\moneybayts
+cd c:\Moneybay
 ng serve
 ```
 Слушает порт **1100**, открыть в браузере http://localhost:1100.
