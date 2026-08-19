@@ -15,7 +15,7 @@ import { environment } from '../../../environments/environment';
   standalone: true,
   imports: [CommonModule, FormsModule, ImageUploadComponent, CityAutocompleteComponent],
   template: `
-    <div class="max-w-3xl mx-auto px-4 py-8">
+    <div class="max-w-3xl mx-auto px-4 py-8 min-page">
       <h1 class="text-3xl font-bold text-mb-dark mb-8">Edit Listing</h1>
 
       @if (listing()) {

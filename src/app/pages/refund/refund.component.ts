@@ -4,7 +4,7 @@ import { Component } from '@angular/core';
   selector: 'app-refund',
   standalone: true,
   template: `
-    <div class="max-w-4xl mx-auto px-4 py-12">
+    <div class="max-w-4xl mx-auto px-4 py-12 min-page">
       <h1 class="text-4xl font-bold text-mb-dark mb-8">Refund Policy</h1>
       <div class="prose max-w-none space-y-4 text-gray-700">
         <p>Last updated: January 1, 2026</p>

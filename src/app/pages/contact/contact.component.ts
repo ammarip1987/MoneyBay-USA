@@ -4,7 +4,7 @@ import { Component } from '@angular/core';
   selector: 'app-contact',
   standalone: true,
   template: `
-    <div class="max-w-2xl mx-auto px-4 py-12">
+    <div class="max-w-2xl mx-auto px-4 py-12 min-page">
       <h1 class="text-4xl font-bold text-mb-dark mb-8">Contact Us</h1>
 
       <div class="bg-white rounded-2xl shadow-lg p-8 space-y-4">

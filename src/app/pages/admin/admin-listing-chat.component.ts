@@ -32,7 +32,7 @@ interface ListingChats {
   standalone: true,
   imports: [CommonModule, RouterLink, SkeletonLoaderComponent],
   template: `
-    <div class="max-w-6xl mx-auto px-4 py-8">
+    <div class="max-w-6xl mx-auto px-4 py-8 min-page">
       <a routerLink="/admin/chats" class="text-mb-blue hover:underline mb-4 inline-block">← Back to admin chats</a>
 
       @if (loading()) {

@@ -20,7 +20,7 @@ interface SupportMessage {
   standalone: true,
   imports: [CommonModule, FormsModule, SkeletonLoaderComponent],
   template: `
-    <div class="max-w-3xl mx-auto px-4 py-8">
+    <div class="max-w-3xl mx-auto px-4 py-8 min-page">
       <div class="bg-white rounded-2xl shadow-lg overflow-hidden">
         <div class="bg-mb-dark text-white p-4 flex items-center gap-3">
           <i class="fas fa-headset text-2xl"></i>

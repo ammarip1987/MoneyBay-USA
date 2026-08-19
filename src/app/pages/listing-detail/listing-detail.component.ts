@@ -14,7 +14,7 @@ import { ListingCardComponent } from '../../components/listing-card/listing-card
   imports: [CommonModule, RouterLink, ListingCardComponent, FormsModule],
   template: `
     @if (listing()) {
-      <div class="max-w-6xl mx-auto px-4 py-8">
+      <div class="max-w-6xl mx-auto px-4 py-8 min-page">
         <a href="/" (click)="goBackToListings($event)" class="text-mb-blue hover:underline mb-4 inline-block">← Back to listings</a>
 
         <div class="grid grid-cols-1 lg:grid-cols-2 gap-0 rounded-none">

@@ -15,7 +15,7 @@ interface PricingTier {
   standalone: true,
   imports: [CommonModule],
   template: `
-    <div class="max-w-5xl mx-auto px-4 py-12">
+    <div class="max-w-5xl mx-auto px-4 py-12 min-page">
       <div class="text-center mb-12">
         <h1 class="text-4xl font-bold text-mb-dark mb-4">Boost Your Listing</h1>
         <p class="text-gray-600 text-lg">Get up to 10x more views with premium placement</p>

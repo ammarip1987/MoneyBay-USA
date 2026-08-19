@@ -14,7 +14,7 @@ import { CityAutocompleteComponent } from '../../components/city-autocomplete/ci
   standalone: true,
   imports: [CommonModule, FormsModule, ImageUploadComponent, CityAutocompleteComponent],
   template: `
-    <div class="max-w-3xl mx-auto px-4 py-8">
+    <div class="max-w-3xl mx-auto px-4 py-8 min-page">
       <h1 class="text-3xl font-bold text-mb-dark mb-8">Post New Ad</h1>
 
       <form (ngSubmit)="onSubmit()" class="bg-white rounded-2xl shadow-lg p-8 space-y-6">

@@ -29,7 +29,7 @@ interface PublicProfile {
         <app-skeleton-loader variant="listing-grid" [count]="8"></app-skeleton-loader>
       </div>
     } @else if (profile()) {
-      <div class="max-w-6xl mx-auto px-4 py-8">
+      <div class="max-w-6xl mx-auto px-4 py-8 min-page">
         <div class="bg-white rounded-2xl shadow-lg p-8 mb-8">
           <div class="flex flex-col sm:flex-row items-center sm:items-start gap-6">
             <div class="w-24 h-24 bg-gradient-to-br from-mb-blue to-mb-cyan rounded-full flex items-center justify-center text-white text-4xl font-bold flex-shrink-0">

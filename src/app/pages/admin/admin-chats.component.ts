@@ -17,7 +17,7 @@ interface AdminChat {
   standalone: true,
   imports: [CommonModule, RouterLink],
   template: `
-    <div class="max-w-7xl mx-auto px-4 py-8">
+    <div class="max-w-7xl mx-auto px-4 py-8 min-page">
       <div class="flex justify-between items-center mb-8">
         <h1 class="text-3xl font-bold text-mb-dark">Admin: All Chats</h1>
         <div class="flex gap-2">

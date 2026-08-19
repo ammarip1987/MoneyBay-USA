@@ -10,7 +10,7 @@ import { AuthService } from '../../services/auth.service';
   standalone: true,
   imports: [CommonModule, FormsModule],
   template: `
-    <div class="max-w-2xl mx-auto px-4 py-8">
+    <div class="max-w-2xl mx-auto px-4 py-8 min-page">
       <h1 class="text-3xl font-bold text-mb-dark mb-8">Edit Profile</h1>
 
       @if (error()) {

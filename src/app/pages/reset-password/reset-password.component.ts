@@ -10,7 +10,7 @@ import { NotificationService } from '../../services/notification.service';
   standalone: true,
   imports: [CommonModule, FormsModule, RouterLink],
   template: `
-    <div class="max-w-md mx-auto px-4 py-12">
+    <div class="max-w-md mx-auto px-4 py-12 min-page">
       <div class="bg-white rounded-2xl shadow-lg p-8">
         <h1 class="text-3xl font-bold text-mb-dark mb-6 text-center">Reset Password</h1>
 
