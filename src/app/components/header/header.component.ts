@@ -40,7 +40,8 @@ import { NotificationsService } from '../../services/notifications.service';
               @if (auth.currentUser()?.is_admin) {
                 <a routerLink="/admin/chats" class="btn btn-primary text-sm">Admin</a>
               }
-              <span class="text-gray-300">{{ auth.currentUser()?.username }}</span>
+              <!-- Имя пользователя убрано из шапки: оно приходит асинхронно, и
+                   его ширина сдвигала ссылки слева. Видно на странице Profile. -->
               <button (click)="logout()" class="hover:text-mb-cyan transition">Log out</button>
             } @else {
               <a routerLink="/login" class="hover:text-mb-cyan transition">Log in</a>
@@ -70,8 +71,7 @@ import { NotificationsService } from '../../services/notifications.service';
               @if (auth.currentUser()?.is_admin) {
                 <a routerLink="/admin/chats" (click)="closeMobileMenu()" class="btn btn-primary text-sm self-start">Admin</a>
               }
-              <span class="text-gray-300 py-2 border-t border-gray-700">{{ auth.currentUser()?.username }}</span>
-              <button (click)="logout()" class="hover:text-mb-cyan transition py-2 text-left">Log out</button>
+              <button (click)="logout()" class="hover:text-mb-cyan transition py-2 text-left border-t border-gray-700 pt-4">Log out</button>
             } @else {
               <a routerLink="/login" (click)="closeMobileMenu()" class="hover:text-mb-cyan transition py-2">Log in</a>
               <a routerLink="/register" (click)="closeMobileMenu()" class="btn btn-primary self-start">Sign up</a>
