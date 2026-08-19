@@ -8,107 +8,45 @@ MoneyBay project is built in Enterprise using strict typing and preserving inher
 
 ## Технологический стек
 
-### Backend (Java)
+**Backend (Java)**
 
-- **Java 25** (Eclipse Temurin) — язык
-- **Spring Boot 3.5.0** — каркас приложения
-- **Spring Data JPA + Hibernate** — доступ к базе
-- **Spring Security** — вход и права
-- **jjwt 0.12.6** — токены JWT
-- **Spring WebSocket (STOMP)** — обмен сообщениями в реальном времени
-- **Spring Boot Mail** — отправка почты
-- **Spring Boot Actuator** — проверки состояния для балансировщика
-- **Bucket4j 8.14.0** — ограничение частоты запросов
-- **Springdoc OpenAPI 2.7.0** — описание API, Swagger UI
-- **Stripe Java 26.6.0** — приём платежей
-- **AWS SDK S3 2.25.0** — загрузка фотографий в Cloudflare R2 по протоколу S3
-- **Lombok 1.18.38** — сокращение шаблонного кода
-- **Maven** — сборка
+Java 25 (Eclipse Temurin) — язык. Spring Boot 3.5.0 — каркас приложения. Spring Data JPA с Hibernate — доступ к базе. Spring Security — вход и права. jjwt 0.12.6 — токены JWT. Spring WebSocket со STOMP — обмен сообщениями в реальном времени. Spring Boot Mail — отправка почты. Spring Boot Actuator — проверки состояния для балансировщика. Bucket4j 8.14.0 — ограничение частоты запросов. Springdoc OpenAPI 2.7.0 — описание API и Swagger UI. Stripe Java 26.6.0 — приём платежей. AWS SDK S3 2.25.0 — загрузка фотографий в Cloudflare R2 по протоколу S3. Lombok 1.18.38 — сокращение шаблонного кода. Maven — сборка.
 
-### Frontend (TypeScript)
+**Frontend (TypeScript)**
 
-- **Angular 21.2** — каркас, отдельно стоящие компоненты и сигналы
-- **TypeScript 5.9** — типизация
-- **@angular/ssr 21.2** — отрисовка на сервере
-- **@angular/service-worker 21.2** — Progressive Web App
-- **Tailwind CSS 3.4** — оформление управляемого интерфейса
-- **@tailwindcss/typography 0.5** — класс `prose` для содержимого из базы
-- **SASS 1.99** — оформление пользовательского содержимого
-- **PostCSS 8.5 + Autoprefixer 10.5** — обработка стилей
-- **RxJS 7.8** — потоки данных
-- **@stomp/stompjs 7.3 + sockjs-client 1.6** — WebSocket
-- **FontAwesome 6.5** — значки
-- **JWT через HTTP-перехватчик** — вход
+Angular 21.2 — каркас, отдельно стоящие компоненты и сигналы вместо модулей. TypeScript 5.9 — типизация. @angular/ssr 21.2 — отрисовка на сервере. @angular/service-worker 21.2 — Progressive Web App. Tailwind CSS 3.4 — оформление управляемого интерфейса. @tailwindcss/typography 0.5 — класс prose для содержимого из базы. SASS 1.99 — оформление пользовательского содержимого. PostCSS 8.5 и Autoprefixer 10.5 — обработка стилей. RxJS 7.8 — потоки данных. @stomp/stompjs 7.3 с sockjs-client 1.6 — WebSocket. FontAwesome 6.5 — значки. Вход по JWT через HTTP-перехватчик.
 
-### База и хранилище
+**База и хранилище**
 
-- **PostgreSQL 18.3** — база на AWS RDS (`db.t4g.micro`)
-- **H2** — база в памяти для тестов
-- **Cloudflare R2** — фотографии объявлений, корзина `moneybayts-photos`, отдача
-  напрямую через CDN
+PostgreSQL 18.3 — база на AWS RDS, класс db.t4g.micro. H2 — база в памяти для тестов. Cloudflare R2 — фотографии объявлений в корзине moneybayts-photos, отдаются напрямую через CDN, минуя backend.
 
-### Инфраструктура (AWS, регион us-east-2)
+**Облачные службы (AWS, регион us-east-2)**
 
-- **ECS Fargate** — backend, платформа ARM64 (Graviton)
-- **ECR** — хранилище образов
-- **CodeBuild** — сборка образа на нативном ARM (Amazon Linux 2023)
-- **RDS PostgreSQL** — база
-- **Application Load Balancer** — приём трафика, проверки состояния
-- **Secrets Manager** — пароли, ключи, секреты OAuth
-- **CloudWatch Logs** — журналы задачи и сборки
-- **EC2** — bastion для доступа к базе (t4g.small, arm64)
-- **IAM** — роли `ecsTaskExecutionRole`, `MoneybayCodeBuildRole`
+ECS Fargate — backend на платформе ARM64 (Graviton). ECR — хранилище образов. CodeBuild — сборка образа на нативном ARM под Amazon Linux 2023. RDS PostgreSQL — управляемая база. Application Load Balancer — приём трафика и проверки состояния задач. Secrets Manager — пароли, ключи и секреты OAuth. CloudWatch Logs — журналы задачи и сборки. EC2 — bastion для доступа к базе, t4g.small на arm64. IAM — роли ecsTaskExecutionRole и MoneybayCodeBuildRole.
 
-### Инфраструктура (Cloudflare)
+**Облачные службы (Cloudflare)**
 
-- **Workers** — отрисовка frontend на сервере, воркер `moneybay-usa`
-- **R2** — хранилище фотографий
-- **DNS** — домен `moneybay.us`
-- **SSL/TLS** — сквозное шифрование
+Workers — отрисовка frontend на сервере, воркер moneybay-usa. R2 — хранилище фотографий. DNS — домен moneybay.us. SSL/TLS — сквозное шифрование.
 
-### Платежи и внешние службы
+**Платежи и внешние службы**
 
-- **Stripe Checkout** — продвижение объявлений
-- **Google OAuth2** — вход через Google
-- **Facebook Login** — вход через Facebook
-- **Google reCAPTCHA** — защита форм (на сервере; виджета на клиенте нет)
-- **SMTP** — Mailtrap при разработке, SendGrid или SES на production
+Stripe Checkout 26.6.0 — оплата продвижения объявлений. Google OAuth2 — вход через Google. Facebook Login — вход через Facebook. Google reCAPTCHA — защита форм, проверка на сервере. SMTP — Mailtrap при разработке, SendGrid или SES на production.
 
-### Тестирование и CI/CD
+**Тестирование и CI/CD**
 
-- **JUnit + Spring Boot Test** — 9 методов в 3 файлах
-- **Vitest 4.0** — тесты frontend (1 файл)
-- **GitHub Actions** — запуск сборки и обновление сервиса ECS
-- **AWS CodeBuild** — сборка образа
-- **Docker** — многостадийная сборка (Temurin 25 JDK → JRE Alpine)
+JUnit со Spring Boot Test — 9 методов в трёх файлах. Vitest 4.0 — тесты frontend. GitHub Actions — запуск сборки и обновление сервиса ECS. AWS CodeBuild — сборка образа на ARM. Docker — многостадийная сборка: Temurin 25 JDK для компиляции, JRE Alpine для запуска.
 
-### Устройство CSS
+**DevOps и безопасность**
 
-Смешанный подход:
+Docker — контейнеризация. Cloudflare — защита от перегрузки, сквозное шифрование, постоянный HTTPS. AWS ECS Fargate — управляемая среда с масштабированием и проверками состояния. GitHub — хранение кода и Actions. Группы безопасности сужают доступ: база открыта только задаче и bastion, задача — только балансировщику. Секреты в Secrets Manager, в репозитории только ссылки по ARN.
 
-- **Tailwind CSS** — управляемый интерфейс: навигация, кнопки, фильтры,
-  выдвижные панели. Utility-first ускоряет работу над компонентами.
-- **SASS** (`src/ugc.scss`) — содержимое, пришедшее от пользователей: описания
-  объявлений, отзывы. Оформление по селекторам, поскольку разметка приходит из
-  базы и классов не имеет.
+**Устройство CSS**
 
-### Устройство приложения
+Смешанный подход. Tailwind CSS — управляемый интерфейс: навигация, кнопки, фильтры, выдвижные панели; utility-first ускоряет работу над компонентами. SASS в src/ugc.scss — содержимое от пользователей: описания объявлений и отзывы; оформление по селекторам, поскольку разметка приходит из базы и классов не имеет. Обоснование: Tailwind точен для размеченного интерфейса, SASS — для содержимого, разметку которого мы не задаём.
 
-- Отдельно стоящие компоненты Angular и сигналы вместо модулей и зависимостей от
-  зон
-- Слои backend: `controller`, `service`, `repository`, `model`, `dto`, `config`,
-  `security`
-- Отрисовка на сервере с разбором по маршрутам: открытые страницы на сервере,
-  страницы за входом на клиенте
-- Поддомены по городам в духе Craigslist: `CityContextFilter` на сервере,
-  `CityContextService` на клиенте
-- Кэш запросов на клиенте: свежий ответ до 20 секунд, просроченный отдаётся сразу
-  с обновлением в фоне
-- Датировка в UTC с учётом часового пояса
-- Обработка webhook Stripe с проверкой подписи
-- Progressive Web App с работой без сети
-- Отзывчивое оформление для настольных компьютеров и телефонов
-- Сквозное шифрование HTTPS
+**Архитектура**
+
+Слои backend: controller, service, repository, model, dto, config, security. Отдельно стоящие компоненты Angular и сигналы вместо модулей и зависимости от зон. Отрисовка на сервере с разбором по маршрутам: открытые страницы на сервере, страницы за входом на клиенте. Поддомены по городам в духе Craigslist — CityContextFilter на сервере, CityContextService на клиенте. Кэш запросов на клиенте: до 20 секунд ответ свежий, дальше отдаётся сразу с обновлением в фоне. Датировка в UTC с учётом часового пояса — важно для платежей и сроков продвижения. Обработка webhook Stripe с проверкой подписи. Progressive Web App с работой без сети. Отзывчивое оформление для настольных компьютеров и телефонов. Сквозное шифрование HTTPS.
 
 ## Competitive Position
 
