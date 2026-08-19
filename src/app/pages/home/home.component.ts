@@ -303,9 +303,24 @@ export class HomeComponent implements OnInit, OnDestroy, AfterViewInit {
     });
 
     this.route.queryParams.subscribe(params => {
+      // Переход в категорию не меняет маршрут, только параметры запроса, и
+      // компонент остаётся тем же. Без очистки объявления прежнего раздела
+      // висят на экране, пока грузится новый: сначала пропадают плитки и hero,
+      // потом сменяются карточки. Очищаем только при смене раздела и только
+      // когда ответа нет в кэше — иначе возврат назад тоже начнёт мигать.
+      const sectionChanged =
+        (params['category'] || null) !== this.selectedCategory() ||
+        (params['sub'] || null) !== this.selectedSub() ||
+        (params['subsub'] || null) !== this.selectedSubSub();
+
       this.selectedCategory.set(params['category'] || null);
       this.selectedSub.set(params['sub'] || null);
       this.selectedSubSub.set(params['subsub'] || null);
+
+      if (sectionChanged) {
+        this.subcategories.set([]);
+        this.subsubcategories.set([]);
+      }
       this.searchQuery = params['q'] || '';
       this.cityFilter = params['city'] || '';
       this.sortBy = params['sort'] || 'newest';
@@ -478,7 +493,12 @@ export class HomeComponent implements OnInit, OnDestroy, AfterViewInit {
     } else {
       this.currentPage.set(1);
       this.hasMore.set(true);
-      if (!this.api.hasCachedListings(params)) this.loading.set(true);
+      if (!this.api.hasCachedListings(params)) {
+        this.loading.set(true);
+        // Объявления прежнего раздела не должны висеть под заголовком нового:
+        // на их месте показываются заглушки, пока идёт запрос
+        this.listings.set([]);
+      }
     }
 
     this.api.getListings(params).subscribe({
