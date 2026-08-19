@@ -60,3 +60,6 @@ backend/.env
 deploy-body.json
 env-*.json
 stripe-*.json
+
+# Wrangler build cache
+.wrangler/
