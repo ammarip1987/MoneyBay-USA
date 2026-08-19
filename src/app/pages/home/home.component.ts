@@ -256,7 +256,9 @@ export class HomeComponent implements OnInit, OnDestroy, AfterViewInit {
   }
 
   listings = signal<Listing[]>([]);
-  categories = signal<Category[]>([]);
+  // Список из сервиса: переживает уничтожение компонента, поэтому при
+  // возврате на главную плитки уже на месте и не перерисовываются
+  categories = this.api.categories;
   cities = signal<City[]>([]);
   subcategories = signal<Subcategory[]>([]);
   subsubcategories = signal<Subcategory[]>([]);
@@ -292,12 +294,9 @@ export class HomeComponent implements OnInit, OnDestroy, AfterViewInit {
   sortBy: string = 'newest';
 
   ngOnInit(): void {
-    this.api.getCategories().subscribe({
-      // Порядок задаёт запрос к базе: сортировка по имени. Ручная перестановка
-      // Beauty и Kids больше не нужна и перебивала бы алфавит.
-      next: (data) => this.categories.set(data),
-      error: () => this.categories.set([])
-    });
+    // Ответ сервис кладёт в свой сигнал сам, здесь только запуск запроса.
+    // Порядок задаёт запрос к базе: сортировка по имени.
+    this.api.getCategories().subscribe({ error: () => {} });
     this.api.getCities().subscribe({
       next: (data) => this.cities.set(data),
       error: () => this.cities.set([])

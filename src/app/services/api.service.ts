@@ -1,4 +1,4 @@
-import { Injectable, inject } from '@angular/core';
+import { Injectable, inject, signal } from '@angular/core';
 import { HttpClient, HttpParams } from '@angular/common/http';
 import { Observable, of } from 'rxjs';
 import { tap } from 'rxjs/operators';
@@ -142,9 +142,18 @@ export class ApiService {
     return !!hit && Date.now() - hit.at < this.cacheTtlMs;
   }
 
+  /**
+   * Категории живут в сервисе, а не в компоненте: главная уничтожается при
+   * уходе и создаётся заново при возврате, поэтому её поле каждый раз
+   * стартовало пустым и плитки перерисовывались. Сервис переживает переходы,
+   * значит список уже на месте к первому кадру.
+   */
+  readonly categories = signal<Category[]>([]);
+
   getCategories(): Observable<Category[]> {
     return this.cached('categories', () =>
-      this.http.get<Category[]>(`${this.baseUrl}/api/categories`));
+      this.http.get<Category[]>(`${this.baseUrl}/api/categories`)
+    ).pipe(tap(list => this.categories.set(list)));
   }
 
   getCities(): Observable<City[]> {
