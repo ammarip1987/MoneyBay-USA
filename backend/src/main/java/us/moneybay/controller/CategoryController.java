@@ -19,6 +19,6 @@ public class CategoryController {
 
     @GetMapping
     public List<Category> list() {
-        return categoryRepository.findAll();
+        return categoryRepository.findAllByOrderByNameAsc();
     }
 }

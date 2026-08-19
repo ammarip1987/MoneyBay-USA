@@ -293,15 +293,9 @@ export class HomeComponent implements OnInit, OnDestroy, AfterViewInit {
 
   ngOnInit(): void {
     this.api.getCategories().subscribe({
-      next: (data) => {
-        const reordered = [...data];
-        const beautyIdx = reordered.findIndex(c => c.slug === 'cosmetics');
-        const kidsIdx = reordered.findIndex(c => c.slug === 'kids-baby');
-        if (beautyIdx !== -1 && kidsIdx !== -1) {
-          [reordered[beautyIdx], reordered[kidsIdx]] = [reordered[kidsIdx], reordered[beautyIdx]];
-        }
-        this.categories.set(reordered);
-      },
+      // Порядок задаёт запрос к базе: сортировка по имени. Ручная перестановка
+      // Beauty и Kids больше не нужна и перебивала бы алфавит.
+      next: (data) => this.categories.set(data),
       error: () => this.categories.set([])
     });
     this.api.getCities().subscribe({
