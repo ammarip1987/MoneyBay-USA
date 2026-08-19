@@ -215,8 +215,8 @@ Moneybay/
 
 | Шар | Технологія | Порт | Деплой |
 |------|-----------|------|---------|
-| Frontend | Angular 21 + Tailwind CSS | 1100 (dev), 443 (prod) | Cloudflare Pages |
-| Backend | Spring Boot 3.5 + Spring Security | 8080 | AWS ECS Express Mode |
+| Frontend | Angular 21 + Tailwind CSS | 1100 (dev), 443 (prod) | Cloudflare Workers (SSR) |
+| Backend | Spring Boot 3.5 + Spring Security | 8080 | AWS ECS Fargate (ARM64) |
 | Database | PostgreSQL 18 | 5432 | AWS RDS |
 | Real-time | WebSocket STOMP | 8080 | AWS ECS Express Mode |
 | CDN фото | Cloudflare R2 | - | Cloudflare R2 |
@@ -227,9 +227,9 @@ Moneybay/
 ```
 User Browser
     ↓
-Cloudflare Pages (moneybay.us) ← Frontend (Angular)
+Cloudflare Workers (moneybay.us) ← Frontend (Angular SSR)
     ↓
-AWS ECS Express Mode (moneybay-backend) ← Spring Boot API (порт 8080)
+AWS ECS Fargate ARM64 (moneybay-api) ← Spring Boot API (порт 8080)
     ↓
 AWS RDS PostgreSQL ← Database
     ↓
@@ -248,7 +248,7 @@ Git push → GitHub Actions → Docker build → ECR push → ECS update
 3. Собирает Docker образ из `backend/Dockerfile` (Java 25, Alpine)
 4. Загружает образ в AWS ECR (`moneybay-usa:latest` + git SHA)
 5. Обновляет ECS сервис — новая версия контейнера запускается автоматически
-6. Cloudflare Pages автоматически деплоит frontend при изменениях в `src/`
+6. Frontend деплоится отдельно, вручную: `npm run build` и `npx wrangler deploy`
 
 ## Setup
 
@@ -296,7 +296,7 @@ Open http://localhost:1100
 |-------|---------|------|-----|-----|-----|-------|
 | **Dev (ng serve)** | `ng serve` | 1100 | ✅ | ❌ Off | ✅ Vite | **Ежедневная разработка, 95% времени** |
 | **Production-like local** | `ng build` + `npm run serve:ssr` | 4000 | ❌ | ✅ On | ✅ Express | Тестирование PWA + offline + bundle size |
-| **Cloud Run production** | `gcloud builds submit` + deploy | 443 | ❌ | ✅ On | ✅ Express | Реальный production |
+| **Production** | `npx wrangler deploy` + push в `main` | 443 | ❌ | ✅ On | Cloudflare Workers | Реальный production |
 
 ### Mode 1: Dev (ежедневная разработка)
 
@@ -344,9 +344,9 @@ Express SSR server на 4000 с production bundle и активным Service Wo
 - Service Worker в DevTools → Application → Service Workers — должен быть `ngsw-worker.js` зарегистрирован
 - Cache Storage в DevTools → Application → Cache Storage — несколько кэшей: `assets`, `api-listings-read`, `uploads`
 
-### Mode 3: Cloud Run production
+### Mode 3: Production (Cloudflare Workers + AWS ECS)
 
-См. раздел [Deploy to Cloud Run](#deploy-to-cloud-run) ниже.
+См. раздел [Deploy](#deploy) ниже.
 
 ## Categories
 
@@ -563,7 +563,7 @@ patterns; нужно для субдоменов городов.
 
 ## Secrets (AWS Secrets Manager)
 
-Секреты backend хранятся в Secrets Manager, регион `eu-north-1`. В `task-def.json`
+Секреты backend хранятся в Secrets Manager, регион `us-east-2`. В `task-def.json`
 только ссылки `valueFrom` по ARN — значений в репозитории нет.
 
 | Секрет | Переменная контейнера | Что внутри |
@@ -576,7 +576,7 @@ patterns; нужно для субдоменов городов.
 а не за ключ, поэтому все OAuth-значения кладутся в один):
 
 ```
-arn:aws:secretsmanager:eu-north-1:<account>:secret:moneybay/oauth:GOOGLE_CLIENT_SECRET::
+arn:aws:secretsmanager:us-east-2:<account>:secret:moneybay/oauth:GOOGLE_CLIENT_SECRET::
 ```
 
 Читать их задаче разрешает inline-политика `MoneybaySecretsRead` на роли
@@ -821,26 +821,46 @@ Services:
 - `backend` (5000) — Spring Boot
 - `frontend` (1100) — Angular + Nginx
 
-## Deploy to Cloud Run
+## Deploy
 
-```bash
-# Backend
-cd backend
-gcloud builds submit --tag gcr.io/PROJECT_ID/moneybay-backend
-gcloud run deploy moneybay-backend \
-  --image gcr.io/PROJECT_ID/moneybay-backend \
-  --region us-central1 \
-  --set-env-vars SPRING_PROFILES_ACTIVE=prod,JWT_SECRET=YOUR_SECRET
+Две независимые части: backend на AWS ECS, frontend на Cloudflare Workers.
+GCP и Cloud Run не применяются.
 
-# Frontend
-cd ..
-gcloud builds submit --tag gcr.io/PROJECT_ID/moneybay-frontend
-gcloud run deploy moneybay-frontend \
-  --image gcr.io/PROJECT_ID/moneybay-frontend \
-  --region us-central1
+**Backend — автоматически по push в `main`:**
+
+```
+git push origin main
 ```
 
-Automated via GitHub Actions (`.github/workflows/deploy.yml`) on push to master.
+GitHub Actions (`.github/workflows/deploy.yml`) собирает образ под linux/arm64,
+кладёт в ECR и обновляет сервис ECS. Сборка ARM64 идёт через эмуляцию QEMU на
+раннере x86, поэтому занимает около 20 минут.
+
+**Frontend — вручную:**
+
+```
+npm run build
+npx wrangler deploy
+```
+
+Каждый деплой отдаёт Version ID; предыдущие версии остаются для отката.
+
+**Проверка после деплоя:**
+
+```bash
+# ревизия задачи и число запущенных
+aws ecs describe-services --region us-east-2 --cluster default \
+  --services moneybay-api --query 'services[].{Task:taskDefinition,Run:runningCount}'
+
+# отрисовка страницы
+curl -s https://moneybay.us/ | grep -c 'ng-server-context="ssr"'
+```
+
+**Сообщения об откате в логах CI бывают ложными.** Автоматический откат
+(`deployment circuit breaker`) отключён — `enable: false`. Сообщения вида
+`deployment ... not found after stabilization` возникали, когда балансировка по
+зонам доступности заменяла отслеживаемый taskSet; при этом деплой проходил.
+Проверять по ревизии задачи и статусу целевой группы, а не по тексту ошибки.
 
 ## CSS Architecture
 
@@ -917,15 +937,21 @@ Wildcard A-запись `*.moneybay.us` → IP сервера. Один билд
 
 **Зарезервированные subdomains** (не считаются городом): `www`, `api`, `admin`, `localhost`.
 
-## SSR (Angular Universal)
+## SSR (Angular Universal на Cloudflare Workers)
 
-Angular 21 SSR настроен через `@angular/ssr` 21.
+Angular 21 SSR через `@angular/ssr` 21, отрисовка идёт в воркере Cloudflare, не на
+Node. Раньше фронт отдавался как статика Cloudflare Pages: страница приходила
+пустой и заполнялась после загрузки JS, из-за чего обновление выглядело долгим, а
+поисковые роботы получали пустой каркас.
 
 **Файлы:**
 - `src/main.server.ts` — SSR bootstrap с `BootstrapContext`
-- `src/server.ts` — Express server с `AngularNodeAppEngine`
+- `src/server.worker.ts` — точка входа воркера на `AngularAppEngine`
 - `src/app/app.config.server.ts` — `provideServerRendering(withRoutes(serverRoutes))`
 - `src/app/app.routes.server.ts` — render mode per route
+
+**Как устроен воркер:** сначала запрос идёт в привязку `ASSETS`; если файла нет
+(статус 404), запрос отдаётся `AngularAppEngine` на отрисовку.
 
 **Render modes:**
 - **Server** — public pages (home, listing/:id, about, terms, privacy, refund, contact, login, register, forgot-password, reset-password)
@@ -933,10 +959,150 @@ Angular 21 SSR настроен через `@angular/ssr` 21.
 
 **angular.json config:**
 - `outputMode: "server"`
-- `ssr.entry: "src/server.ts"`
+- `ssr.entry: "src/server.worker.ts"`
+- `ssr.experimentalPlatform: "neutral"` — платформо-независимая сборка без
+  `node:module`, иначе воркер падает на `createRequire`
+- `externalDependencies: ["sockjs-client", "@stomp/stompjs"]` — faye-websocket
+  тянет node-модули `stream` и `util`, которых в воркере нет
 - `server: "src/main.server.ts"`
 - `prerender: false` (только runtime SSR)
 - `security.allowedHosts` для защиты от SSRF (localhost, 127.0.0.1, subdomains, moneybay.us/net)
+
+**wrangler.jsonc:**
+- `main: ./dist/moneybay-angular/server/server.mjs`
+- `assets.binding: ASSETS`
+- `compatibility_date: 2026-08-03`
+
+**Локальная проверка:** `npx wrangler dev` слушать на `127.0.0.1` (не `localhost`),
+порт от 8790 и выше. Если локальный wrangler старше `compatibility_date` из
+конфигурации, он откажется стартовать — временно понизить дату.
+
+**Признак работающей отрисовки:** в отданном HTML есть атрибут
+`ng-server-context="ssr"`, размер страницы порядка 32 КБ вместо 3 КБ у пустого
+каркаса.
+
+## Отзывчивость и устойчивость раскладки
+
+Раздел про переходы между страницами: что мельками и чем устранено.
+
+### Кэш запросов (`ApiService`)
+
+Короткоживущий кэш на 20 секунд для запросов, которые повторяются при возврате
+назад. Ключ — путь с параметрами.
+
+| Метод | Ключ кэша |
+|---|---|
+| `getListings` | `listings?<параметры>` |
+| `getFacets` | `facets?<параметры>` |
+| `getCategories` | `categories` |
+| `getCities` | `cities` |
+| `getSubcategories` | `subcategories/<slug>` |
+| `getSubcategoryChildren` | `subcategory-children/<id>` |
+| `getStates` | `states` |
+| `getMyListings` | `my-listings` |
+| `getFavorites` | `favorites` |
+| `getConversations` | `conversations` |
+
+`getChatMessages` намеренно без кэша — переписка меняется постоянно.
+
+**Сброс:** создание, правка и удаление объявления чистят кэш целиком
+(`invalidateListingsCache`); переключение избранного сбрасывает `favorites`;
+отправка сообщения — `conversations`.
+
+### Флаг загрузки выводится из кэша
+
+Попадание в кэш отдаётся синхронно через `of()` из RxJS. Если поднять флаг
+загрузки до подписки, заглушка вставляется и убирается в пределах одного тика —
+это видно как мельк. Поэтому страницы выводят флаг из состояния кэша:
+
+```ts
+this.loading.set(!this.api.hasCached('conversations'));
+```
+
+`listing-detail` действует так же, но от предзагруженного объявления из
+`history.state`: `this.loading.set(passed === null)`.
+
+### Начальное значение флага
+
+`loading = signal(true)`, а не `false`. Иначе до первого запроса выполняется
+условие пустого состояния, и «No messages yet» показывается тем, у кого
+переписки есть.
+
+### Жёлоб полосы прокрутки
+
+```css
+html { scrollbar-gutter: stable; }
+```
+
+Без этого переход с длинной страницы на короткую убирает полосу прокрутки,
+ширина области содержимого растёт на её толщину, и всё центрированное по
+`mx-auto` сдвигается по горизонтали вместе с шапкой.
+
+### Подвал прижат к низу
+
+`app.html` — колонка на всю высоту окна, `main` забирает свободное место:
+
+```html
+<div class="min-h-screen flex flex-col">
+  <app-header></app-header>
+  <main class="flex-1 flex flex-col w-full max-w-7xl mx-auto px-4 py-8">
+    <router-outlet />
+  </main>
+  <app-footer></app-footer>
+</div>
+```
+
+До этого шапка, `main` и подвал были простыми соседями: на короткой странице
+подвал стоял посреди экрана и уезжал вниз с приходом данных.
+
+`router-outlet` вставляет компонент соседним узлом, а не оборачивает его,
+поэтому растяжение передаётся правилом по дочерним элементам `main`:
+
+```css
+main > *:not(router-outlet) { flex: 1 1 auto; min-height: 0; }
+```
+
+Класс `.min-page` на корневых обёртках страниц — `flex-1`, растягивание внутри
+`main`. Фиксированная высота от окна (`min-h-[70vh]`) при прижатом подвале давала
+лишнюю прокрутку.
+
+### Метка входа в cookie
+
+Сервер не видит `localStorage`, поэтому при отрисовке считал вошедшего гостем, и
+после гидратации шапка менялась — ссылки «Log in» и «Sign up» мелькали у
+вошедшего.
+
+`AuthService` кладёт в cookie `mb_auth_hint` признак входа без токена (токен
+остаётся в `localStorage`, недоступным для запросов с других сайтов). Шапка
+выбирает раскладку так:
+
+```
+authReady() ? auth.isAuthenticated() : auth.authHint()
+```
+
+`authReady` поднимается в `afterNextRender`. До гидратации применяется метка, после
+— фактическое состояние.
+
+### Имя пользователя убрано из шапки
+
+Имя приходило асинхронно, его ширина менялась от пустой строки до полного
+адреса, и в блоке с `flex-wrap` и `justify-end` сдвигались все ссылки слева от
+него: Post Ad, My Ads, Messages, Profile. «Log out» стоял за именем, прижатый к
+краю, и не двигался. Имя и email видны на странице Profile.
+
+### Мгновенный переход в объявление
+
+Карточка передаёт объявление через `history.state`: поля те же, что отдаёт лента,
+поэтому данные видны сразу, а ответ сервера потом обновляет их. Возврат назад —
+через `history.back()`, чтобы восстановилась позиция прокрутки
+(`withInMemoryScrolling` с `scrollPositionRestoration: 'enabled'`).
+
+### Заглушки на время запроса
+
+Страницы-списки на время запроса показывают заглушки строк или карточек, а не
+пустое место: `SkeletonLoaderComponent` (варианты `listing-grid`, `profile`,
+`avatar-card`, `text-lines`) либо блоки с `animate-pulse` в разметке страницы.
+Место занято с первого кадра, поэтому приход данных не сдвигает страницу.
 
 ## PWA (Progressive Web App)
 
@@ -1032,12 +1198,16 @@ DELETE FROM users WHERE email LIKE '%@test.moneybay.us';
 | Frontend дизайн (как Flask) | 85% |
 | Navigation drawer (mobile) | 100% |
 | Backend REST API | 95% |
-| Categories/subcategories | 100% (13 cat + 41 sub + 36 subsub + FontAwesome) |
+| Categories/subcategories | 100% (12 cat + 107 sub + FontAwesome, плитки по алфавиту) |
 | Cities + city subdomain routing | 100% |
 | US cities catalogue (4335 городов, автоподстановка) | 100% |
 | Auth + JWT | 100% |
-| Social sign-in (OAuth2) | Google настроен; Facebook и Apple ждут credentials |
+| Social sign-in (OAuth2) | Google и Facebook настроены; Apple ждёт credentials |
 | Secrets в AWS Secrets Manager | 100% |
+| Перенос инфраструктуры в us-east-2 (Огайо) | 100% |
+| ARM64 / Graviton | 100% |
+| SSR на Cloudflare Workers | 100% |
+| Устранение смещений раскладки при переходах | 100% |
 | Email verification (DB-backed) | 100% |
 | SMTP отправка (Mailtrap dev / SendGrid prod) | 100% |
 | WebSocket chat | 80% |
@@ -1080,8 +1250,8 @@ DELETE FROM users WHERE email LIKE '%@test.moneybay.us';
 - i18n (Spanish для US-Latino аудитории)
 
 ### DevOps
-- Тестирование Cloud Run deployment
-- Cloud SQL подключение
+- Автоматический деплой frontend в составе CI (сейчас вручную)
+- Замена root-ключей AWS на пользователя IAM
 - Domain mapping (moneybay.us, api.moneybay.us)
 - SSL сертификаты
 - Cloud Secret Manager для JWT_SECRET, STRIPE_*
@@ -1418,27 +1588,52 @@ ng serve
 
 ## Project Data
 
+Вся инфраструктура в США. Перенесена из eu-north-1 (Стокгольм) в us-east-2
+(Огайо) — регион ближе к пользователям площадки. Стокгольмские ресурсы удалены
+полностью: инстансы, база, балансировщик, снимки, диски.
+
 ### Infrastructure
 
 | Компонент | Сервис | Детали |
 |-----------|--------|--------|
-| **Frontend** | Cloudflare Pages | Автодеплой через Git интеграцию |
-| **Backend** | AWS ECS Express Mode | `moneybay-backend`, cluster `default` |
-| **Database** | AWS RDS PostgreSQL | `db-moneybay-usa.c5qkmgi6m2e9.eu-north-1.rds.amazonaws.com` |
-| **Photo Storage** | Cloudflare R2 | Bucket: `moneybayts-photos` |
+| **Frontend** | Cloudflare Workers | Воркер `moneybay-usa`, отрисовка SSR; деплой `npx wrangler deploy` |
+| **Backend** | AWS ECS Fargate | Сервис `moneybay-api`, cluster `default`, ARM64 |
+| **Database** | AWS RDS PostgreSQL 18.3 | `db-moneybay-usa.c18o4s6gatg6.us-east-2.rds.amazonaws.com`, db.t4g.micro |
+| **Load Balancer** | AWS ALB | `moneybay-alb-1342255176.us-east-2.elb.amazonaws.com` |
+| **Photo Storage** | Cloudflare R2 | Bucket: `moneybayts-photos`, отдача напрямую через CDN |
 | **Domain** | moneybay.us | Cloudflare DNS |
 | **CI/CD** | GitHub Actions + ECR | `.github/workflows/deploy.yml` |
 | **Container Registry** | AWS ECR | `moneybay-usa` |
+| **Bastion** | AWS EC2 | `i-0821136db2ceea87a`, t4g.small (arm64), доступ к базе по SSH |
 
 ### AWS Resources
 
 | Ресурс | ID/Name | Регион |
 |--------|---------|--------|
-| ECS Service | `moneybay-backend` | eu-north-1 |
-| ECS Cluster | `default` | eu-north-1 |
-| ECR Repository | `moneybay-usa` | eu-north-1 |
-| RDS Database | `db-moneybay-usa` | eu-north-1 |
+| ECS Service | `moneybay-api` | us-east-2 |
+| ECS Cluster | `default` | us-east-2 |
+| Task Definition | `default-moneybay-backend` | us-east-2 |
+| ECR Repository | `moneybay-usa` | us-east-2 |
+| RDS Database | `db-moneybay-usa` | us-east-2 |
+| ALB | `moneybay-alb` | us-east-2 |
+| Target Group | `moneybay-backend-tg` | us-east-2 |
+| EC2 Bastion | `i-0821136db2ceea87a` | us-east-2 |
 | AWS Account | `172575865299` | - |
+
+### Task Platform (ARM64 / Graviton)
+
+| Параметр | Значение |
+|----------|----------|
+| `runtimePlatform.cpuArchitecture` | `ARM64` |
+| `runtimePlatform.operatingSystemFamily` | `LINUX` |
+| CPU | 256 |
+| Memory | 512 |
+
+Graviton дешевле x86 при той же нагрузке. Образ собирается под `linux/arm64`
+через buildx с QEMU, отсюда время сборки в CI около 20 минут.
+
+**Настройки развёртывания:** `minimumHealthyPercent: 50` — при 100 обновление не
+может остановить ни одну задачу и висит. Автоматический откат отключён.
 
 ### GitHub Configuration
 
@@ -1452,12 +1647,20 @@ ng serve
 | Key | Value | Type |
 |-----|-------|------|
 | `SPRING_PROFILES_ACTIVE` | `production` | Environment variable |
-| `DATABASE_URL` | `jdbc:postgresql://db-moneybay-usa.c5qkmgi6m2e9.eu-north-1.rds.amazonaws.com:5432/moneybay` | Environment variable |
+| `DATABASE_URL` | `jdbc:postgresql://db-moneybay-usa.c18o4s6gatg6.us-east-2.rds.amazonaws.com:5432/moneybay` | Environment variable |
 | `DB_USERNAME` | `moneybayusa` | Environment variable |
 | `GOOGLE_CLIENT_ID` | client id из Google Cloud Console | Environment variable |
 | `DB_PASSWORD` | `moneybay/db-password` | Secret (`valueFrom`) |
 | `JWT_SECRET` | `moneybay/jwt-secret` | Secret (`valueFrom`) |
 | `GOOGLE_CLIENT_SECRET` | `moneybay/oauth`, ключ `GOOGLE_CLIENT_SECRET` | Secret (`valueFrom`) |
+| `FACEBOOK_APP_SECRET` | `moneybay/oauth`, ключ `FACEBOOK_APP_SECRET` | Secret (`valueFrom`) |
+| `R2_ACCESS_KEY_ID` | `moneybay/oauth`, ключ `R2_ACCESS_KEY_ID` | Secret (`valueFrom`) |
+| `R2_SECRET_ACCESS_KEY` | `moneybay/oauth`, ключ `R2_SECRET_ACCESS_KEY` | Secret (`valueFrom`) |
+
+Ключи R2 переведены из переменных окружения в Secrets Manager. ARN секретов
+привязаны к региону, поэтому при переносе в us-east-2 секреты созданы заново, а
+в доверительную политику роли задачи добавлен `aws:SourceArn` нового региона —
+без этого ECS сообщает `unable to assume the role`.
 
 Значения секретов в репозитории не хранятся — см. [Secrets](#secrets-aws-secrets-manager).
 
@@ -1469,11 +1672,16 @@ Git push → GitHub Actions → Docker build → ECR push → ECS update
 
 **Workflow шаги:**
 1. Checkout code
-2. Configure AWS credentials
+2. Configure AWS credentials (регион `us-east-2`)
 3. Login to Amazon ECR
-4. Build Docker image (Java 25, Alpine)
-5. Push to ECR (`moneybay-usa:latest` + git SHA)
-6. Update ECS service
+4. Set up QEMU + buildx (эмуляция ARM64 на раннере x86)
+5. Build Docker image под `linux/arm64` (Java 25, Alpine)
+6. Push to ECR (`moneybay-usa:latest` + git SHA)
+7. Update ECS service (`moneybay-api` в кластере `default`)
+
+Время прохождения — около 20 минут, почти всё уходит на эмуляцию ARM64.
+
+Только backend. Frontend деплоится вручную через `npx wrangler deploy`.
 
 ### Docker Configuration
 
@@ -1481,6 +1689,7 @@ Git push → GitHub Actions → Docker build → ECR push → ECS update
 - Builder: `eclipse-temurin:25-jdk-alpine`
 - Runtime: `eclipse-temurin:25-jre-alpine`
 
+**Target platform:** `linux/arm64` (Graviton)
 **Java version:** 25
 **Maven Compiler Plugin:** 3.14.0
 **Lombok:** 1.18.38
@@ -1502,12 +1711,22 @@ ng serve
 ```cmd
 # AWS CLI (настроен локально)
 aws sts get-caller-identity
-aws ec2 describe-instances
-aws rds describe-db-instances
+aws ec2 describe-instances --region us-east-2
+aws rds describe-db-instances --region us-east-2
 
-# SSH к EC2
-ssh -i "G:\Мой диск\работа\ключи aws moneybay\MoneyBay.us server.pem#1-8" admin@16.16.207.124
+# Состояние сервиса
+aws ecs describe-services --region us-east-2 --cluster default --services moneybay-api
+
+# Frontend
+npm run build
+npx wrangler deploy
+
+# SSH к bastion (адрес меняется при перезапуске инстанса — уточнять по describe-instances)
+ssh -i "G:\Мой диск\работа\ключи aws moneybay\MoneyBay.us server.pem#1-8" admin@3.12.174.53
 ```
+
+Локальный AWS CLI настроен на root-ключи учётной записи. Замена на отдельного
+пользователя IAM отложена.
 
 ### Architecture Style
 
