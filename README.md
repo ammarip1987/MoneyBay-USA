@@ -1666,6 +1666,50 @@ ng serve
 (Огайо) — регион ближе к пользователям площадки. Стокгольмские ресурсы удалены
 полностью: инстансы, база, балансировщик, снимки, диски.
 
+### Сервисы AWS
+
+Всё в регионе `us-east-2` (Огайо), учётная запись `172575865299`.
+
+| Сервис | Что делает | Ресурс |
+|---|---|---|
+| **ECS Fargate** | держит backend | кластер `default`, сервис `moneybay-api`, задача `default-moneybay-backend`, ARM64 |
+| **ECR** | хранит образы | `moneybay-usa`, теги `latest` и git SHA |
+| **CodeBuild** | собирает образ на нативном ARM | `moneybay-backend`, `amazonlinux-aarch64-standard:3.0` |
+| **RDS PostgreSQL** | база | `db-moneybay-usa`, 18.3, db.t4g.micro |
+| **ALB** | принимает трафик, проверяет состояние задач | `moneybay-alb`, целевая группа `moneybay-backend-tg` |
+| **Secrets Manager** | пароли и ключи | `moneybay/db-password`, `moneybay/jwt-secret`, `moneybay/oauth` |
+| **CloudWatch Logs** | логи | `moneybay-backend` (задача), `/aws/codebuild/moneybay-backend` (сборка) |
+| **EC2** | bastion для доступа к базе | `i-0821136db2ceea87a`, t4g.small, arm64 |
+| **IAM** | роли и права | `ecsTaskExecutionRole`, `MoneybayCodeBuildRole`, пользователь `moneybay-user` |
+| **VPC** | сеть | `vpc-0851c39d5efddebf4`, `172.31.0.0/16` |
+
+Не применяются: CodePipeline, CodeDeploy, CloudFront, S3 (фотографии в
+Cloudflare R2), Route 53 (DNS в Cloudflare), SES (почта через SMTP).
+
+**Группы безопасности** — доступ сужен до необходимого:
+
+| Группа | Открыт порт | Кому |
+|---|---|---|
+| `moneybay-alb` | 80, 443 | всем |
+| `moneybay-task` | 8080 | только группе балансировщика |
+| `moneybay-rds` | 5432 | только группам задачи и bastion |
+| `moneybay-bastion` | 22 | всем (SSH по ключу) |
+
+База наружу не выставлена: подключиться можно только из задачи ECS или через
+bastion.
+
+**Роли IAM:**
+
+| Роль | Кто применяет | Что разрешено |
+|---|---|---|
+| `ecsTaskExecutionRole` | задача ECS | забрать образ из ECR, прочитать три секрета, писать логи |
+| `MoneybayCodeBuildRole` | CodeBuild | запись в репозиторий `moneybay-usa`, своя группа логов |
+| `moneybay-user` (пользователь) | GitHub Actions | `AmazonECS_FullAccess`, `AmazonEC2ContainerRegistryPowerUser`, встроенная `MoneybayRunCodeBuild` |
+
+Доверительная политика `ecsTaskExecutionRole` содержит `aws:SourceArn` для
+`us-east-2`. При переносе региона его нужно добавлять, иначе ECS сообщает
+`unable to assume the role`.
+
 ### Infrastructure
 
 | Компонент | Сервис | Детали |
