@@ -10,7 +10,7 @@ MoneyBay project is built in Enterprise using strict typing and preserving inher
 
 **Backend (Java)**
 
-Java 25 (Amazon Corretto) — язык. Spring Boot 3.5.0 — каркас приложения. Spring Data JPA с Hibernate — доступ к базе. Spring Security — вход и права. jjwt 0.12.6 — токены JWT. Spring WebSocket со STOMP — обмен сообщениями в реальном времени. Spring Boot Mail — отправка почты. Spring Boot Actuator — проверки состояния для балансировщика. Bucket4j 8.14.0 — ограничение частоты запросов. Springdoc OpenAPI 2.7.0 — описание API и Swagger UI. Stripe Java 26.6.0 — приём платежей. AWS SDK S3 2.25.0 — загрузка фотографий в Cloudflare R2 по протоколу S3. Lombok 1.18.38 — сокращение шаблонного кода. Maven — сборка.
+Java 25 (Amazon Corretto) — язык. Spring Boot 3.5.0 — каркас приложения. Spring Data JPA с Hibernate — доступ к базе. Spring Security — вход и права. jjwt 0.12.6 — токены JWT. Spring WebSocket со STOMP — обмен сообщениями в реальном времени. Spring Boot Mail — отправка почты. Spring Boot Actuator — проверки состояния для балансировщика. Bucket4j 8.14.0 — ограничение частоты запросов. Springdoc OpenAPI 2.7.0 — описание API и Swagger UI. Stripe Java 26.6.0 — приём платежей. AWS SDK S3 2.25.0 — загрузка фотографий в Cloudflare R2 по протоколу S3. Lombok — обработчик аннотаций: на этапе компиляции дописывает в классы геттеры, сеттеры, конструкторы и equals, поэтому в исходниках их не пишут. Maven — сборка.
 
 **Frontend (TypeScript)**
 

@@ -5,6 +5,9 @@
 # groupadd/useradd вместо apk и adduser.
 FROM amazoncorretto:25-al2023-jdk AS builder
 
+# tar нужен обёртке Maven для распаковки дистрибутива; в этом образе его нет
+RUN dnf install -y tar gzip && dnf clean all
+
 WORKDIR /app
 
 # Copy Maven wrapper and pom first for better layer caching
