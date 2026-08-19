@@ -1,4 +1,4 @@
-import { Injectable, Injector, inject, signal, PLATFORM_ID } from '@angular/core';
+import { Injectable, Injector, inject, signal, PLATFORM_ID, REQUEST } from '@angular/core';
 import { isPlatformBrowser } from '@angular/common';
 import { HttpClient, HttpContext } from '@angular/common/http';
 import { Observable, tap } from 'rxjs';
@@ -19,6 +19,7 @@ export class AuthService {
   private readonly baseUrl = environment.apiUrl;
   private readonly tokenKey = 'mb_auth_token';
   private readonly userKey = 'mb_auth_user';
+  private readonly hintKey = 'mb_auth_hint';
 
   currentUser = signal<User | null>(this.loadUser());
   isAuthenticated = signal<boolean>(!!this.getToken());
@@ -53,6 +54,7 @@ export class AuthService {
       localStorage.removeItem(this.tokenKey);
       localStorage.removeItem(this.userKey);
     }
+    this.setAuthHint(false);
     this.currentUser.set(null);
     this.isAuthenticated.set(false);
     // Ленивый резолв (циклическая зависимость SocketService -> AuthService):
@@ -100,11 +102,43 @@ export class AuthService {
     }
   }
 
+
+  /**
+   * Метка входа в cookie. Сервер localStorage не видит, а cookie приходят
+   * с каждым запросом — по ней серверная отрисовка сразу рисует шапку
+   * верно, без мелькания ссылок.
+   *
+   * В cookie кладётся только признак, без токена: токен остаётся в
+   * localStorage, недоступным для запросов с других сайтов.
+   */
+
+  /**
+   * Предположение о входе для первой отрисовки. В браузере — из cookie,
+   * на сервере — из заголовка Cookie запроса. Значение не удостоверяет
+   * личность и правами не распоряжается: оно лишь определяет, какую шапку
+   * показать до того, как прочитан localStorage.
+   */
+  authHint(): boolean {
+    if (this.isBrowser()) {
+      return document.cookie.includes(`${this.hintKey}=1`);
+    }
+    const request = this.injector.get(REQUEST, null);
+    const header = request?.headers?.get('cookie') ?? '';
+    return header.includes(`${this.hintKey}=1`);
+  }
+  private setAuthHint(active: boolean): void {
+    if (!this.isBrowser()) return;
+    const base = `${this.hintKey}=1; path=/; SameSite=Lax`;
+    document.cookie = active
+      ? `${base}; max-age=${60 * 60 * 24 * 30}`
+      : `${this.hintKey}=; path=/; SameSite=Lax; max-age=0`;
+  }
   setSession(res: LoginResponse): void {
     if (this.isBrowser()) {
       localStorage.setItem(this.tokenKey, res.token);
       localStorage.setItem(this.userKey, JSON.stringify(res.user));
     }
+    this.setAuthHint(true);
     this.currentUser.set(res.user);
     this.isAuthenticated.set(true);
   }

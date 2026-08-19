@@ -25,7 +25,7 @@ import { NotificationsService } from '../../services/notifications.service';
           </a>
 
           <div class="hidden md:flex items-center gap-4 flex-wrap justify-end">
-            @if (auth.isAuthenticated()) {
+            @if (authReady() ? auth.isAuthenticated() : auth.authHint()) {
               <a routerLink="/new-listing" class="hover:text-mb-cyan transition">+ Post Ad</a>
               <a routerLink="/my-listings" class="hover:text-mb-cyan transition">My Ads</a>
               <a routerLink="/messages" class="hover:text-mb-cyan transition relative">
@@ -42,7 +42,7 @@ import { NotificationsService } from '../../services/notifications.service';
               }
               <span class="text-gray-300">{{ auth.currentUser()?.username }}</span>
               <button (click)="logout()" class="hover:text-mb-cyan transition">Log out</button>
-            } @else if (authReady()) {
+            } @else {
               <a routerLink="/login" class="hover:text-mb-cyan transition">Log in</a>
               <a routerLink="/register" class="btn btn-primary">Sign up</a>
             }
@@ -57,7 +57,7 @@ import { NotificationsService } from '../../services/notifications.service';
 
         @if (mobileOpen()) {
           <div class="md:hidden mt-4 pb-2 border-t border-gray-700 pt-4 flex flex-col gap-3">
-            @if (auth.isAuthenticated()) {
+            @if (authReady() ? auth.isAuthenticated() : auth.authHint()) {
               <a routerLink="/new-listing" (click)="closeMobileMenu()" class="hover:text-mb-cyan transition py-2">+ Post Ad</a>
               <a routerLink="/my-listings" (click)="closeMobileMenu()" class="hover:text-mb-cyan transition py-2">My Ads</a>
               <a routerLink="/messages" (click)="closeMobileMenu()" class="hover:text-mb-cyan transition py-2 flex items-center gap-2">
@@ -72,7 +72,7 @@ import { NotificationsService } from '../../services/notifications.service';
               }
               <span class="text-gray-300 py-2 border-t border-gray-700">{{ auth.currentUser()?.username }}</span>
               <button (click)="logout()" class="hover:text-mb-cyan transition py-2 text-left">Log out</button>
-            } @else if (authReady()) {
+            } @else {
               <a routerLink="/login" (click)="closeMobileMenu()" class="hover:text-mb-cyan transition py-2">Log in</a>
               <a routerLink="/register" (click)="closeMobileMenu()" class="btn btn-primary self-start">Sign up</a>
             }
