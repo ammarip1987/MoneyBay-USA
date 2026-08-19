@@ -239,7 +239,9 @@ export class ProfileComponent implements OnInit {
 
   ngOnInit(): void {
     this.user.set(this.auth.currentUser());
-    this.loading.set(true);
+    // Попадание в кэш отдаётся синхронно: подъём флага вставил бы заглушки
+    // на один тик, и список мелькал бы при каждом входе
+    this.loading.set(!this.api.hasCached('my-listings'));
     this.api.getProfile().subscribe({
       next: (data) => this.user.set(data),
       error: () => {}

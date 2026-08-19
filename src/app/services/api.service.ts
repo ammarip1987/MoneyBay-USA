@@ -133,7 +133,13 @@ export class ApiService {
   }
 
   getMyListings(): Observable<Listing[]> {
-    return this.http.get<Listing[]>(`${this.baseUrl}/api/my-listings`);
+    return this.cached('my-listings', () =>
+      this.http.get<Listing[]>(`${this.baseUrl}/api/my-listings`));
+  }
+
+  hasCached(key: string): boolean {
+    const hit = this.cache.get(key);
+    return !!hit && Date.now() - hit.at < this.cacheTtlMs;
   }
 
   getCategories(): Observable<Category[]> {
@@ -152,12 +158,14 @@ export class ApiService {
   }
 
   getSubcategoryChildren(subcategoryId: number): Observable<any[]> {
-    return this.http.get<any[]>(`${this.baseUrl}/api/subcategories/${subcategoryId}/children`);
+    return this.cached(`subcategory-children/${subcategoryId}`, () =>
+      this.http.get<any[]>(`${this.baseUrl}/api/subcategories/${subcategoryId}/children`));
   }
 
   /** 51 штат плюс DC для выпадающего списка State. */
   getStates(): Observable<UsState[]> {
-    return this.http.get<UsState[]>(`${this.baseUrl}/api/states`);
+    return this.cached('states', () =>
+      this.http.get<UsState[]>(`${this.baseUrl}/api/states`));
   }
 
   /** Города выбранного штата для автоподстановки в поле City / Area. */
@@ -228,7 +236,8 @@ export class ApiService {
   }
 
   getFavorites(): Observable<Listing[]> {
-    return this.http.get<Listing[]>(`${this.baseUrl}/api/favorites`);
+    return this.cached('favorites', () =>
+      this.http.get<Listing[]>(`${this.baseUrl}/api/favorites`));
   }
 
   toggleFavorite(listingId: number): Observable<{ success: boolean; liked: boolean }> {
@@ -236,7 +245,8 @@ export class ApiService {
       `${this.baseUrl}/listing/${listingId}/like`,
       {},
       { headers: { 'X-Requested-With': 'XMLHttpRequest' } }
-    );
+      // Список избранного меняется сразу же
+    ).pipe(tap(() => this.cache.delete('favorites')));
   }
 
   createBoostCheckout(listingId: number, hours: number): Observable<{ checkout_url: string }> {

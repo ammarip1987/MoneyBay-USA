@@ -128,7 +128,9 @@ export class MyListingsComponent implements OnInit {
   activeCount = () => this.listings().filter(l => l.is_active).length;
 
   ngOnInit(): void {
-    this.loading.set(true);
+    // Попадание в кэш отдаётся синхронно: подъём флага вставил бы заглушки
+    // на один тик, и список мелькал бы при каждом входе
+    this.loading.set(!this.api.hasCached('my-listings'));
     this.api.getMyListings().subscribe({
       next: (data) => {
         this.listings.set(data || []);

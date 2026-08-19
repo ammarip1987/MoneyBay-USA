@@ -43,7 +43,23 @@ interface Conversation {
             </a>
           }
         </div>
-      } @else if (!loading()) {
+      } @else if (loading()) {
+        <!-- Заглушки на время запроса: место карточек занято сразу, поэтому
+             приход списка не сдвигает страницу -->
+        <div class="bg-white rounded-2xl shadow border border-gray-100 divide-y divide-gray-100">
+          @for (i of [1, 2, 3]; track i) {
+            <div class="p-4">
+              <div class="flex items-center gap-4">
+                <div class="w-12 h-12 rounded-full bg-gray-200 animate-pulse"></div>
+                <div class="flex-1 min-w-0 space-y-2">
+                  <div class="h-4 bg-gray-200 rounded animate-pulse w-1/3"></div>
+                  <div class="h-3 bg-gray-100 rounded animate-pulse w-1/2"></div>
+                </div>
+              </div>
+            </div>
+          }
+        </div>
+      } @else {
         <div class="bg-white rounded-2xl shadow p-12 text-center border border-gray-100">
           <span class="text-6xl mb-4 block">💬</span>
           <h2 class="text-xl font-bold text-mb-dark mb-2">No messages yet</h2>
@@ -64,7 +80,7 @@ export class MessagesComponent implements OnInit {
   ngOnInit(): void {
     // Попадание в кэш отдаётся синхронно: подъём флага вставил бы пустое
     // состояние на один тик, и список мелькал бы при каждом входе
-    if (!this.api.hasCachedConversations()) this.loading.set(true);
+    this.loading.set(!this.api.hasCached('conversations'));
     this.api.getConversations().subscribe({
       next: (data) => {
         this.conversations.set(data || []);

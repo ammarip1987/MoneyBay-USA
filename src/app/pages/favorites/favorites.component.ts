@@ -40,7 +40,9 @@ export class FavoritesComponent implements OnInit {
   loading = signal(true);
 
   ngOnInit(): void {
-    this.loading.set(true);
+    // Попадание в кэш отдаётся синхронно: подъём флага вставил бы заглушки
+    // на один тик, и список мелькал бы при каждом входе
+    this.loading.set(!this.api.hasCached('favorites'));
     this.api.getFavorites().subscribe({
       next: (data) => {
         this.favorites.set(data || []);
