@@ -10,11 +10,11 @@ MoneyBay project is built in Enterprise using strict typing and preserving inher
 
 **Backend (Java)**
 
-Java 25 (Eclipse Temurin) — язык. Spring Boot 3.5.0 — каркас приложения. Spring Data JPA с Hibernate — доступ к базе. Spring Security — вход и права. jjwt 0.12.6 — токены JWT. Spring WebSocket со STOMP — обмен сообщениями в реальном времени. Spring Boot Mail — отправка почты. Spring Boot Actuator — проверки состояния для балансировщика. Bucket4j 8.14.0 — ограничение частоты запросов. Springdoc OpenAPI 2.7.0 — описание API и Swagger UI. Stripe Java 26.6.0 — приём платежей. AWS SDK S3 2.25.0 — загрузка фотографий в Cloudflare R2 по протоколу S3. Lombok 1.18.38 — сокращение шаблонного кода. Maven — сборка.
+Java 25 (Amazon Corretto) — язык. Spring Boot 3.5.0 — каркас приложения. Spring Data JPA с Hibernate — доступ к базе. Spring Security — вход и права. jjwt 0.12.6 — токены JWT. Spring WebSocket со STOMP — обмен сообщениями в реальном времени. Spring Boot Mail — отправка почты. Spring Boot Actuator — проверки состояния для балансировщика. Bucket4j 8.14.0 — ограничение частоты запросов. Springdoc OpenAPI 2.7.0 — описание API и Swagger UI. Stripe Java 26.6.0 — приём платежей. AWS SDK S3 2.25.0 — загрузка фотографий в Cloudflare R2 по протоколу S3. Lombok 1.18.38 — сокращение шаблонного кода. Maven — сборка.
 
 **Frontend (TypeScript)**
 
-Angular 21.2 — каркас, отдельно стоящие компоненты и сигналы вместо модулей. TypeScript 5.9 — типизация. @angular/ssr 21.2 — отрисовка на сервере. @angular/service-worker 21.2 — Progressive Web App. Tailwind CSS 3.4 — оформление управляемого интерфейса. @tailwindcss/typography 0.5 — класс prose для содержимого из базы. SASS 1.99 — оформление пользовательского содержимого. PostCSS 8.5 и Autoprefixer 10.5 — обработка стилей. RxJS 7.8 — потоки данных. @stomp/stompjs 7.3 с sockjs-client 1.6 — WebSocket. FontAwesome 6.5 — значки. Вход по JWT через HTTP-перехватчик.
+TypeScript 5.9 — язык, JavaScript с проверкой типов при сборке. Angular 21.2 — каркас: отдельно стоящие компоненты, сигналы, отрисовка на сервере, Service Worker для Progressive Web App. Tailwind CSS 3.4 — оформление управляемого интерфейса. SASS 1.99 — оформление пользовательского содержимого. PostCSS 8.5 и Autoprefixer 10.5 — обработка стилей. RxJS 7.8 — потоки данных. STOMP поверх SockJS — WebSocket. FontAwesome 6.5 — значки. Вход по JWT через HTTP-перехватчик.
 
 **База и хранилище**
 
@@ -34,7 +34,7 @@ Stripe Checkout 26.6.0 — оплата продвижения объявлен�
 
 **Тестирование и CI/CD**
 
-JUnit со Spring Boot Test — 9 методов в трёх файлах. Vitest 4.0 — тесты frontend. GitHub Actions — запуск сборки и обновление сервиса ECS. AWS CodeBuild — сборка образа на ARM. Docker — многостадийная сборка: Temurin 25 JDK для компиляции, JRE Alpine для запуска.
+JUnit со Spring Boot Test — 9 методов в трёх файлах. Vitest 4.0 — тесты frontend. GitHub Actions — запуск сборки и обновление сервиса ECS. AWS CodeBuild — сборка образа на ARM. Docker — многостадийная сборка: Corretto 25 JDK для компиляции, headless для запуска.
 
 **DevOps и безопасность**
 
@@ -271,7 +271,7 @@ Git push → GitHub Actions → Docker build → ECR push → ECS update
 
 ### Prerequisites
 - Node.js 22+ or 24+
-- JDK 25 (Eclipse Temurin)
+- JDK 25 (Amazon Corretto или любая сборка OpenJDK)
 - PostgreSQL 14+ on localhost:5432
 
 ### JAVA_HOME (Windows)
@@ -1671,8 +1671,12 @@ Git push → GitHub Actions → Docker build → ECR push → ECS update
 ### Docker Configuration
 
 **Base images:**
-- Builder: `eclipse-temurin:25-jdk-alpine`
-- Runtime: `eclipse-temurin:25-jre-alpine`
+- Builder: `amazoncorretto:25-al2023-jdk`
+- Runtime: `amazoncorretto:25-al2023-headless`
+
+Сборка OpenJDK от Amazon, та же среда, где задача и запускается. Основа Amazon
+Linux 2023, поэтому в Dockerfile `dnf` и `groupadd`/`useradd` вместо `apk` и
+`adduser`. Вариант `headless` без графических библиотек и компилятора.
 
 **Target platform:** `linux/arm64` (Graviton)
 **Java version:** 25

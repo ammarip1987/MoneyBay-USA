@@ -1,7 +1,9 @@
 # Multi-stage build for Spring Boot
-FROM eclipse-temurin:25-jdk-alpine AS builder
-
-RUN apk add --no-cache bash
+#
+# Amazon Corretto: сборка OpenJDK от Amazon, та же среда, в которой задача и
+# запускается (ECS Fargate). Основа — Amazon Linux 2023, поэтому dnf и
+# groupadd/useradd вместо apk и adduser.
+FROM amazoncorretto:25-al2023-jdk AS builder
 
 WORKDIR /app
 
@@ -19,12 +21,14 @@ COPY src src
 # Build with more memory
 RUN ./mvnw package -DskipTests -B -Dmaven.test.skip=true || ./mvnw package -DskipTests -B
 
-FROM eclipse-temurin:25-jre-alpine
+# headless: без графических библиотек и компилятора, только среда выполнения
+FROM amazoncorretto:25-al2023-headless
 
-RUN apk add --no-cache curl
+# curl нужен проверке состояния контейнера
+RUN dnf install -y curl-minimal shadow-utils && dnf clean all
 
 WORKDIR /app
-RUN addgroup -S spring && adduser -S spring -G spring
+RUN groupadd -r spring && useradd -r -g spring spring
 USER spring
 
 COPY --from=builder /app/target/*.jar app.jar
