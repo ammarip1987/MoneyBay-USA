@@ -13,7 +13,7 @@ import { Message } from '../../models/listing.model';
   standalone: true,
   imports: [CommonModule, FormsModule, RouterLink],
   template: `
-    <div class="max-w-4xl mx-auto px-4 py-8">
+    <div class="max-w-4xl mx-auto px-4 py-8 min-page">
       <a routerLink="/messages" class="text-mb-blue hover:underline mb-4 inline-block">← Back to messages</a>
 
       <div class="bg-white rounded-2xl shadow-lg border border-gray-100 flex flex-col" style="height: 70vh;">

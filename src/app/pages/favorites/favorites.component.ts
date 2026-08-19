@@ -10,7 +10,7 @@ import { ListingCardComponent } from '../../components/listing-card/listing-card
   standalone: true,
   imports: [CommonModule, RouterLink, ListingCardComponent],
   template: `
-    <div class="max-w-7xl mx-auto px-4 py-8">
+    <div class="max-w-7xl mx-auto px-4 py-8 min-page">
       <h1 class="text-3xl font-bold text-mb-dark mb-8">My Favorites</h1>
 
       @if (favorites().length > 0) {

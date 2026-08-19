@@ -16,7 +16,7 @@ interface Conversation {
   standalone: true,
   imports: [CommonModule, RouterLink],
   template: `
-    <div class="max-w-5xl mx-auto px-4 py-8">
+    <div class="max-w-5xl mx-auto px-4 py-8 min-page">
       <h1 class="text-3xl font-bold text-mb-dark mb-8">Messages</h1>
 
       @if (conversations().length > 0) {

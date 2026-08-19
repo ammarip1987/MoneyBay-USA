@@ -11,7 +11,7 @@ import { environment } from '../../../environments/environment';
   standalone: true,
   imports: [CommonModule, RouterLink],
   template: `
-    <div class="max-w-6xl mx-auto px-4 py-8 overflow-x-hidden">
+    <div class="max-w-6xl mx-auto px-4 py-8 overflow-x-hidden min-page">
       <!-- Header Card -->
       <div class="bg-white rounded-2xl shadow-lg p-8 mb-8 border border-gray-100">
         <div class="flex flex-col md:flex-row items-start md:items-center gap-8">

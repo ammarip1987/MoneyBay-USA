@@ -2,6 +2,21 @@
 @tailwind components;
 @tailwind utilities;
 
+/* Жёлоб полосы прокрутки занят всегда. Иначе переход с длинной страницы на
+   короткую убирает полосу, ширина содержимого растёт на её толщину и вся
+   вкладка вместе с шапкой сдвигается по горизонтали. */
+html {
+  scrollbar-gutter: stable;
+}
+
+@layer components {
+  /* Запас высоты на время запроса: страница-список не сжимается до одного
+     заголовка, пока данные не пришли, и скролл не срывается вверх */
+  .min-page {
+    @apply min-h-[70vh];
+  }
+}
+
 @layer components {
   .btn {
     @apply px-4 py-2 rounded transition-all duration-200 font-medium;

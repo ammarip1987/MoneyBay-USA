@@ -10,7 +10,7 @@ import { environment } from '../../../environments/environment';
   standalone: true,
   imports: [CommonModule, RouterLink],
   template: `
-    <div class="max-w-7xl mx-auto px-4 py-12 overflow-x-hidden">
+    <div class="max-w-7xl mx-auto px-4 py-12 overflow-x-hidden min-page">
       <div class="mb-12">
         <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
           <div>
