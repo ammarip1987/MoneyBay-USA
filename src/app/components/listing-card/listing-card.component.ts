@@ -47,17 +47,19 @@ import { ApiService } from '../../services/api.service';
                  decoding="async">
 
             @if (listing.images.length > 1) {
+              <!-- Стрелки без подложки: тень делает их различимыми и на светлой,
+                   и на тёмной фотографии -->
               <button (click)="prevImage($event)"
-                      class="absolute left-0 top-1/2 -translate-y-1/2 bg-black/60 hover:bg-black/80 text-white w-11 h-11 rounded-full flex items-center justify-center z-10 transition">
-                <i class="fas fa-chevron-left"></i>
+                      class="absolute left-1 top-1/2 -translate-y-1/2 text-white w-11 h-11 flex items-center justify-center z-10 transition drop-shadow-lg hover:scale-110">
+                <i class="fas fa-chevron-left text-xl"></i>
               </button>
               <button (click)="nextImage($event)"
-                      class="absolute right-0 top-1/2 -translate-y-1/2 bg-black/60 hover:bg-black/80 text-white w-11 h-11 rounded-full flex items-center justify-center z-10 transition">
-                <i class="fas fa-chevron-right"></i>
+                      class="absolute right-1 top-1/2 -translate-y-1/2 text-white w-11 h-11 flex items-center justify-center z-10 transition drop-shadow-lg hover:scale-110">
+                <i class="fas fa-chevron-right text-xl"></i>
               </button>
 
               <!-- Indicators on image -->
-              <div class="absolute bottom-2 left-1/2 -translate-x-1/2 flex justify-center gap-2 z-10">
+              <div class="absolute bottom-2 left-2 flex gap-2 z-10">
                 @for (img of listing.images; track $index) {
                   <button (click)="setImage($index, $event)"
                           class="carousel-dot w-2.5 h-2.5 rounded-full transition-all cursor-pointer"
