@@ -178,10 +178,10 @@ import { ListingCardComponent } from '../../components/listing-card/listing-card
                   <h3 class="text-2xl font-bold text-mb-dark">Similar Products in {{ listing()!.location }}</h3>
                   @if (similar()!.same_location.length > 3) {
                     <div class="hidden md:flex gap-2 flex-none">
-                      <button (click)="scrollRow(row1, -300)" class="w-10 h-10 rounded-full border border-gray-200 flex items-center justify-center text-gray-700 hover:bg-gray-50 transition" aria-label="Previous">
+                      <button (click)="scrollRow(row1, -300)" class="w-10 h-10 rounded-lg bg-gray-100 flex items-center justify-center text-gray-700 hover:bg-gray-200 transition" aria-label="Previous">
                         <i class="fas fa-chevron-left text-sm"></i>
                       </button>
-                      <button (click)="scrollRow(row1, 300)" class="w-10 h-10 rounded-full border border-gray-200 flex items-center justify-center text-gray-700 hover:bg-gray-50 transition" aria-label="Next">
+                      <button (click)="scrollRow(row1, 300)" class="w-10 h-10 rounded-lg bg-gray-100 flex items-center justify-center text-gray-700 hover:bg-gray-200 transition" aria-label="Next">
                         <i class="fas fa-chevron-right text-sm"></i>
                       </button>
                     </div>
@@ -203,10 +203,10 @@ import { ListingCardComponent } from '../../components/listing-card/listing-card
                   <h3 class="text-2xl font-bold text-mb-dark">Similar Price Range</h3>
                   @if (similar()!.similar_price.length > 3) {
                     <div class="hidden md:flex gap-2 flex-none">
-                      <button (click)="scrollRow(row2, -300)" class="w-10 h-10 rounded-full border border-gray-200 flex items-center justify-center text-gray-700 hover:bg-gray-50 transition" aria-label="Previous">
+                      <button (click)="scrollRow(row2, -300)" class="w-10 h-10 rounded-lg bg-gray-100 flex items-center justify-center text-gray-700 hover:bg-gray-200 transition" aria-label="Previous">
                         <i class="fas fa-chevron-left text-sm"></i>
                       </button>
-                      <button (click)="scrollRow(row2, 300)" class="w-10 h-10 rounded-full border border-gray-200 flex items-center justify-center text-gray-700 hover:bg-gray-50 transition" aria-label="Next">
+                      <button (click)="scrollRow(row2, 300)" class="w-10 h-10 rounded-lg bg-gray-100 flex items-center justify-center text-gray-700 hover:bg-gray-200 transition" aria-label="Next">
                         <i class="fas fa-chevron-right text-sm"></i>
                       </button>
                     </div>
@@ -228,10 +228,10 @@ import { ListingCardComponent } from '../../components/listing-card/listing-card
                   <h3 class="text-2xl font-bold text-mb-dark">More from this Seller</h3>
                   @if (similar()!.from_seller.length > 3) {
                     <div class="hidden md:flex gap-2 flex-none">
-                      <button (click)="scrollRow(row3, -300)" class="w-10 h-10 rounded-full border border-gray-200 flex items-center justify-center text-gray-700 hover:bg-gray-50 transition" aria-label="Previous">
+                      <button (click)="scrollRow(row3, -300)" class="w-10 h-10 rounded-lg bg-gray-100 flex items-center justify-center text-gray-700 hover:bg-gray-200 transition" aria-label="Previous">
                         <i class="fas fa-chevron-left text-sm"></i>
                       </button>
-                      <button (click)="scrollRow(row3, 300)" class="w-10 h-10 rounded-full border border-gray-200 flex items-center justify-center text-gray-700 hover:bg-gray-50 transition" aria-label="Next">
+                      <button (click)="scrollRow(row3, 300)" class="w-10 h-10 rounded-lg bg-gray-100 flex items-center justify-center text-gray-700 hover:bg-gray-200 transition" aria-label="Next">
                         <i class="fas fa-chevron-right text-sm"></i>
                       </button>
                     </div>
