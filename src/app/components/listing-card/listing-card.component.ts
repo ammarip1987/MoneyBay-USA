@@ -80,7 +80,7 @@ import { ApiService } from '../../services/api.service';
             <button (click)="setImage($index, $event)"
                     class="carousel-dot h-1.5 rounded-full transition-all cursor-pointer"
                     [class.w-5]="currentImage() === $index"
-                    [class.bg-mb-blue]="currentImage() === $index"
+                    [class.bg-mb-green]="currentImage() === $index"
                     [class.w-1.5]="currentImage() !== $index"
                     [class.bg-gray-300]="currentImage() !== $index"
                     [attr.aria-label]="'Image ' + ($index + 1)">
