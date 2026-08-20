@@ -26,6 +26,9 @@ import java.util.*;
 @RequestMapping("/api/listings")
 public class ListingController {
 
+    /** Объявлений на странице: сетка выводит по четыре в ряд, выходит четыре ряда. */
+    private static final int PAGE_SIZE = 16;
+
     @Value("${app.upload.dir:./uploads}")
     private String uploadDir;
 
@@ -73,7 +76,8 @@ public class ListingController {
         }
 
         if (page < 1) page = 1;
-        PageRequest pageRequest = PageRequest.of(page - 1, 20, sortObj);
+        // 16 на страницу: ровно ложится в сетку по четыре карточки в ряд
+        PageRequest pageRequest = PageRequest.of(page - 1, PAGE_SIZE, sortObj);
         boolean advancedFilters = priceMin != null || priceMax != null || hasImage || postedAfter != null;
 
         Page<Listing> listings = advancedFilters
@@ -85,6 +89,9 @@ public class ListingController {
         response.put("page", page);
         response.put("total", listings.getTotalElements());
         response.put("has_next", listings.hasNext());
+        // Число страниц нужно карусели: без него она не знает, где конец
+        response.put("total_pages", listings.getTotalPages());
+        response.put("page_size", PAGE_SIZE);
         return ResponseEntity.ok(response);
     }
 

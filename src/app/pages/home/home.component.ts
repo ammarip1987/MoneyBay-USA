@@ -187,11 +187,15 @@ interface Subcategory {
     }
 
     @if (selectedCategory()) {
-      <app-filter-chips-bar
-        [filters]="currentFilters()"
-        (filtersChange)="onFiltersChange($event)"
-        (openDrawer)="drawerOpen.set(true)">
-      </app-filter-chips-bar>
+      <!-- Полоса фильтров закреплена под шапкой: при прокрутке длинного списка
+           остаётся на виду. top совпадает с высотой шапки. -->
+      <div class="sticky top-[72px] z-30 -mx-4 px-4 py-2 bg-white/95 backdrop-blur border-b border-gray-100">
+        <app-filter-chips-bar
+          [filters]="currentFilters()"
+          (filtersChange)="onFiltersChange($event)"
+          (openDrawer)="drawerOpen.set(true)">
+        </app-filter-chips-bar>
+      </div>
 
       <app-filter-drawer
         [open]="drawerOpen()"
@@ -208,17 +212,38 @@ interface Subcategory {
         }
       </div>
 
-      @if (hasMore()) {
-        <div #scrollSentinel class="py-8 flex justify-center">
-          @if (loadingMore()) {
-            <span class="inline-flex items-center gap-2 text-gray-500">
-              <span class="inline-block w-5 h-5 border-2 border-mb-blue border-t-transparent rounded-full animate-spin"></span>
-              Loading more...
-            </span>
-          } @else {
-            <button (click)="loadMore()" class="btn btn-secondary">Load more</button>
+      @if (totalPages() > 1) {
+        <nav class="py-8 flex justify-center items-center gap-1 flex-wrap" aria-label="Pagination">
+          <button (click)="goToPage(currentPage() - 1)"
+                  [disabled]="currentPage() <= 1"
+                  class="px-3 py-2 rounded-lg text-sm font-medium transition disabled:opacity-40 disabled:cursor-not-allowed hover:bg-gray-100 text-gray-700"
+                  aria-label="Previous page">
+            <i class="fas fa-chevron-left"></i>
+          </button>
+
+          @for (p of pageNumbers(); track $index) {
+            @if (p === 0) {
+              <span class="px-2 text-gray-400">…</span>
+            } @else {
+              <button (click)="goToPage(p)"
+                      class="min-w-[2.5rem] px-3 py-2 rounded-lg text-sm font-medium transition"
+                      [class.bg-mb-blue]="p === currentPage()"
+                      [class.text-white]="p === currentPage()"
+                      [class.text-gray-700]="p !== currentPage()"
+                      [class.hover:bg-gray-100]="p !== currentPage()"
+                      [attr.aria-current]="p === currentPage() ? 'page' : null">
+                {{ p }}
+              </button>
+            }
           }
-        </div>
+
+          <button (click)="goToPage(currentPage() + 1)"
+                  [disabled]="currentPage() >= totalPages()"
+                  class="px-3 py-2 rounded-lg text-sm font-medium transition disabled:opacity-40 disabled:cursor-not-allowed hover:bg-gray-100 text-gray-700"
+                  aria-label="Next page">
+            <i class="fas fa-chevron-right"></i>
+          </button>
+        </nav>
       }
     }
 
@@ -232,7 +257,7 @@ interface Subcategory {
     </div>
   `
 })
-export class HomeComponent implements OnInit, OnDestroy, AfterViewInit {
+export class HomeComponent implements OnInit, OnDestroy {
   @ViewChild('scrollSentinel') scrollSentinel?: ElementRef<HTMLElement>;
 
   private api = inject(ApiService);
@@ -267,6 +292,29 @@ export class HomeComponent implements OnInit, OnDestroy, AfterViewInit {
   loadingMore = signal(false);
   hasMore = signal(true);
   currentPage = signal(1);
+  totalPages = signal(1);
+
+  /**
+   * Номера для карусели: первая, последняя, текущая и по соседу с ней. Ноль
+   * означает пропуск и рисуется многоточием — иначе при сотнях страниц полоса
+   * не поместилась бы на экран.
+   */
+  pageNumbers = (): number[] => {
+    const total = this.totalPages();
+    const cur = this.currentPage();
+    if (total <= 7) return Array.from({ length: total }, (_, i) => i + 1);
+
+    const pages: number[] = [1];
+    const from = Math.max(2, cur - 1);
+    const to = Math.min(total - 1, cur + 1);
+
+    if (from > 2) pages.push(0);
+    for (let p = from; p <= to; p++) pages.push(p);
+    if (to < total - 1) pages.push(0);
+
+    pages.push(total);
+    return pages;
+  };
 
   selectedCategory = signal<string | null>(null);
   selectedSub = signal<string | null>(null);
@@ -324,6 +372,8 @@ export class HomeComponent implements OnInit, OnDestroy, AfterViewInit {
       this.searchQuery = params['q'] || '';
       this.cityFilter = params['city'] || '';
       this.sortBy = params['sort'] || 'newest';
+      // Номер страницы из адреса: смена раздела или фильтра возвращает на первую
+      this.currentPage.set(sectionChanged ? 1 : Math.max(1, Number(params['page']) || 1));
 
       const advanced: Partial<ListingFilters> = {};
       if (params['price_min']) advanced.price_min = Number(params['price_min']);
@@ -338,43 +388,11 @@ export class HomeComponent implements OnInit, OnDestroy, AfterViewInit {
     });
   }
 
-  ngAfterViewInit(): void {
-    if (!isPlatformBrowser(this.platformId)) return;
-    this.setupScrollObserver();
-  }
-
   ngOnDestroy(): void {
     this.destroyed = true;
-    if (this.observeRetryTimer) clearTimeout(this.observeRetryTimer);
-    this.scrollObserver?.disconnect();
   }
 
   private destroyed = false;
-  private observeRetryTimer: ReturnType<typeof setTimeout> | null = null;
-
-  private setupScrollObserver(): void {
-    if (typeof IntersectionObserver === 'undefined') return;
-    this.scrollObserver = new IntersectionObserver(
-      (entries) => {
-        entries.forEach(entry => {
-          if (entry.isIntersecting && this.hasMore() && !this.loadingMore() && !this.loading()) {
-            this.loadMore();
-          }
-        });
-      },
-      { rootMargin: '300px 0px', threshold: 0.01 }
-    );
-
-    const tryObserve = () => {
-      if (this.destroyed) return;
-      if (this.scrollSentinel?.nativeElement) {
-        this.scrollObserver?.observe(this.scrollSentinel.nativeElement);
-      } else {
-        this.observeRetryTimer = setTimeout(tryObserve, 500);
-      }
-    };
-    tryObserve();
-  }
 
   onFiltersChange(filters: ListingFilters): void {
     const queryParams: any = {};
@@ -475,7 +493,7 @@ export class HomeComponent implements OnInit, OnDestroy, AfterViewInit {
     // Параметры считаются до флага загрузки: по ним видно, лежит ли ответ в
     // кэше. Возврат на главную отдаётся синхронно, и подъём флага вставил бы
     // скелет на один тик — он и виден как мельк.
-    const params: any = { page: append ? this.currentPage() : 1 };
+    const params: any = { page: this.currentPage() };
     if (this.searchQuery) params.q = this.searchQuery;
     if (this.selectedCategory()) params.category = this.selectedCategory();
     if (this.cityFilter) params.city = this.cityFilter;
@@ -487,32 +505,19 @@ export class HomeComponent implements OnInit, OnDestroy, AfterViewInit {
     if (adv.has_image) params.has_image = true;
     if (adv.posted_within) params.posted_within = adv.posted_within;
 
-    if (append) {
-      if (this.loadingMore() || !this.hasMore()) return;
-      this.loadingMore.set(true);
-    } else {
-      this.currentPage.set(1);
-      this.hasMore.set(true);
-      if (!this.api.hasCachedListings(params)) {
-        this.loading.set(true);
-        // Объявления прежнего раздела не должны висеть под заголовком нового:
-        // на их месте показываются заглушки, пока идёт запрос
-        this.listings.set([]);
-      }
+    if (!this.api.hasCachedListings(params)) {
+      this.loading.set(true);
+      // Объявления прежней страницы не должны висеть под заголовком новой:
+      // на их месте показываются заглушки, пока идёт запрос
+      this.listings.set([]);
     }
 
     this.api.getListings(params).subscribe({
       next: (data) => {
-        const newItems = data.listings || [];
-        if (append) {
-          this.listings.update(prev => [...prev, ...newItems]);
-          this.loadingMore.set(false);
-        } else {
-          this.listings.set(newItems);
-          this.loading.set(false);
-        }
+        this.listings.set(data.listings || []);
+        this.loading.set(false);
         this.hasMore.set(data.has_next === true);
-        this.currentPage.update(p => p + 1);
+        this.totalPages.set(data.total_pages || 1);
       },
       error: () => {
         if (append) {
@@ -526,8 +531,22 @@ export class HomeComponent implements OnInit, OnDestroy, AfterViewInit {
     });
   }
 
-  loadMore(): void {
-    this.loadListings(true);
+  /**
+   * Переход на страницу через адрес: номер попадает в queryParams, поэтому
+   * ссылку можно сохранить, а возврат назад возвращает на прежнюю страницу.
+   */
+  goToPage(page: number): void {
+    if (page < 1 || page > this.totalPages() || page === this.currentPage()) return;
+
+    this.router.navigate([], {
+      relativeTo: this.route,
+      queryParams: { page: page > 1 ? page : null },
+      queryParamsHandling: 'merge'
+    });
+
+    if (typeof window !== 'undefined') {
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
   }
 
   onAutocompleteSearch(query: string): void {

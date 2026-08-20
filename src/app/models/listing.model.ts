@@ -55,4 +55,6 @@ export interface PaginatedListings {
   has_next: boolean;
   page: number;
   total: number;
+  total_pages: number;
+  page_size: number;
 }
