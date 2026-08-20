@@ -67,8 +67,6 @@ MoneyBay project is built in Enterprise using strict typing and preserving inher
 ### Payments & Integrations
 
 - **Stripe Checkout** — payment processing (boost listings)
-- **Google OAuth2** — social sign-in
-- **Facebook Login** — social sign-in
 - **Google reCAPTCHA** — bot protection (проверка на сервере)
 - **SMTP** — Mailtrap (dev), SendGrid / SES (production)
 
