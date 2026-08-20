@@ -85,7 +85,12 @@ import { ListingCardComponent } from '../../components/listing-card/listing-card
                 </a>
               </div>
 
-              <p class="text-gray-500 text-sm mb-6">{{ listing()!.created_at | date:'MMM d, yyyy' }}</p>
+              <div class="flex items-center gap-4 text-gray-500 text-sm mb-6">
+                <span>{{ listing()!.created_at | date:'MMM d, yyyy' }}</span>
+                <span class="flex items-center gap-1">
+                  <i class="fas fa-eye"></i> {{ listing()!.views || 0 }} views
+                </span>
+              </div>
               <div class="prose max-w-none mb-6" [innerHTML]="listing()!.description"></div>
 
               @if (auth.isAuthenticated()) {
