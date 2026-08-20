@@ -35,7 +35,7 @@ import { RouterLink } from '@angular/router';
           <li>🔒 <strong>Safety:</strong> Verified accounts and secure messaging</li>
           <li>💳 <strong>Payment:</strong> Stripe-powered payment processing</li>
           <li>📱 <strong>Mobile:</strong> Fully responsive design works everywhere</li>
-          <li>🌍 <strong>Reach:</strong> Available across 53 US cities</li>
+          <li>🌍 <strong>Reach:</strong> Available across 50 US states</li>
         </ul>
       </div>
 

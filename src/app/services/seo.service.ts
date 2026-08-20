@@ -11,7 +11,7 @@ export interface SeoMetadata {
   noindex?: boolean;
 }
 
-const DEFAULT_TITLE = 'MoneyBay — Buy & Sell in 51 US Cities';
+const DEFAULT_TITLE = 'MoneyBay — Buy & Sell in 50 US States';
 const DEFAULT_DESCRIPTION = 'MoneyBay is a free classifieds marketplace for buying and selling items, services, jobs, and real estate across 51 cities in the United States.';
 const DEFAULT_IMAGE = '/icons/icons8-m-50.png';
 const SITE_NAME = 'MoneyBay';

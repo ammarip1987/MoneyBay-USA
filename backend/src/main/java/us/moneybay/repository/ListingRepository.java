@@ -43,6 +43,15 @@ public interface ListingRepository extends JpaRepository<Listing, Long> {
 
     List<Listing> findByUserIdOrderByCreatedAtDesc(Long userId);
 
+    /** Видимые объявления продавца для открытого профиля, с пределом. */
+    @Query("SELECT l FROM Listing l WHERE l.user.id = :userId " +
+           "AND l.isActive = true AND l.isDeleted = false ORDER BY l.createdAt DESC")
+    List<Listing> findActiveByUser(@Param("userId") Long userId, Pageable pageable);
+
+    @Query("SELECT COUNT(l) FROM Listing l WHERE l.user.id = :userId " +
+           "AND l.isActive = true AND l.isDeleted = false")
+    long countActiveByUser(@Param("userId") Long userId);
+
     @Query("SELECT l FROM Listing l WHERE l.isActive = true AND l.isDeleted = false " +
            "AND (COALESCE(:q, '') = '' OR LOWER(l.title) LIKE LOWER(CONCAT('%', :q, '%')) OR LOWER(l.description) LIKE LOWER(CONCAT('%', :q, '%'))) " +
            "AND (COALESCE(:city, '') = '' OR l.location = :city) " +

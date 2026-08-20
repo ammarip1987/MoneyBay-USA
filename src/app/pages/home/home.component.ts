@@ -432,9 +432,9 @@ export class HomeComponent implements OnInit, OnDestroy {
       keywords.push(this.searchQuery);
     }
 
-    const title = parts.length > 0 ? parts.join(' — ') : 'Buy & Sell in 51 US Cities';
+    const title = parts.length > 0 ? parts.join(' — ') : 'Buy & Sell in 50 US States';
     const description = parts.length > 0
-      ? `Browse ${parts.join(', ')} listings on MoneyBay. Free classifieds across 51 US cities.`
+      ? `Browse ${parts.join(', ')} listings on MoneyBay. Free classifieds across 50 US states.`
       : 'Free classifieds marketplace for buying and selling items, services, jobs, and real estate across 51 cities in the United States.';
 
     this.seo.update({

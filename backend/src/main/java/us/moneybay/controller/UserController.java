@@ -1,5 +1,6 @@
 package us.moneybay.controller;
 
+import org.springframework.data.domain.PageRequest;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
@@ -54,9 +55,12 @@ public class UserController {
     public ResponseEntity<?> publicProfile(@PathVariable Long id) {
         return userRepository.findById(id)
             .map(user -> {
-                List<ListingDto> listings = listingRepository.findByUserIdOrderByCreatedAtDesc(id)
+                // Отбор и предел в запросе, а не в приложении: у продавца со
+                // 144 тысячами объявлений выборка целиком не укладывалась в
+                // отведённое время и страница отвечала 504
+                List<ListingDto> listings = listingRepository
+                    .findActiveByUser(id, PageRequest.of(0, 48))
                     .stream()
-                    .filter(l -> l.isActive())
                     .map(ListingDto::from)
                     .toList();
 
@@ -65,7 +69,7 @@ public class UserController {
                 response.put("username", user.getUsername());
                 response.put("city", user.getCity());
                 response.put("created_at", user.getCreatedAt());
-                response.put("listings_count", listings.size());
+                response.put("listings_count", listingRepository.countActiveByUser(id));
                 response.put("listings", listings);
                 return ResponseEntity.ok((Object) response);
             })
