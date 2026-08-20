@@ -90,7 +90,9 @@ public interface ListingRepository extends JpaRepository<Listing, Long> {
            "AND l.id <> :excludeId " +
            "AND (:categoryId IS NULL OR l.category.id = :categoryId) " +
            "AND l.location = :location " +
-           "ORDER BY l.createdAt DESC")
+           // Предел как у соседних запросов: без него отдавались все объявления
+           // города — на большой категории это тысячи строк и пять секунд ответа
+           "ORDER BY l.createdAt DESC LIMIT 12")
     List<Listing> findRelatedSameLocation(@Param("excludeId") Long excludeId,
                                           @Param("categoryId") Long categoryId,
                                           @Param("location") String location);

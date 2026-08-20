@@ -517,6 +517,12 @@ export class HomeComponent implements OnInit, OnDestroy {
         this.loading.set(false);
         this.hasMore.set(data.has_next === true);
         this.totalPages.set(data.total_pages || 1);
+
+        if (this.pendingScroll) {
+          this.pendingScroll = false;
+          // Кадр на отрисовку списка: до неё якорь стоит по прежней разметке
+          requestAnimationFrame(() => this.scrollToListings());
+        }
       },
       error: () => {
         if (append) {
@@ -537,21 +543,29 @@ export class HomeComponent implements OnInit, OnDestroy {
   goToPage(page: number): void {
     if (page < 1 || page > this.totalPages() || page === this.currentPage()) return;
 
+    // Прокрутка после смены страницы, а не до: положение якоря считается по
+    // разметке, и до отрисовки нового списка оно относится к прежнему. Плавная
+    // прокрутка тогда идёт к точке, которая по дороге уезжает, и останавливает
+    // на плитках разделов.
+    this.pendingScroll = true;
+
     this.router.navigate([], {
       relativeTo: this.route,
       queryParams: { page: page > 1 ? page : null },
       queryParamsHandling: 'merge'
     });
+  }
 
-    if (typeof window !== 'undefined') {
-      // К началу списка, а не к самому верху: плитки разделов и поиск листать
-      // заново незачем. Отступ на высоту шапки, иначе она перекроет первый ряд.
-      const anchor = this.listingsAnchor?.nativeElement;
-      const top = anchor
-        ? anchor.getBoundingClientRect().top + window.scrollY - 80
-        : 0;
-      window.scrollTo({ top: Math.max(0, top), behavior: 'smooth' });
-    }
+  private pendingScroll = false;
+
+  /** К началу списка: плитки разделов и поиск листать заново незачем. */
+  private scrollToListings(): void {
+    if (typeof window === 'undefined') return;
+    const anchor = this.listingsAnchor?.nativeElement;
+    if (!anchor) return;
+    // Отступ на высоту шапки, иначе она перекроет первый ряд карточек
+    const top = anchor.getBoundingClientRect().top + window.scrollY - 80;
+    window.scrollTo({ top: Math.max(0, top), behavior: 'smooth' });
   }
 
   onAutocompleteSearch(query: string): void {
