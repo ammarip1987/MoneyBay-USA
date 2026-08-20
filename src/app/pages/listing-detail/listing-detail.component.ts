@@ -171,7 +171,10 @@ import { ListingCardComponent } from '../../components/listing-card/listing-card
              примерно равна одной карусели. -->
         @if (similar() === null) {
           <div class="mt-12 flex items-center justify-center" style="min-height: 340px;">
-            <span class="text-6xl font-bold text-mb-blue animate-pulse select-none">M</span>
+            <span class="relative inline-flex items-center justify-center w-16 h-16">
+              <span class="absolute inset-0 border-4 border-mb-blue border-t-transparent rounded-full animate-spin"></span>
+              <span class="text-2xl font-bold text-mb-blue select-none">M</span>
+            </span>
           </div>
         }
 
@@ -331,6 +334,8 @@ export class ListingDetailComponent implements OnInit {
   currentImage = signal(0);
   isFavorited = signal(false);
   similar = signal<SimilarListings | null>(null);
+  /** Для какого объявления загружены похожие: сброс только при смене. */
+  private similarFor: number | null = null;
   lightboxOpen = signal(false);
   flagModalOpen = signal(false);
   selectedReason = signal('');
@@ -378,7 +383,16 @@ export class ListingDetailComponent implements OnInit {
       if (!id) return;
 
       this.currentImage.set(0);
-      this.similar.set(null);
+
+      // Похожие сбрасываются только при переходе к другому объявлению. При
+      // обновлении страницы ngOnInit выполняется дважды, и безусловный сброс
+      // стирал бы блок, отрисованный сервером: подвал подпрыгивает, пока идёт
+      // повторный запрос.
+      const shownFor = this.similarFor;
+      if (shownFor !== id) {
+        this.similar.set(null);
+        this.similarFor = id;
+      }
 
       // Карточка передаёт объявление через состояние перехода: те же поля,
       // что отдаёт лента. Показываем их сразу, без пустого экрана, а ответ
