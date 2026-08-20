@@ -172,24 +172,26 @@ import { ListingCardComponent } from '../../components/listing-card/listing-card
 
             @if (similar()!.same_location.length > 0) {
               <section>
-                <div class="flex items-center justify-between mb-4">
+                <!-- Стрелки в строке заголовка, справа: не перекрывают карточки
+                     и не зависят от высоты ряда -->
+                <div class="flex items-center justify-between mb-4 gap-4">
                   <h3 class="text-2xl font-bold text-mb-dark">Similar Products in {{ listing()!.location }}</h3>
-                </div>
-                <div class="relative">
-                  <div class="flex gap-4 overflow-x-auto scrollbar-bottom pb-4 -mx-2 px-2 snap-x" #row1>
-                    @for (item of similar()!.same_location; track item.id) {
-                      <div class="flex-none w-64 sm:w-72 snap-start">
-                        <app-listing-card [listing]="item"></app-listing-card>
-                      </div>
-                    }
-                  </div>
                   @if (similar()!.same_location.length > 3) {
-                    <button (click)="scrollRow(row1, -300)" class="hidden md:flex absolute -left-4 top-1/2 -translate-y-1/2 w-14 h-14 bg-white rounded-full shadow-md items-center justify-center hover:shadow-lg z-10" aria-label="Previous">
-                      <i class="fas fa-chevron-left text-gray-700"></i>
-                    </button>
-                    <button (click)="scrollRow(row1, 300)" class="hidden md:flex absolute -right-4 top-1/2 -translate-y-1/2 w-14 h-14 bg-white rounded-full shadow-md items-center justify-center hover:shadow-lg z-10" aria-label="Next">
-                      <i class="fas fa-chevron-right text-gray-700"></i>
-                    </button>
+                    <div class="hidden md:flex gap-2 flex-none">
+                      <button (click)="scrollRow(row1, -300)" class="w-10 h-10 rounded-full border border-gray-200 flex items-center justify-center text-gray-700 hover:bg-gray-50 transition" aria-label="Previous">
+                        <i class="fas fa-chevron-left text-sm"></i>
+                      </button>
+                      <button (click)="scrollRow(row1, 300)" class="w-10 h-10 rounded-full border border-gray-200 flex items-center justify-center text-gray-700 hover:bg-gray-50 transition" aria-label="Next">
+                        <i class="fas fa-chevron-right text-sm"></i>
+                      </button>
+                    </div>
+                  }
+                </div>
+                <div class="flex gap-4 overflow-x-auto scrollbar-bottom pb-4 -mx-2 px-2 snap-x" #row1>
+                  @for (item of similar()!.same_location; track item.id) {
+                    <div class="flex-none w-64 sm:w-72 snap-start">
+                      <app-listing-card [listing]="item"></app-listing-card>
+                    </div>
                   }
                 </div>
               </section>
@@ -197,22 +199,24 @@ import { ListingCardComponent } from '../../components/listing-card/listing-card
 
             @if (similar()!.similar_price.length > 0) {
               <section>
-                <h3 class="text-2xl font-bold text-mb-dark mb-4">Similar Price Range</h3>
-                <div class="relative">
-                  <div class="flex gap-4 overflow-x-auto scrollbar-bottom pb-4 -mx-2 px-2 snap-x" #row2>
-                    @for (item of similar()!.similar_price; track item.id) {
-                      <div class="flex-none w-64 sm:w-72 snap-start">
-                        <app-listing-card [listing]="item"></app-listing-card>
-                      </div>
-                    }
-                  </div>
+                <div class="flex items-center justify-between mb-4 gap-4">
+                  <h3 class="text-2xl font-bold text-mb-dark">Similar Price Range</h3>
                   @if (similar()!.similar_price.length > 3) {
-                    <button (click)="scrollRow(row2, -300)" class="hidden md:flex absolute -left-4 top-1/2 -translate-y-1/2 w-14 h-14 bg-white rounded-full shadow-md items-center justify-center hover:shadow-lg z-10" aria-label="Previous">
-                      <i class="fas fa-chevron-left text-gray-700"></i>
-                    </button>
-                    <button (click)="scrollRow(row2, 300)" class="hidden md:flex absolute -right-4 top-1/2 -translate-y-1/2 w-14 h-14 bg-white rounded-full shadow-md items-center justify-center hover:shadow-lg z-10" aria-label="Next">
-                      <i class="fas fa-chevron-right text-gray-700"></i>
-                    </button>
+                    <div class="hidden md:flex gap-2 flex-none">
+                      <button (click)="scrollRow(row2, -300)" class="w-10 h-10 rounded-full border border-gray-200 flex items-center justify-center text-gray-700 hover:bg-gray-50 transition" aria-label="Previous">
+                        <i class="fas fa-chevron-left text-sm"></i>
+                      </button>
+                      <button (click)="scrollRow(row2, 300)" class="w-10 h-10 rounded-full border border-gray-200 flex items-center justify-center text-gray-700 hover:bg-gray-50 transition" aria-label="Next">
+                        <i class="fas fa-chevron-right text-sm"></i>
+                      </button>
+                    </div>
+                  }
+                </div>
+                <div class="flex gap-4 overflow-x-auto scrollbar-bottom pb-4 -mx-2 px-2 snap-x" #row2>
+                  @for (item of similar()!.similar_price; track item.id) {
+                    <div class="flex-none w-64 sm:w-72 snap-start">
+                      <app-listing-card [listing]="item"></app-listing-card>
+                    </div>
                   }
                 </div>
               </section>
@@ -220,22 +224,24 @@ import { ListingCardComponent } from '../../components/listing-card/listing-card
 
             @if (similar()!.from_seller.length > 0) {
               <section>
-                <h3 class="text-2xl font-bold text-mb-dark mb-4">More from this Seller</h3>
-                <div class="relative">
-                  <div class="flex gap-4 overflow-x-auto scrollbar-bottom pb-4 -mx-2 px-2 snap-x" #row3>
-                    @for (item of similar()!.from_seller; track item.id) {
-                      <div class="flex-none w-64 sm:w-72 snap-start">
-                        <app-listing-card [listing]="item"></app-listing-card>
-                      </div>
-                    }
-                  </div>
+                <div class="flex items-center justify-between mb-4 gap-4">
+                  <h3 class="text-2xl font-bold text-mb-dark">More from this Seller</h3>
                   @if (similar()!.from_seller.length > 3) {
-                    <button (click)="scrollRow(row3, -300)" class="hidden md:flex absolute -left-4 top-1/2 -translate-y-1/2 w-14 h-14 bg-white rounded-full shadow-md items-center justify-center hover:shadow-lg z-10" aria-label="Previous">
-                      <i class="fas fa-chevron-left text-gray-700"></i>
-                    </button>
-                    <button (click)="scrollRow(row3, 300)" class="hidden md:flex absolute -right-4 top-1/2 -translate-y-1/2 w-14 h-14 bg-white rounded-full shadow-md items-center justify-center hover:shadow-lg z-10" aria-label="Next">
-                      <i class="fas fa-chevron-right text-gray-700"></i>
-                    </button>
+                    <div class="hidden md:flex gap-2 flex-none">
+                      <button (click)="scrollRow(row3, -300)" class="w-10 h-10 rounded-full border border-gray-200 flex items-center justify-center text-gray-700 hover:bg-gray-50 transition" aria-label="Previous">
+                        <i class="fas fa-chevron-left text-sm"></i>
+                      </button>
+                      <button (click)="scrollRow(row3, 300)" class="w-10 h-10 rounded-full border border-gray-200 flex items-center justify-center text-gray-700 hover:bg-gray-50 transition" aria-label="Next">
+                        <i class="fas fa-chevron-right text-sm"></i>
+                      </button>
+                    </div>
+                  }
+                </div>
+                <div class="flex gap-4 overflow-x-auto scrollbar-bottom pb-4 -mx-2 px-2 snap-x" #row3>
+                  @for (item of similar()!.from_seller; track item.id) {
+                    <div class="flex-none w-64 sm:w-72 snap-start">
+                      <app-listing-card [listing]="item"></app-listing-card>
+                    </div>
                   }
                 </div>
               </section>
