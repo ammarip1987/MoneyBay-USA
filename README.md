@@ -10,7 +10,8 @@ MoneyBay project is built in Enterprise using strict typing and preserving inher
 
 ### Backend (Java)
 
-- **Java 25** — язык (сборка Amazon Corretto)
+- **Java 25** — язык
+- **Amazon Corretto** — сборка OpenJDK от Amazon
 - **Spring Boot 3.5.0** — web framework
 - **Spring Data JPA + Hibernate 6** — ORM для базы данных
 - **Spring Security** — аутентификация и авторизация
