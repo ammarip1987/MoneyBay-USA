@@ -1,4 +1,4 @@
-import { Component, OnInit, inject, signal } from '@angular/core';
+import { Component, OnInit, inject, signal, afterNextRender } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { FormsModule } from '@angular/forms';
@@ -62,7 +62,7 @@ import { ListingCardComponent } from '../../components/listing-card/listing-card
             <div class="p-8">
               <div class="flex justify-between items-start mb-4">
                 <h1 class="text-3xl font-bold text-mb-dark">{{ listing()!.title }}</h1>
-                @if (auth.isAuthenticated()) {
+                @if (signedIn()) {
                   <button (click)="toggleFavorite()" class="text-2xl bg-white/80 hover:bg-white rounded-lg p-2 transition" [style.color]="isFavorited() ? '#FFD700' : ''">
                     {{ isFavorited() ? '★' : '☆' }}
                   </button>
@@ -93,7 +93,7 @@ import { ListingCardComponent } from '../../components/listing-card/listing-card
               </div>
               <div class="prose max-w-none mb-6" [innerHTML]="listing()!.description"></div>
 
-              @if (auth.isAuthenticated()) {
+              @if (signedIn()) {
                 <div class="space-y-3">
                   <a [routerLink]="['/chat', listing()!.user_id]" class="btn btn-primary w-full text-center block">Contact Seller</a>
                   <div class="flex gap-3">
@@ -260,6 +260,19 @@ export class ListingDetailComponent implements OnInit {
   private router = inject(Router);
   private seo = inject(SeoService);
   auth = inject(AuthService);
+
+  /**
+   * Признак входа для отрисовки. На сервере токена не видно — он в
+   * localStorage, — поэтому там применяется метка из cookie. Без этого сервер
+   * рисует приглашение войти, а после гидратации на его месте появляются три
+   * кнопки: страница подпрыгивает вместе с подвалом.
+   */
+  private authReady = signal(false);
+  signedIn = () => this.authReady() ? this.auth.isAuthenticated() : this.auth.authHint();
+
+  constructor() {
+    afterNextRender(() => this.authReady.set(true));
+  }
 
   listing = signal<Listing | null>(null);
   loading = signal(false);
