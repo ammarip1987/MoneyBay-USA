@@ -102,11 +102,16 @@ public class ListingController {
 
         city = resolveCity(city);
 
-        List<Double> prices = listingRepository.pricesForCategory(city, category);
+        // Считает база: границы и среднее одним запросом, распределение —
+        // вторым. Прежде все цены выбирались в приложение и обрабатывались там,
+        // и на большой категории это занимало больше двух секунд.
+        Object[] stats = listingRepository.priceStats(city, category);
         Map<String, Object> response = new HashMap<>();
-        response.put("total", prices.size());
 
-        if (prices.isEmpty()) {
+        long total = stats[0] == null ? 0 : ((Number) stats[0]).longValue();
+        response.put("total", total);
+
+        if (total == 0 || stats[1] == null) {
             response.put("price_min", 0);
             response.put("price_max", 0);
             response.put("price_avg", 0);
@@ -114,25 +119,43 @@ public class ListingController {
             return ResponseEntity.ok(response);
         }
 
-        double min = prices.get(0);
-        double max = prices.get(prices.size() - 1);
-        double avg = prices.stream().mapToDouble(Double::doubleValue).average().orElse(0);
+        double min = ((Number) stats[1]).doubleValue();
+        double max = ((Number) stats[2]).doubleValue();
+        double avg = ((Number) stats[3]).doubleValue();
 
-        int bucketCount = 10;
-        double bucketSize = Math.max(1, (max - min) / bucketCount);
+        final int bucketCount = 12;
+        // Все цены одинаковы: одна корзина на всё, width_bucket на нулевом
+        // размахе разложить не сможет
+        double span = max - min;
         List<Map<String, Object>> buckets = new java.util.ArrayList<>();
-        for (int i = 0; i < bucketCount; i++) {
-            final double bMin = min + (i * bucketSize);
-            final double bMax = (i == bucketCount - 1) ? max : (bMin + bucketSize);
-            final boolean isLast = (i == bucketCount - 1);
-            long count = prices.stream()
-                .filter(p -> p >= bMin && (isLast ? p <= bMax : p < bMax))
-                .count();
-            Map<String, Object> bucket = new HashMap<>();
-            bucket.put("min", round(bMin));
-            bucket.put("max", round(bMax));
-            bucket.put("count", count);
-            buckets.add(bucket);
+
+        if (span <= 0) {
+            Map<String, Object> single = new HashMap<>();
+            single.put("min", round(min));
+            single.put("max", round(max));
+            single.put("count", total);
+            buckets.add(single);
+        } else {
+            Map<Integer, Long> counts = new HashMap<>();
+            for (Object[] row : listingRepository.priceBuckets(city, category, min, max, bucketCount)) {
+                counts.put(((Number) row[0]).intValue(), ((Number) row[1]).longValue());
+            }
+
+            double bucketSize = span / bucketCount;
+            for (int i = 0; i < bucketCount; i++) {
+                double bMin = min + (i * bucketSize);
+                double bMax = (i == bucketCount - 1) ? max : (bMin + bucketSize);
+                // width_bucket нумерует с единицы; всё, что равно max, попадает
+                // в корзину bucketCount + 1 — присоединяем её к последней
+                long count = counts.getOrDefault(i + 1, 0L);
+                if (i == bucketCount - 1) count += counts.getOrDefault(bucketCount + 1, 0L);
+
+                Map<String, Object> bucket = new HashMap<>();
+                bucket.put("min", round(bMin));
+                bucket.put("max", round(bMax));
+                bucket.put("count", count);
+                buckets.add(bucket);
+            }
         }
 
         response.put("price_min", round(min));

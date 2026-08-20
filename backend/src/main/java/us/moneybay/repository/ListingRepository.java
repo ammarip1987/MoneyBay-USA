@@ -80,6 +80,38 @@ public interface ListingRepository extends JpaRepository<Listing, Long> {
            "ORDER BY l.price ASC")
     List<Double> pricesForCategory(@Param("city") String city, @Param("categorySlug") String categorySlug);
 
+    /**
+     * Границы и среднее одним запросом: возвращает count, min, max, avg.
+     *
+     * Прежде для этого выбирались все цены и считались в приложении — на
+     * категории со 144 тысячами объявлений ответ шёл больше двух секунд, почти
+     * всё уходило на пересылку и разбор списка.
+     */
+    @Query(value = "SELECT count(*), min(l.price), max(l.price), avg(l.price) " +
+                   "FROM listings l LEFT JOIN categories c ON c.id = l.category_id " +
+                   "WHERE l.is_active AND NOT l.is_deleted " +
+                   "AND (COALESCE(:city, '') = '' OR l.location = :city) " +
+                   "AND (COALESCE(:categorySlug, '') = '' OR c.slug = :categorySlug)",
+           nativeQuery = true)
+    Object[] priceStats(@Param("city") String city, @Param("categorySlug") String categorySlug);
+
+    /**
+     * Распределение цен по промежуткам средствами базы: width_bucket раскладывает
+     * строки, не вынимая их наружу.
+     */
+    @Query(value = "SELECT width_bucket(l.price, :priceMin, :priceMax, :buckets) AS bucket, count(*) " +
+                   "FROM listings l LEFT JOIN categories c ON c.id = l.category_id " +
+                   "WHERE l.is_active AND NOT l.is_deleted " +
+                   "AND (COALESCE(:city, '') = '' OR l.location = :city) " +
+                   "AND (COALESCE(:categorySlug, '') = '' OR c.slug = :categorySlug) " +
+                   "GROUP BY bucket ORDER BY bucket",
+           nativeQuery = true)
+    List<Object[]> priceBuckets(@Param("city") String city,
+                                @Param("categorySlug") String categorySlug,
+                                @Param("priceMin") double priceMin,
+                                @Param("priceMax") double priceMax,
+                                @Param("buckets") int buckets);
+
     @Query("SELECT l FROM Listing l WHERE l.isActive = true AND l.isDeleted = false " +
            "AND LOWER(l.title) LIKE LOWER(CONCAT(:q, '%')) " +
            "AND (:city IS NULL OR l.location = :city) " +
