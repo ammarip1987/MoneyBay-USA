@@ -10,7 +10,7 @@ MoneyBay project is built in Enterprise using strict typing and preserving inher
 
 ### Backend (Java)
 
-- **Java 25** — язык
+- **Java 25**
 - **Amazon Corretto** — сборка OpenJDK от Amazon
 - **Spring Boot 3.5.0** — web framework
 - **Spring Data JPA + Hibernate 6** — ORM для базы данных
@@ -19,11 +19,10 @@ MoneyBay project is built in Enterprise using strict typing and preserving inher
 - **Spring WebSocket (STOMP)** — real-time messaging (чат)
 - **Spring Boot Mail** — SMTP отправка почты
 - **Spring Boot Actuator** — health checks для балансировщика
-- **Bucket4j 8.14.0** — rate limiting
 - **Springdoc OpenAPI 2.7.0** — API documentation, Swagger UI
 - **Stripe Java 26.6.0** — payment processing (boost listings)
 - **AWS SDK S3 2.25.0** — загрузка фото в Cloudflare R2 (S3-совместимый API)
-- **Lombok** — annotation processor (геттеры, сеттеры, конструкторы при компиляции)
+- **Lombok** — annotation processor
 - **Maven** — build tool
 
 ### Frontend (TypeScript)
