@@ -156,9 +156,11 @@ public interface ListingRepository extends JpaRepository<Listing, Long> {
                                           @Param("priceMin") Double priceMin,
                                           @Param("priceMax") Double priceMax);
 
+    // Отбора по категории здесь нет: «ещё от этого продавца» показывает всё, что
+    // у него есть. С отбором подборка пустела, когда объявления продавца из
+    // разных разделов, и вместе с ней пропадала кнопка See all.
     @Query("SELECT l FROM Listing l WHERE l.isActive = true AND l.isDeleted = false " +
            "AND l.id <> :excludeId " +
-           "AND (:categoryId IS NULL OR l.category.id = :categoryId) " +
            "AND (:userId IS NULL OR l.user.id = :userId) " +
            "ORDER BY l.createdAt DESC LIMIT 12")
     List<Listing> findRelatedFromSeller(@Param("excludeId") Long excludeId,

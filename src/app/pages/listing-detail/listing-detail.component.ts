@@ -166,6 +166,15 @@ import { ListingCardComponent } from '../../components/listing-card/listing-card
           </div>
         }
 
+        <!-- Пока похожие грузятся, место занято заглушкой: иначе блок
+             появляется рывком и вместе с ним подпрыгивает подвал. Высота
+             примерно равна одной карусели. -->
+        @if (similar() === null) {
+          <div class="mt-12 flex items-center justify-center" style="min-height: 340px;">
+            <span class="text-6xl font-bold text-mb-blue animate-pulse select-none">M</span>
+          </div>
+        }
+
         <!-- Similar Products -->
         @if (similar() && (similar()!.same_location.length > 0 || similar()!.similar_price.length > 0 || similar()!.from_seller.length > 0)) {
           <div class="mt-12 space-y-12">
