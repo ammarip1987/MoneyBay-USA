@@ -67,8 +67,7 @@ MoneyBay project is built in Enterprise using strict typing and preserving inher
 ### Payments & Integrations
 
 - **Stripe Checkout** — payment processing (boost listings)
-- **Google reCAPTCHA** — bot protection (проверка на сервере)
-- **SMTP** — Mailtrap (dev), SendGrid / SES (production)
+- **STOMP over SockJS** — real-time messaging (WebSocket)
 
 ### Testing & CI/CD
 
@@ -98,7 +97,7 @@ Rationale: Масштабируемость, надёжность, произв�
 
 ### Архитектура
 
-- Слоистая структура backend: controller, service, repository, model, dto, config, security
+- Структура backend: controller, service, repository, model, dto, config, security
 - Angular standalone components и signals вместо NgModule и zone.js
 - SSR с разбором по маршрутам: публичные страницы на сервере, страницы за авторизацией на клиенте
 - City subdomain routing в духе Craigslist (CityContextFilter на сервере, CityContextService на клиенте)
