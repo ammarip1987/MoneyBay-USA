@@ -318,10 +318,23 @@ export class ListingDetailComponent implements OnInit {
       // Карточка передаёт объявление через состояние перехода: те же поля,
       // что отдаёт лента. Показываем их сразу, без пустого экрана, а ответ
       // сервера потом обновляет данные на случай, если они устарели.
+      //
+      // При обновлении страницы ngOnInit выполняется дважды — на сервере и в
+      // браузере после гидратации. Во втором проходе history.state пуст, и
+      // безусловная запись стёрла бы объявление, отрисованное сервером: на его
+      // месте мелькает «Loading listing». Поэтому уже показанное объявление
+      // сохраняется, если это то же самое.
       const passed = this.preloadedListing(id);
-      this.listing.set(passed);
-      this.loading.set(passed === null);
-      if (passed) this.isFavorited.set(passed.is_favorited || false);
+      const shown = this.listing();
+      const alreadyShown = shown !== null && shown.id === id;
+
+      if (passed) {
+        this.listing.set(passed);
+        this.isFavorited.set(passed.is_favorited || false);
+      } else if (!alreadyShown) {
+        this.listing.set(null);
+      }
+      this.loading.set(!passed && !alreadyShown);
 
       if (typeof window !== 'undefined') {
         window.scrollTo({ top: 0, behavior: 'smooth' });
