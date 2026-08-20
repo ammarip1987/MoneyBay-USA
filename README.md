@@ -22,7 +22,7 @@ MoneyBay project is built in Enterprise using strict typing and preserving inher
 - **Springdoc OpenAPI 2.7.0** — API documentation, Swagger UI
 - **Stripe Java 26.6.0** — payment processing (boost listings)
 - **AWS SDK S3 2.25.0** — загрузка фото в Cloudflare R2 (S3-совместимый API)
-- **Lombok** — annotation processor
+- **Lombok** — compiler plugin
 - **Maven** — build tool
 
 ### Frontend (TypeScript)
