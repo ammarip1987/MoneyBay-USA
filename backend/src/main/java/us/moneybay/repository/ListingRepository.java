@@ -69,10 +69,6 @@ public interface ListingRepository extends JpaRepository<Listing, Long> {
                                   @Param("postedAfter") java.time.Instant postedAfter,
                                   Pageable pageable);
 
-    @Query("SELECT MIN(l.price), MAX(l.price), COUNT(l) FROM Listing l WHERE l.isActive = true AND l.isDeleted = false " +
-           "AND (COALESCE(:city, '') = '' OR l.location = :city) " +
-           "AND (COALESCE(:categorySlug, '') = '' OR l.category.slug = :categorySlug)")
-    Object[] priceStats(@Param("city") String city, @Param("categorySlug") String categorySlug);
 
     @Query("SELECT l.price FROM Listing l WHERE l.isActive = true AND l.isDeleted = false " +
            "AND (COALESCE(:city, '') = '' OR l.location = :city) " +
