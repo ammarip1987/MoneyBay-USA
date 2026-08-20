@@ -97,7 +97,7 @@ Rationale: Масштабируемость, надёжность, произв�
 
 ### Архитектура
 
-- Построение backend: controller, service, repository, model, dto, config, security
+- Архитектура backend: controller, service, repository, model, dto, config, security
 - Angular standalone components и signals вместо NgModule и zone.js
 - SSR с разбором по маршрутам: публичные страницы на сервере, страницы за авторизацией на клиенте
 - City subdomain routing в духе Craigslist (CityContextFilter на сервере, CityContextService на клиенте)
