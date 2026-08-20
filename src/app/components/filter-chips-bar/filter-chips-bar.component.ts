@@ -8,7 +8,7 @@ import { ListingFilters, SORT_OPTIONS } from '../../models/listing-filters.model
   standalone: true,
   imports: [CommonModule, FormsModule],
   template: `
-    <div class="flex items-center gap-2 flex-wrap py-3 sticky top-16 bg-white/95 backdrop-blur z-30 border-b border-gray-100">
+    <div class="flex items-center gap-2 flex-wrap py-3 border-b border-gray-100">
       <button (click)="openDrawer.emit()"
               class="inline-flex items-center gap-2 px-4 py-2 bg-white border border-gray-300 rounded-full text-sm font-medium hover:border-mb-blue transition shadow-sm">
         <i class="fas fa-sliders"></i>

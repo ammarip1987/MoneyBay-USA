@@ -21,7 +21,10 @@ export const errorInterceptor: HttpInterceptorFn = (req, next) => {
     catchError((err: unknown) => {
       if (
         err instanceof HttpErrorResponse &&
-        err.status === 401 &&
+        // 403 наравне с 401: Spring Security отвечает Forbidden на просроченный
+        // токен, и без этого сеанс не сбрасывался — опрос счётчика стучался
+        // каждые 20 секунд, набивая консоль ошибками
+        (err.status === 401 || err.status === 403) &&
         !req.context.get(SKIP_SESSION_EXPIRED) &&
         !req.url.includes('/api/auth/') &&
         auth.getToken()

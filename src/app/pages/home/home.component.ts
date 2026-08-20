@@ -158,6 +158,9 @@ interface Subcategory {
     }
 
     <!-- Listings -->
+    <!-- Якорь для перехода по страницам: список начинается отсюда, на главной,
+         в категориях и в подкатегориях. Плитки разделов остаются выше. -->
+    <div #listingsAnchor></div>
     @if (!selectedCategory()) {
       <h2 class="text-2xl font-bold text-mb-dark mb-6">All Listings</h2>
     }
@@ -254,7 +257,7 @@ interface Subcategory {
   `
 })
 export class HomeComponent implements OnInit, OnDestroy {
-  @ViewChild('scrollSentinel') scrollSentinel?: ElementRef<HTMLElement>;
+  @ViewChild('listingsAnchor') listingsAnchor?: ElementRef<HTMLElement>;
 
   private api = inject(ApiService);
   private route = inject(ActivatedRoute);
@@ -541,7 +544,13 @@ export class HomeComponent implements OnInit, OnDestroy {
     });
 
     if (typeof window !== 'undefined') {
-      window.scrollTo({ top: 0, behavior: 'smooth' });
+      // К началу списка, а не к самому верху: плитки разделов и поиск листать
+      // заново незачем. Отступ на высоту шапки, иначе она перекроет первый ряд.
+      const anchor = this.listingsAnchor?.nativeElement;
+      const top = anchor
+        ? anchor.getBoundingClientRect().top + window.scrollY - 80
+        : 0;
+      window.scrollTo({ top: Math.max(0, top), behavior: 'smooth' });
     }
   }
 
