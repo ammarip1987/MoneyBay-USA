@@ -271,7 +271,15 @@ export class ListingDetailComponent implements OnInit {
   signedIn = () => this.authReady() ? this.auth.isAuthenticated() : this.auth.authHint();
 
   constructor() {
-    afterNextRender(() => this.authReady.set(true));
+    afterNextRender(() => {
+      this.authReady.set(true);
+
+      // Лента подгружается заранее, пока читают объявление: возврат на главную
+      // идёт внутри приложения, без участия сервера, и без кэша там ждали бы
+      // ответа около секунды со скелетом на экране. Запрос уходит один раз и
+      // кладётся в тот же кэш, из которого главная читает.
+      this.api.getListings({ page: 1 }).subscribe({ error: () => {} });
+    });
   }
 
   listing = signal<Listing | null>(null);
