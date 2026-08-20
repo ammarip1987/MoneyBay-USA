@@ -58,20 +58,6 @@ import { ApiService } from '../../services/api.service';
                 <i class="fas fa-chevron-right text-xl"></i>
               </button>
 
-              <!-- Indicators on image -->
-              <div class="absolute bottom-2 left-2 flex gap-2 z-10">
-                @for (img of listing.images; track $index) {
-                  <button (click)="setImage($index, $event)"
-                          class="carousel-dot w-2.5 h-2.5 rounded-full transition-all cursor-pointer"
-                          [class.bg-mb-green]="currentImage() === $index"
-                          [class.scale-110]="currentImage() === $index"
-                          [class.opacity-100]="currentImage() === $index"
-                          [class.bg-gray-300]="currentImage() !== $index"
-                          [class.opacity-40]="currentImage() !== $index"
-                          [class.scale-100]="currentImage() !== $index">
-                  </button>
-                }
-              </div>
             }
           </div>
         </a>
@@ -86,8 +72,25 @@ import { ApiService } from '../../services/api.service';
         </a>
       }
 
+      <!-- Указатели карусели: под фотографией, перед описанием. Поверх снимка
+           они терялись на пёстром фоне. -->
+      @if (listing.images && listing.images.length > 1) {
+        <div class="flex gap-1.5 px-4 pt-3">
+          @for (img of listing.images; track $index) {
+            <button (click)="setImage($index, $event)"
+                    class="carousel-dot h-1.5 rounded-full transition-all cursor-pointer"
+                    [class.w-5]="currentImage() === $index"
+                    [class.bg-mb-blue]="currentImage() === $index"
+                    [class.w-1.5]="currentImage() !== $index"
+                    [class.bg-gray-300]="currentImage() !== $index"
+                    [attr.aria-label]="'Image ' + ($index + 1)">
+            </button>
+          }
+        </div>
+      }
+
       <!-- Info -->
-      <a [routerLink]="['/listing', listing.id]" [state]="{ listing: listing }" class="block p-4 hover:bg-gray-50 transition">
+      <a [routerLink]="['/listing', listing.id]" [state]="{ listing: listing }" class="block px-4 pt-2 pb-4 hover:bg-gray-50 transition">
         <h3 class="font-bold text-mb-dark text-lg mb-2 line-clamp-2">{{ listing.title }}</h3>
         <p class="text-sm text-gray-600 mb-2 line-clamp-1">
           {{ listing.location }}@if (listing.area) { · {{ listing.area }} }
