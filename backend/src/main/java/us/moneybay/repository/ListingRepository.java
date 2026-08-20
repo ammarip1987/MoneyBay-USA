@@ -59,7 +59,9 @@ public interface ListingRepository extends JpaRepository<Listing, Long> {
            "AND (:priceMin IS NULL OR l.price >= :priceMin) " +
            "AND (:priceMax IS NULL OR l.price <= :priceMax) " +
            "AND (:hasImage = false OR SIZE(l.images) > 0) " +
-           "AND (:postedAfter IS NULL OR l.createdAt >= :postedAfter)")
+           // CAST обязателен: без него PostgreSQL не выводит тип для null и
+           // отвечает "could not determine data type of parameter"
+           "AND (CAST(:postedAfter AS timestamp) IS NULL OR l.createdAt >= :postedAfter)")
     Page<Listing> searchAdvanced(@Param("q") String q,
                                   @Param("city") String city,
                                   @Param("categorySlug") String categorySlug,
