@@ -75,14 +75,16 @@ import { ApiService } from '../../services/api.service';
       <!-- Указатели карусели: под фотографией, перед описанием. Поверх снимка
            они терялись на пёстром фоне. -->
       @if (listing.images && listing.images.length > 1) {
-        <div class="flex gap-1.5 px-4 pt-3">
+        <div class="flex gap-2 px-4 pt-3">
           @for (img of listing.images; track $index) {
             <button (click)="setImage($index, $event)"
-                    class="carousel-dot h-1.5 rounded-full transition-all cursor-pointer"
-                    [class.w-5]="currentImage() === $index"
+                    class="carousel-dot w-2.5 h-2.5 rounded-full transition-all cursor-pointer"
                     [class.bg-mb-green]="currentImage() === $index"
-                    [class.w-1.5]="currentImage() !== $index"
+                    [class.scale-110]="currentImage() === $index"
+                    [class.opacity-100]="currentImage() === $index"
                     [class.bg-gray-300]="currentImage() !== $index"
+                    [class.opacity-40]="currentImage() !== $index"
+                    [class.scale-100]="currentImage() !== $index"
                     [attr.aria-label]="'Image ' + ($index + 1)">
             </button>
           }
