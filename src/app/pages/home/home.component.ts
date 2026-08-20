@@ -187,15 +187,11 @@ interface Subcategory {
     }
 
     @if (selectedCategory()) {
-      <!-- Полоса фильтров закреплена под шапкой: при прокрутке длинного списка
-           остаётся на виду. top совпадает с высотой шапки. -->
-      <div class="sticky top-[72px] z-30 -mx-4 px-4 py-2 bg-white/95 backdrop-blur border-b border-gray-100">
-        <app-filter-chips-bar
-          [filters]="currentFilters()"
-          (filtersChange)="onFiltersChange($event)"
-          (openDrawer)="drawerOpen.set(true)">
-        </app-filter-chips-bar>
-      </div>
+      <app-filter-chips-bar
+        [filters]="currentFilters()"
+        (filtersChange)="onFiltersChange($event)"
+        (openDrawer)="drawerOpen.set(true)">
+      </app-filter-chips-bar>
 
       <app-filter-drawer
         [open]="drawerOpen()"
