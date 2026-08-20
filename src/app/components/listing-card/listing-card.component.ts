@@ -50,11 +50,11 @@ import { ApiService } from '../../services/api.service';
               <!-- Стрелки без подложки: тень делает их различимыми и на светлой,
                    и на тёмной фотографии -->
               <button (click)="prevImage($event)"
-                      class="absolute left-1 top-1/2 -translate-y-1/2 text-white w-11 h-11 flex items-center justify-center z-10 transition drop-shadow-lg hover:scale-110">
+                      class="absolute left-0 top-1/2 -translate-y-1/2 text-white w-11 h-11 flex items-center justify-center z-10 transition drop-shadow-lg hover:scale-110">
                 <i class="fas fa-chevron-left text-xl"></i>
               </button>
               <button (click)="nextImage($event)"
-                      class="absolute right-1 top-1/2 -translate-y-1/2 text-white w-11 h-11 flex items-center justify-center z-10 transition drop-shadow-lg hover:scale-110">
+                      class="absolute right-0 top-1/2 -translate-y-1/2 text-white w-11 h-11 flex items-center justify-center z-10 transition drop-shadow-lg hover:scale-110">
                 <i class="fas fa-chevron-right text-xl"></i>
               </button>
 
