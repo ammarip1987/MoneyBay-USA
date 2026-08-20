@@ -201,6 +201,9 @@ public class TestDataController {
         if (auth == null) {
             return ResponseEntity.status(401).body("Not authenticated");
         }
+        // Фотографии удаляются первыми: внешний ключ listing_images без
+        // ON DELETE CASCADE, и без этого удаление объявлений упирается в него
+        listingRepository.deleteImagesOfTestListings();
         int deleted = listingRepository.deleteAllByIsTestTrue();
         return ResponseEntity.ok(Map.of(
             "message", "Test listings deleted (is_test = true only)",

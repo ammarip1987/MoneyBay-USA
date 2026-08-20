@@ -29,6 +29,16 @@ public interface ListingRepository extends JpaRepository<Listing, Long> {
     @Query("DELETE FROM Listing l WHERE l.isTest = true")
     int deleteAllByIsTestTrue();
 
+    /**
+     * Фотографии тестовых объявлений. Вызывается перед удалением самих
+     * объявлений: внешний ключ listing_images задан без ON DELETE CASCADE.
+     */
+    @Modifying
+    @Transactional
+    @Query(value = "DELETE FROM listing_images WHERE listing_id IN " +
+                   "(SELECT id FROM listings WHERE is_test = true)", nativeQuery = true)
+    int deleteImagesOfTestListings();
+
     List<Listing> findByUserIdAndIsDeletedFalseOrderByCreatedAtDesc(Long userId);
 
     List<Listing> findByUserIdOrderByCreatedAtDesc(Long userId);
