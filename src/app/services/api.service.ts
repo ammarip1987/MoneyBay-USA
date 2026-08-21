@@ -237,6 +237,13 @@ export class ApiService {
     return this.http.put<Storefront>(`${this.baseUrl}/api/storefront`, data);
   }
 
+  /** Логотип или обложка магазина. */
+  uploadStorefrontImage(kind: 'logo' | 'banner', file: File): Observable<Storefront> {
+    const form = new FormData();
+    form.append('file', file);
+    return this.http.post<Storefront>(`${this.baseUrl}/api/storefront/image/${kind}`, form);
+  }
+
   /** Открытая страница магазина по адресу. */
   getPublicStorefront(slug: string): Observable<PublicStorefront> {
     return this.http.get<PublicStorefront>(`${this.baseUrl}/api/storefront/${slug}`);

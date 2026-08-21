@@ -55,14 +55,23 @@ import { Storefront } from '../../models/storefront.model';
       } @else {
         <!-- Обложка и логотип -->
         <div class="bg-white rounded-2xl shadow-lg overflow-hidden mb-6">
-          <div class="h-40 bg-gradient-to-r from-mb-blue to-mb-cyan relative">
+          <!-- Store Billboard: обложка магазина. Загружается по нажатию,
+               наведение показывает подпись -->
+          <div class="h-40 bg-gradient-to-r from-mb-blue to-mb-cyan relative group">
             @if (store()!.bannerUrl) {
               <img [src]="api.imageUrl(store()!.bannerUrl)" alt="" class="w-full h-full object-cover">
             }
+            <input type="file" accept="image/jpeg,image/png,image/webp" hidden
+                   #bannerInput (change)="uploadImage('banner', $event)">
+            <button type="button" (click)="bannerInput.click()" [disabled]="busy()"
+                    class="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition flex items-center justify-center text-white text-sm font-medium">
+              <i class="fas fa-camera mr-2"></i>
+              {{ store()!.bannerUrl ? 'Change cover' : 'Add cover image' }}
+            </button>
           </div>
           <div class="px-8 pb-6">
-            <div class="flex items-end gap-5 -mt-12 mb-4 flex-wrap">
-              <div class="w-24 h-24 rounded-2xl bg-white p-1 shadow-md flex-shrink-0">
+            <div class="flex items-end gap-5 -mt-12 mb-4 flex-wrap relative z-10">
+              <div class="w-24 h-24 rounded-2xl bg-white p-1 shadow-md flex-shrink-0 group relative">
                 <div class="w-full h-full rounded-xl overflow-hidden bg-gradient-to-br from-mb-blue to-mb-cyan flex items-center justify-center">
                   @if (store()!.logoUrl) {
                     <img [src]="api.imageUrl(store()!.logoUrl)" alt="" class="w-full h-full object-cover">
@@ -70,6 +79,12 @@ import { Storefront } from '../../models/storefront.model';
                     <span class="text-white text-3xl font-bold">{{ store()!.name[0].toUpperCase() }}</span>
                   }
                 </div>
+                <input type="file" accept="image/jpeg,image/png,image/webp" hidden
+                       #logoInput (change)="uploadImage('logo', $event)">
+                <button type="button" (click)="logoInput.click()" [disabled]="busy()"
+                        class="absolute inset-1 rounded-xl bg-black/50 opacity-0 group-hover:opacity-100 transition flex items-center justify-center text-white text-xs">
+                  <i class="fas fa-camera"></i>
+                </button>
               </div>
               <div class="flex-1 pb-1">
                 <h2 class="text-2xl font-bold text-mb-dark">{{ store()!.name }}</h2>
@@ -252,6 +267,81 @@ export class StorefrontComponent implements OnInit {
         this.error.set(err?.error?.message || 'Could not create the storefront');
         this.busy.set(false);
       }
+    });
+  }
+
+  /** Логотип или обложка. Уменьшается в браузере, чтобы не слать мегабайты. */
+  async uploadImage(kind: 'logo' | 'banner', event: Event): Promise<void> {
+    const input = event.target as HTMLInputElement;
+    const file = input.files?.[0];
+    if (!file) return;
+
+    this.busy.set(true);
+    this.error.set(null);
+
+    try {
+      // Логотип квадратный, обложка широкая — отсюда разные размеры
+      const resized = kind === 'logo'
+        ? await this.resize(file, 512, 512, true)
+        : await this.resize(file, 1600, 400, false);
+
+      this.api.uploadStorefrontImage(kind, resized).subscribe({
+        next: (s) => {
+          this.apply(s);
+          this.busy.set(false);
+        },
+        error: (err) => {
+          this.error.set(err?.error?.message || 'Could not upload the image');
+          this.busy.set(false);
+        }
+      });
+    } catch {
+      this.error.set('Could not read the image');
+      this.busy.set(false);
+    } finally {
+      input.value = '';
+    }
+  }
+
+  /** Уменьшение с обрезкой по центру: square — до квадрата, иначе по ширине. */
+  private resize(file: File, w: number, h: number, square: boolean): Promise<File> {
+    return new Promise((resolve, reject) => {
+      const img = new Image();
+      img.onload = () => {
+        const canvas = document.createElement('canvas');
+        canvas.width = w;
+        canvas.height = h;
+        const ctx = canvas.getContext('2d');
+        if (!ctx) return reject(new Error('no canvas'));
+
+        if (square) {
+          const side = Math.min(img.width, img.height);
+          ctx.drawImage(img, (img.width - side) / 2, (img.height - side) / 2,
+                        side, side, 0, 0, w, h);
+        } else {
+          // Обложка: берётся полоса нужного соотношения из середины снимка
+          const ratio = w / h;
+          let sw = img.width;
+          let sh = sw / ratio;
+          if (sh > img.height) {
+            sh = img.height;
+            sw = sh * ratio;
+          }
+          ctx.drawImage(img, (img.width - sw) / 2, (img.height - sh) / 2,
+                        sw, sh, 0, 0, w, h);
+        }
+
+        URL.revokeObjectURL(img.src);
+        canvas.toBlob(
+          blob => blob
+            ? resolve(new File([blob], 'image.webp', { type: 'image/webp' }))
+            : reject(new Error('no blob')),
+          'image/webp',
+          0.85
+        );
+      };
+      img.onerror = () => reject(new Error('bad image'));
+      img.src = URL.createObjectURL(file);
     });
   }
 

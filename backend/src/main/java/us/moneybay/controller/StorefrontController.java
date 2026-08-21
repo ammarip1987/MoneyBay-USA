@@ -9,6 +9,9 @@ import us.moneybay.model.Storefront;
 import us.moneybay.model.User;
 import us.moneybay.repository.ListingRepository;
 import us.moneybay.repository.StorefrontRepository;
+import us.moneybay.service.R2PhotoService;
+import org.springframework.web.multipart.MultipartFile;
+import java.io.IOException;
 import org.springframework.data.domain.PageRequest;
 
 import java.util.List;
@@ -29,11 +32,14 @@ public class StorefrontController {
 
     private final StorefrontRepository storefrontRepository;
     private final ListingRepository listingRepository;
+    private final R2PhotoService r2PhotoService;
 
     public StorefrontController(StorefrontRepository storefrontRepository,
-                                ListingRepository listingRepository) {
+                                ListingRepository listingRepository,
+                                R2PhotoService r2PhotoService) {
         this.storefrontRepository = storefrontRepository;
         this.listingRepository = listingRepository;
+        this.r2PhotoService = r2PhotoService;
     }
 
     /** Витрина текущего пользователя; пусто, если не заведена. */
@@ -87,6 +93,45 @@ public class StorefrontController {
                     s.setPublished(Boolean.TRUE.equals(body.get("published")));
                 }
                 return ResponseEntity.ok((Object) StorefrontDto.from(storefrontRepository.save(s)));
+            })
+            .orElse(ResponseEntity.status(404).body(Map.of("message", "No storefront")));
+    }
+
+    /**
+     * Логотип или обложка. Тип задаётся в пути: logo или banner.
+     *
+     * Это изображения магазина, а не личное фото, поэтому загрузка со своего
+     * устройства здесь уместна: витрину оформляет владелец.
+     */
+    @PostMapping("/image/{kind}")
+    public ResponseEntity<?> uploadImage(@PathVariable String kind,
+                                         @RequestParam("file") MultipartFile file,
+                                         Authentication auth) {
+        if (auth == null) return ResponseEntity.status(401).build();
+        if (!kind.equals("logo") && !kind.equals("banner")) {
+            return ResponseEntity.badRequest().body(Map.of("message", "Unknown image kind"));
+        }
+        if (file.isEmpty()) return ResponseEntity.badRequest().body(Map.of("message", "File is empty"));
+        if (file.getSize() > 3_000_000) {
+            return ResponseEntity.badRequest().body(Map.of("message", "Image must be under 3 MB"));
+        }
+
+        String type = file.getContentType();
+        if (type == null || !(type.equals("image/jpeg") || type.equals("image/png")
+                || type.equals("image/webp"))) {
+            return ResponseEntity.badRequest().body(Map.of("message", "Allowed: JPEG, PNG, WebP"));
+        }
+
+        User user = (User) auth.getPrincipal();
+        return storefrontRepository.findByUserId(user.getId())
+            .map(s -> {
+                try {
+                    String url = r2PhotoService.uploadPhoto(file);
+                    if (kind.equals("logo")) s.setLogoUrl(url); else s.setBannerUrl(url);
+                    return ResponseEntity.ok((Object) StorefrontDto.from(storefrontRepository.save(s)));
+                } catch (IOException e) {
+                    return ResponseEntity.status(500).body(Map.of("message", "Failed to upload image"));
+                }
             })
             .orElse(ResponseEntity.status(404).body(Map.of("message", "No storefront")));
     }
