@@ -71,6 +71,15 @@ interface Subcategory {
     <!-- Categories grid (only on main page) -->
     @if (!selectedCategory()) {
       <div class="mb-12">
+        <!-- Место под плитки занято с первого кадра: без этого лента
+             подпрыгивает, когда категории приходят -->
+        @if (categories().length === 0) {
+          <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+            @for (i of [1, 2, 3, 4, 5, 6, 7, 8, 9, 11, 12, 13]; track i) {
+              <div class="bg-gray-100 animate-pulse" style="height: 168px;"></div>
+            }
+          </div>
+        }
         <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
           @for (cat of categories(); track cat.id) {
             <!-- Колонка: значок сверху, описание прижато книзу. Иначе длинное
