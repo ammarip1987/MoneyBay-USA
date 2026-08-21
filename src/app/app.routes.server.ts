@@ -13,6 +13,8 @@ export const serverRoutes: ServerRoute[] = [
   { path: 'contact', renderMode: RenderMode.Server },
   { path: 'listing/:id', renderMode: RenderMode.Server },
   { path: 'profile', renderMode: RenderMode.Client },
+  { path: 'storefront', renderMode: RenderMode.Client },
+  { path: 'shop/:slug', renderMode: RenderMode.Server },
   { path: 'edit-profile', renderMode: RenderMode.Client },
   { path: 'my-listings', renderMode: RenderMode.Client },
   { path: 'new-listing', renderMode: RenderMode.Client },

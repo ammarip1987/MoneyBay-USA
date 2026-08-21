@@ -4,6 +4,7 @@ import { Observable, of } from 'rxjs';
 import { tap } from 'rxjs/operators';
 import { environment } from '../../environments/environment';
 import { Listing, Category, City, User, Message, PaginatedListings } from '../models/listing.model';
+import { Storefront, PublicStorefront } from '../models/storefront.model';
 
 export interface ListingSuggestion {
   id: number;
@@ -221,11 +222,24 @@ export class ApiService {
     return this.http.put<User>(`${this.baseUrl}/api/profile`, data);
   }
 
-  /** Загрузка аватара. Размер подгоняется до 400x400 ещё на клиенте. */
-  uploadAvatar(file: File): Observable<User> {
-    const form = new FormData();
-    form.append('file', file);
-    return this.http.post<User>(`${this.baseUrl}/api/profile/avatar`, form);
+  // --- Витрина продавца ---
+
+  /** Витрина текущего пользователя; null, если не заведена. */
+  getMyStorefront(): Observable<Storefront | null> {
+    return this.http.get<Storefront | null>(`${this.baseUrl}/api/storefront/mine`);
+  }
+
+  createStorefront(name: string): Observable<Storefront> {
+    return this.http.post<Storefront>(`${this.baseUrl}/api/storefront`, { name });
+  }
+
+  updateStorefront(data: Partial<Storefront>): Observable<Storefront> {
+    return this.http.put<Storefront>(`${this.baseUrl}/api/storefront`, data);
+  }
+
+  /** Открытая страница магазина по адресу. */
+  getPublicStorefront(slug: string): Observable<PublicStorefront> {
+    return this.http.get<PublicStorefront>(`${this.baseUrl}/api/storefront/${slug}`);
   }
 
   getUnreadCount(): Observable<{ count: number }> {

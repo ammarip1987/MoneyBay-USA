@@ -22,6 +22,8 @@ export const routes: Routes = [
   { path: 'admin/support', canActivate: [authGuard, adminGuard], loadComponent: () => import('./pages/admin/admin-support.component').then(m => m.AdminSupportComponent) },
   { path: 'admin/users', canActivate: [authGuard, adminGuard], loadComponent: () => import('./pages/admin/admin-users.component').then(m => m.AdminUsersComponent) },
   { path: 'admin/listings/:id/chats', canActivate: [authGuard, adminGuard], loadComponent: () => import('./pages/admin/admin-listing-chat.component').then(m => m.AdminListingChatComponent) },
+  { path: 'storefront', canActivate: [authGuard], loadComponent: () => import('./pages/storefront/storefront.component').then(m => m.StorefrontComponent) },
+  { path: 'shop/:slug', loadComponent: () => import('./pages/shop/shop.component').then(m => m.ShopComponent) },
   { path: 'users/:id', loadComponent: () => import('./pages/public-profile/public-profile.component').then(m => m.PublicProfileComponent) },
   { path: 'support', canActivate: [authGuard], loadComponent: () => import('./pages/support-chat/support-chat.component').then(m => m.SupportChatComponent) },
   { path: 'about', loadComponent: () => import('./pages/about/about.component').then(m => m.AboutComponent) },

@@ -54,6 +54,9 @@ import { environment } from '../../../environments/environment';
               <a routerLink="/favorites" class="flex-1 min-w-[100px] bg-gray-100 hover:bg-gray-200 text-gray-800 rounded-lg font-medium transition py-2 px-2 text-xs text-center flex items-center justify-center">
                 ★ Fav
               </a>
+              <a routerLink="/storefront" class="flex-1 min-w-[100px] bg-gray-100 hover:bg-gray-200 text-gray-800 rounded-lg font-medium transition py-2 px-2 text-xs text-center flex items-center justify-center">
+                <i class="fas fa-store mr-1"></i> Storefront
+              </a>
             </div>
           </div>
         </div>
