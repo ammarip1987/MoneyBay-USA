@@ -172,10 +172,12 @@ interface Subcategory {
     <!-- Listings -->
     <!-- Якорь для перехода по страницам: список начинается отсюда, на главной,
          в категориях и в подкатегориях. Плитки разделов остаются выше. -->
-    <div #listingsAnchor></div>
     @if (!selectedCategory()) {
       <h2 class="text-2xl font-bold text-mb-dark mb-6">All Listings</h2>
     }
+    <!-- Якорь перехода по страницам: ниже заголовка, перед геоблоком и
+         фильтрами. Плитки разделов и поиск остаются выше и не листаются заново. -->
+    <div #listingsAnchor></div>
 
     @if (!selectedCategory() && !cityFilter && geo.nearestCity()) {
       <div class="mb-6 bg-blue-50 border border-blue-200 rounded-lg p-4 flex items-center justify-between gap-3 flex-wrap">
@@ -593,8 +595,9 @@ export class HomeComponent implements OnInit, OnDestroy {
     if (typeof window === 'undefined') return;
     const anchor = this.listingsAnchor?.nativeElement;
     if (!anchor) return;
-    // Отступ на высоту шапки, иначе она перекроет первый ряд карточек
-    const top = anchor.getBoundingClientRect().top + window.scrollY - 80;
+    // Небольшой отступ под шапку. Больший подъём уводил выше якоря, на плитки
+    // разделов.
+    const top = anchor.getBoundingClientRect().top + window.scrollY - 16;
     window.scrollTo({ top: Math.max(0, top), behavior: 'smooth' });
   }
 
