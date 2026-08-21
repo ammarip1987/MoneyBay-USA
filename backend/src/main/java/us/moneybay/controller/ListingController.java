@@ -62,10 +62,19 @@ public class ListingController {
         @RequestParam(name = "has_image", defaultValue = "false") boolean hasImage,
         @RequestParam(name = "posted_within", required = false) Integer postedWithinDays) {
 
+        // Порядок для выборки без фильтров задаётся в самом запросе — там же
+        // продвинутые выносятся вперёд. Этот Sort нужен ветке с расширенными
+        // фильтрами: promotedUntil по убыванию ставит непустые значения первыми.
+        // Просроченные там тоже попадут вперёд, но их единицы, а выборка узкая.
+        Sort boostFirst = Sort.by(Sort.Order.desc("promotedUntil").nullsLast());
         Sort sortObj = switch (sort) {
-            case "price_asc" -> Sort.by(Sort.Direction.ASC, "price");
-            case "price_desc" -> Sort.by(Sort.Direction.DESC, "price");
-            default -> Sort.by(Sort.Direction.DESC, "createdAt");
+            case "price_asc" -> boostFirst.and(Sort.by(Sort.Direction.ASC, "price"));
+            case "price_desc" -> boostFirst.and(Sort.by(Sort.Direction.DESC, "price"));
+            default -> boostFirst.and(Sort.by(Sort.Direction.DESC, "createdAt"));
+        };
+        String sortBy = switch (sort) {
+            case "price_asc", "price_desc" -> sort;
+            default -> "newest";
         };
 
         city = resolveCity(city);
@@ -98,8 +107,9 @@ public class ListingController {
         // Без фильтров подсчёт всех строк читал бы таблицу целиком: на миллионах
         // записей это секунды, и запросы накапливались, забивая диск. Берём на
         // одну запись больше нужного — её наличие и означает следующую страницу.
-        PageRequest slice = PageRequest.of(page - 1, PAGE_SIZE + 1, sortObj);
-        List<Listing> rows = listingRepository.searchSlice(q, city, category, slice);
+        // Без Sort: порядок задан в самом запросе, вместе с выносом продвинутых
+        PageRequest slice = PageRequest.of(page - 1, PAGE_SIZE + 1);
+        List<Listing> rows = listingRepository.searchSlice(q, city, category, sortBy, slice);
 
         boolean hasNext = rows.size() > PAGE_SIZE;
         if (hasNext) rows = rows.subList(0, PAGE_SIZE);

@@ -66,14 +66,23 @@ public interface ListingRepository extends JpaRepository<Listing, Long> {
      * миллионам записей читает таблицу целиком. Здесь запрашивается на одну
      * запись больше, чем нужно, — по её наличию видно, есть ли следующая
      * страница, и подсчёт становится лишним.
+     *
+     * Продвинутые объявления идут первыми: CASE даёт 0 тем, у кого срок ещё не
+     * истёк, и 1 остальным. Сортировка по полю promotedUntil не подошла бы —
+     * она вынесла бы вперёд и те, чей срок кончился.
      */
     @Query("SELECT l FROM Listing l WHERE l.isActive = true AND l.isDeleted = false " +
            "AND (COALESCE(:q, '') = '' OR LOWER(l.title) LIKE LOWER(CONCAT('%', :q, '%')) OR LOWER(l.description) LIKE LOWER(CONCAT('%', :q, '%'))) " +
            "AND (COALESCE(:city, '') = '' OR l.location = :city) " +
-           "AND (COALESCE(:categorySlug, '') = '' OR l.category.slug = :categorySlug)")
+           "AND (COALESCE(:categorySlug, '') = '' OR l.category.slug = :categorySlug) " +
+           "ORDER BY CASE WHEN l.promotedUntil > CURRENT_TIMESTAMP THEN 0 ELSE 1 END, " +
+           "CASE WHEN :sortBy = 'price_asc' THEN l.price END ASC, " +
+           "CASE WHEN :sortBy = 'price_desc' THEN l.price END DESC, " +
+           "CASE WHEN :sortBy = 'newest' THEN l.createdAt END DESC")
     List<Listing> searchSlice(@Param("q") String q,
                               @Param("city") String city,
                               @Param("categorySlug") String categorySlug,
+                              @Param("sortBy") String sortBy,
                               Pageable pageable);
 
     @Query("SELECT l FROM Listing l WHERE l.isActive = true AND l.isDeleted = false " +
