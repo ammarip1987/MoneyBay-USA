@@ -249,10 +249,20 @@ interface Subcategory {
       }
     }
 
-    <!-- Скелет карточек, а не кружок: он показывает будущую раскладку, поэтому
-         ожидание переносится легче, и подвал стоит на месте. -->
+    <!-- Первая загрузка — скелет: он показывает будущую раскладку. Переход
+         между страницами — кружок: раскладка уже знакома, и восемь размытых
+         карточек вместо неё выглядят хуже. -->
     @if (loading()) {
-      <app-skeleton-loader variant="listing-grid" [count]="8"></app-skeleton-loader>
+      @if (pagingNow()) {
+        <div class="flex items-center justify-center" style="min-height: 520px;">
+          <span class="relative inline-flex items-center justify-center w-16 h-16">
+            <span class="absolute inset-0 border-4 border-mb-blue border-t-transparent rounded-full animate-spin"></span>
+            <span class="text-2xl font-bold text-mb-blue select-none">M</span>
+          </span>
+        </div>
+      } @else {
+        <app-skeleton-loader variant="listing-grid" [count]="8"></app-skeleton-loader>
+      }
     }
 
     @if (!loading() && listings().length === 0) {
@@ -520,6 +530,7 @@ export class HomeComponent implements OnInit, OnDestroy {
       next: (data) => {
         this.listings.set(data.listings || []);
         this.loading.set(false);
+        this.pagingNow.set(false);
         this.hasMore.set(data.has_next === true);
         this.totalPages.set(data.total_pages || 1);
 
@@ -530,6 +541,7 @@ export class HomeComponent implements OnInit, OnDestroy {
         }
       },
       error: () => {
+        this.pagingNow.set(false);
         if (append) {
           this.loadingMore.set(false);
         } else {
@@ -548,6 +560,8 @@ export class HomeComponent implements OnInit, OnDestroy {
   goToPage(page: number): void {
     if (page < 1 || page > this.totalPages() || page === this.currentPage()) return;
 
+    this.pagingNow.set(true);
+
     // Прокрутка после смены страницы, а не до: положение якоря считается по
     // разметке, и до отрисовки нового списка оно относится к прежнему. Плавная
     // прокрутка тогда идёт к точке, которая по дороге уезжает, и останавливает
@@ -562,6 +576,8 @@ export class HomeComponent implements OnInit, OnDestroy {
   }
 
   private pendingScroll = false;
+  /** Идёт переход между страницами: показывается кружок, а не скелет. */
+  pagingNow = signal(false);
 
   /** К началу списка: плитки разделов и поиск листать заново незачем. */
   private scrollToListings(): void {
