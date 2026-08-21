@@ -9,10 +9,6 @@ import us.moneybay.dto.UserDto;
 import us.moneybay.model.User;
 import us.moneybay.repository.ListingRepository;
 import us.moneybay.repository.UserRepository;
-import us.moneybay.service.R2PhotoService;
-import us.moneybay.service.AvatarImageService;
-import org.springframework.web.multipart.MultipartFile;
-import java.io.IOException;
 import java.util.List;
 import java.util.Map;
 
@@ -22,15 +18,9 @@ public class UserController {
 
     private final UserRepository userRepository;
     private final ListingRepository listingRepository;
-    private final R2PhotoService r2PhotoService;
-    private final AvatarImageService avatarService;
-
-    public UserController(UserRepository userRepository, ListingRepository listingRepository,
-                          R2PhotoService r2PhotoService, AvatarImageService avatarService) {
+    public UserController(UserRepository userRepository, ListingRepository listingRepository) {
         this.userRepository = userRepository;
         this.listingRepository = listingRepository;
-        this.r2PhotoService = r2PhotoService;
-        this.avatarService = avatarService;
     }
 
     @GetMapping("/profile")
@@ -41,47 +31,24 @@ public class UserController {
     }
 
     @PutMapping("/profile")
-    public ResponseEntity<?> updateProfile(@RequestBody Map<String, String> body, Authentication auth) {
+    public ResponseEntity<?> updateProfile(@RequestBody Map<String, Object> body, Authentication auth) {
         if (auth == null) return ResponseEntity.status(401).build();
         User user = (User) auth.getPrincipal();
-        if (body.containsKey("username")) user.setUsername(body.get("username"));
-        if (body.containsKey("phone")) user.setPhone(body.get("phone"));
-        if (body.containsKey("city")) user.setCity(body.get("city"));
+        if (body.containsKey("username")) user.setUsername(str(body.get("username")));
+        if (body.containsKey("phone")) user.setPhone(str(body.get("phone")));
+        if (body.containsKey("city")) user.setCity(str(body.get("city")));
+        // Показ фотографии из социальной сети: сама она не меняется, скрывается
+        // только вывод — как это устроено на других площадках
+        if (body.containsKey("showAvatar")) {
+            user.setShowAvatar(Boolean.TRUE.equals(body.get("showAvatar")));
+        }
         return ResponseEntity.ok(UserDto.from(userRepository.save(user)));
     }
 
-    /**
-     * Загрузка аватара. Снимок приводится к квадрату в AvatarImageService, а
-     * здесь проверяются тип и вес: клиент уменьшает изображение перед отправкой,
-     * поэтому мегабайт достаточно с запасом.
-     */
-    @PostMapping("/profile/avatar")
-    public ResponseEntity<?> uploadAvatar(@RequestParam("file") MultipartFile file,
-                                          Authentication auth) {
-        if (auth == null) return ResponseEntity.status(401).build();
-        if (file.isEmpty()) return ResponseEntity.badRequest().body(Map.of("message", "File is empty"));
-        if (file.getSize() > 1_000_000) {
-            return ResponseEntity.badRequest().body(Map.of("message", "Avatar must be under 1 MB"));
-        }
-
-        String type = file.getContentType();
-        if (type == null || !(type.equals("image/jpeg") || type.equals("image/png")
-                || type.equals("image/webp"))) {
-            return ResponseEntity.badRequest().body(Map.of("message", "Allowed: JPEG, PNG, WebP"));
-        }
-
-        try {
-            User user = (User) auth.getPrincipal();
-            // Обрезка и уменьшение повторяются на сервере: клиент это уже сделал,
-            // но полагаться на него нельзя — файл может прийти в обход браузера.
-            MultipartFile square = avatarService.toSquare(file);
-            String url = r2PhotoService.uploadPhoto(square);
-            user.setAvatarUrl(url);
-            return ResponseEntity.ok(UserDto.from(userRepository.save(user)));
-        } catch (IOException e) {
-            return ResponseEntity.status(500).body(Map.of("message", "Failed to upload avatar"));
-        }
+    private static String str(Object value) {
+        return value == null ? null : value.toString();
     }
+
 
     @GetMapping("/my-listings")
     public ResponseEntity<List<ListingDto>> myListings(Authentication auth) {
@@ -110,7 +77,8 @@ public class UserController {
                 response.put("id", user.getId());
                 response.put("username", user.getUsername());
                 response.put("city", user.getCity());
-                response.put("avatar_url", user.getAvatarUrl());
+                // Скрытая фотография не отдаётся вовсе
+                response.put("avatar_url", user.isShowAvatar() ? user.getAvatarUrl() : null);
                 response.put("created_at", user.getCreatedAt());
                 response.put("listings_count", listingRepository.countActiveByUser(id));
                 response.put("listings", listings);

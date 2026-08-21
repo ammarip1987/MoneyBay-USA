@@ -18,8 +18,8 @@ import { AuthService } from '../../services/auth.service';
       }
 
       <form (ngSubmit)="onSubmit()" class="bg-white rounded-2xl shadow-lg p-8 space-y-6">
-        <!-- Аватар: снимок уменьшается до 400x400 в браузере, поэтому на
-             сервер уходит несколько десятков килобайт вместо мегабайтов -->
+        <!-- Фотография берётся из учётной записи Google или Facebook: своя
+             не загружается, но показ можно отключить -->
         <div class="flex items-center gap-6 pb-6 border-b border-gray-100">
           <div class="w-24 h-24 rounded-2xl overflow-hidden flex-shrink-0 bg-gradient-to-br from-mb-blue to-mb-cyan flex items-center justify-center">
             @if (avatarPreview()) {
@@ -28,14 +28,24 @@ import { AuthService } from '../../services/auth.service';
               <span class="text-white text-4xl font-bold">{{ initial() }}</span>
             }
           </div>
-          <div>
-            <input type="file" accept="image/jpeg,image/png,image/webp" hidden
-                   #avatarInput (change)="onAvatarPicked($event)">
-            <button type="button" (click)="avatarInput.click()"
-                    class="btn btn-secondary text-sm" [disabled]="avatarBusy()">
-              {{ avatarBusy() ? 'Uploading...' : 'Change photo' }}
-            </button>
-            <p class="text-xs text-gray-500 mt-2">JPEG, PNG or WebP.</p>
+          <div class="flex-1">
+            @if (hasSocialPhoto()) {
+              <label class="flex items-center gap-3 cursor-pointer">
+                <input type="checkbox" [(ngModel)]="showAvatar" name="showAvatar"
+                       (change)="onShowAvatarToggled()"
+                       class="w-4 h-4 accent-mb-blue">
+                <span class="text-sm text-gray-700">Show my social profile photo</span>
+              </label>
+              <p class="text-xs text-gray-500 mt-2">
+                The picture comes from the account you signed in with. To change it,
+                update the photo there and sign in again.
+              </p>
+            } @else {
+              <p class="text-sm text-gray-700">No profile photo</p>
+              <p class="text-xs text-gray-500 mt-2">
+                Sign in with Google or Facebook to show your photo here.
+              </p>
+            }
           </div>
         </div>
 
@@ -76,76 +86,30 @@ export class EditProfileComponent implements OnInit {
   error = signal<string | null>(null);
 
   avatarPreview = signal<string | null>(null);
-  avatarBusy = signal(false);
+  /** Есть ли фотография от Google или Facebook. */
+  hasSocialPhoto = signal(false);
+  /** Показывать ли её: снимается — профиль возвращается к букве. */
+  showAvatar = true;
   initial = () => (this.username || this.auth.currentUser()?.email || '?')[0].toUpperCase();
 
   /**
-   * Снимок обрезается до квадрата по короткой стороне и уменьшается до 400x400
-   * прямо в браузере: на сервер уходит несколько десятков килобайт вместо
-   * мегабайтов, и аватар везде одного размера.
+   * Фотография берётся из учётной записи, через которую был вход. Загрузка
+   * своей не предусмотрена: снимок из социальной сети уже подтверждён ею, а
+   * произвольный файл пришлось бы проверять на недопустимое содержимое.
    */
-  async onAvatarPicked(event: Event): Promise<void> {
-    const input = event.target as HTMLInputElement;
-    const file = input.files?.[0];
-    if (!file) return;
-
-    this.avatarBusy.set(true);
-    this.error.set(null);
-
-    try {
-      const square = await this.toSquare(file, 400);
-      // Показываем сразу, не дожидаясь ответа сервера
-      this.avatarPreview.set(URL.createObjectURL(square));
-
-      this.api.uploadAvatar(square).subscribe({
-        next: (user) => {
-          this.auth.currentUser.set(user);
-          this.avatarBusy.set(false);
-        },
-        error: (err) => {
-          this.error.set(err?.error?.message || 'Failed to upload avatar');
-          this.avatarPreview.set(null);
-          this.avatarBusy.set(false);
-        }
-      });
-    } catch {
-      this.error.set('Could not read the image');
-      this.avatarBusy.set(false);
-    } finally {
-      input.value = '';
-    }
+  private applyAvatar(url?: string | null, show?: boolean): void {
+    this.hasSocialPhoto.set(!!url);
+    this.showAvatar = show !== false;
+    this.avatarPreview.set(url && this.showAvatar ? this.api.imageUrl(url) : null);
   }
 
-  /** Обрезка по центру до квадрата и уменьшение до заданной стороны. */
-  private toSquare(file: File, size: number): Promise<File> {
-    return new Promise((resolve, reject) => {
-      const img = new Image();
-      img.onload = () => {
-        const side = Math.min(img.width, img.height);
-        const sx = (img.width - side) / 2;
-        const sy = (img.height - side) / 2;
-
-        const canvas = document.createElement('canvas');
-        canvas.width = size;
-        canvas.height = size;
-        const ctx = canvas.getContext('2d');
-        if (!ctx) return reject(new Error('no canvas'));
-
-        ctx.drawImage(img, sx, sy, side, side, 0, 0, size, size);
-        URL.revokeObjectURL(img.src);
-
-        canvas.toBlob(
-          blob => blob
-            ? resolve(new File([blob], 'avatar.webp', { type: 'image/webp' }))
-            : reject(new Error('no blob')),
-          'image/webp',
-          0.85
-        );
-      };
-      img.onerror = () => reject(new Error('bad image'));
-      img.src = URL.createObjectURL(file);
+  onShowAvatarToggled(): void {
+    this.api.updateProfile({ showAvatar: this.showAvatar } as any).subscribe({
+      next: (user) => this.auth.currentUser.set(user),
+      error: () => this.error.set('Could not save the setting')
     });
   }
+
 
   ngOnInit(): void {
     const user = this.auth.currentUser();
@@ -154,13 +118,13 @@ export class EditProfileComponent implements OnInit {
       this.phone = user.phone || '';
       this.city = user.city || '';
     }
-    if (user?.avatarUrl) this.avatarPreview.set(this.api.imageUrl(user.avatarUrl));
+    this.applyAvatar(user?.avatarUrl, user?.showAvatar);
     this.api.getProfile().subscribe({
       next: (data) => {
         this.username = data.username || '';
         this.phone = data.phone || '';
         this.city = data.city || '';
-        if (data.avatarUrl) this.avatarPreview.set(this.api.imageUrl(data.avatarUrl));
+        this.applyAvatar(data.avatarUrl, data.showAvatar);
       }
     });
   }

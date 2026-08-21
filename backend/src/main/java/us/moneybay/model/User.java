@@ -30,6 +30,11 @@ public class User {
     @Column(name = "avatar_url")
     private String avatarUrl;
 
+    /** Показывать ли фотографию из социальной сети в профиле и объявлениях. */
+    @Column(name = "show_avatar", nullable = false,
+            columnDefinition = "boolean not null default true")
+    private boolean showAvatar = true;
+
     @Column(name = "is_admin")
     private boolean isAdmin = false;
 
