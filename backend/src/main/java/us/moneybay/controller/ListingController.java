@@ -80,18 +80,36 @@ public class ListingController {
         PageRequest pageRequest = PageRequest.of(page - 1, PAGE_SIZE, sortObj);
         boolean advancedFilters = priceMin != null || priceMax != null || hasImage || postedAfter != null;
 
-        Page<Listing> listings = advancedFilters
-            ? listingRepository.searchAdvanced(q, city, category, priceMin, priceMax, hasImage, postedAfter, pageRequest)
-            : listingRepository.search(q, city, category, pageRequest);
-
         Map<String, Object> response = new HashMap<>();
-        response.put("listings", listings.getContent().stream().map(ListingDto::from).toList());
         response.put("page", page);
-        response.put("total", listings.getTotalElements());
-        response.put("has_next", listings.hasNext());
-        // Число страниц нужно карусели: без него она не знает, где конец
-        response.put("total_pages", listings.getTotalPages());
         response.put("page_size", PAGE_SIZE);
+
+        if (advancedFilters) {
+            // С расширенными фильтрами выборка узкая, подсчёт недорог
+            Page<Listing> listings = listingRepository.searchAdvanced(
+                q, city, category, priceMin, priceMax, hasImage, postedAfter, pageRequest);
+            response.put("listings", listings.getContent().stream().map(ListingDto::from).toList());
+            response.put("total", listings.getTotalElements());
+            response.put("has_next", listings.hasNext());
+            response.put("total_pages", listings.getTotalPages());
+            return ResponseEntity.ok(response);
+        }
+
+        // Без фильтров подсчёт всех строк читал бы таблицу целиком: на миллионах
+        // записей это секунды, и запросы накапливались, забивая диск. Берём на
+        // одну запись больше нужного — её наличие и означает следующую страницу.
+        PageRequest slice = PageRequest.of(page - 1, PAGE_SIZE + 1, sortObj);
+        List<Listing> rows = listingRepository.searchSlice(q, city, category, slice);
+
+        boolean hasNext = rows.size() > PAGE_SIZE;
+        if (hasNext) rows = rows.subList(0, PAGE_SIZE);
+
+        response.put("listings", rows.stream().map(ListingDto::from).toList());
+        response.put("has_next", hasNext);
+        // Точного числа страниц нет — карусель показывает соседние и следующую,
+        // пока та существует. Подсчёт миллионов строк для этого не стоит.
+        response.put("total_pages", hasNext ? page + 1 : page);
+        response.put("total", -1);
         return ResponseEntity.ok(response);
     }
 

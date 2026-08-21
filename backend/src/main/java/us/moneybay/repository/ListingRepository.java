@@ -61,6 +61,21 @@ public interface ListingRepository extends JpaRepository<Listing, Long> {
                          @Param("categorySlug") String categorySlug,
                          Pageable pageable);
 
+    /**
+     * Та же выборка, но списком: Page вынуждает считать все строки, а count по
+     * миллионам записей читает таблицу целиком. Здесь запрашивается на одну
+     * запись больше, чем нужно, — по её наличию видно, есть ли следующая
+     * страница, и подсчёт становится лишним.
+     */
+    @Query("SELECT l FROM Listing l WHERE l.isActive = true AND l.isDeleted = false " +
+           "AND (COALESCE(:q, '') = '' OR LOWER(l.title) LIKE LOWER(CONCAT('%', :q, '%')) OR LOWER(l.description) LIKE LOWER(CONCAT('%', :q, '%'))) " +
+           "AND (COALESCE(:city, '') = '' OR l.location = :city) " +
+           "AND (COALESCE(:categorySlug, '') = '' OR l.category.slug = :categorySlug)")
+    List<Listing> searchSlice(@Param("q") String q,
+                              @Param("city") String city,
+                              @Param("categorySlug") String categorySlug,
+                              Pageable pageable);
+
     @Query("SELECT l FROM Listing l WHERE l.isActive = true AND l.isDeleted = false " +
            "AND (COALESCE(:q, '') = '' OR LOWER(l.title) LIKE LOWER(CONCAT('%', :q, '%')) OR LOWER(l.description) LIKE LOWER(CONCAT('%', :q, '%'))) " +
            "AND (COALESCE(:city, '') = '' OR l.location = :city) " +
