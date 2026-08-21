@@ -133,6 +133,13 @@
 			<artifactId>s3</artifactId>
 			<version>2.25.0</version>
 		</dependency>
+		<!-- Обработка изображений: обрезка и уменьшение аватаров на сервере.
+		     Соответствие Intervention Image из мира PHP. -->
+		<dependency>
+			<groupId>net.coobird</groupId>
+			<artifactId>thumbnailator</artifactId>
+			<version>0.4.20</version>
+		</dependency>
 	</dependencies>
 
 	<build>

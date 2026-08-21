@@ -181,6 +181,13 @@ public class OAuth2Service {
             : userRepository.findByEmail(profile.email())
                 .orElseGet(() -> createUser(profile.email(), profile.name()));
 
+        // Фотография из Google или Facebook становится аватаром, если своей нет.
+        // Уже загруженную не трогаем: выбор пользователя важнее.
+        if (profile.picture() != null && user.getAvatarUrl() == null) {
+            user.setAvatarUrl(profile.picture());
+            user = userRepository.save(user);
+        }
+
         SocialAccount account = new SocialAccount();
         account.setUser(user);
         account.setProvider(provider);

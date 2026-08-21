@@ -10,6 +10,7 @@ import us.moneybay.model.User;
 import us.moneybay.repository.ListingRepository;
 import us.moneybay.repository.UserRepository;
 import us.moneybay.service.R2PhotoService;
+import us.moneybay.service.AvatarImageService;
 import org.springframework.web.multipart.MultipartFile;
 import java.io.IOException;
 import java.util.List;
@@ -22,12 +23,14 @@ public class UserController {
     private final UserRepository userRepository;
     private final ListingRepository listingRepository;
     private final R2PhotoService r2PhotoService;
+    private final AvatarImageService avatarService;
 
     public UserController(UserRepository userRepository, ListingRepository listingRepository,
-                          R2PhotoService r2PhotoService) {
+                          R2PhotoService r2PhotoService, AvatarImageService avatarService) {
         this.userRepository = userRepository;
         this.listingRepository = listingRepository;
         this.r2PhotoService = r2PhotoService;
+        this.avatarService = avatarService;
     }
 
     @GetMapping("/profile")
@@ -48,9 +51,9 @@ public class UserController {
     }
 
     /**
-     * Загрузка аватара. Размер подгоняется на клиенте до 400x400, здесь
-     * проверяется только тип и вес: даже уменьшенный снимок не должен занимать
-     * больше мегабайта.
+     * Загрузка аватара. Снимок приводится к квадрату в AvatarImageService, а
+     * здесь проверяются тип и вес: клиент уменьшает изображение перед отправкой,
+     * поэтому мегабайт достаточно с запасом.
      */
     @PostMapping("/profile/avatar")
     public ResponseEntity<?> uploadAvatar(@RequestParam("file") MultipartFile file,
@@ -69,7 +72,10 @@ public class UserController {
 
         try {
             User user = (User) auth.getPrincipal();
-            String url = r2PhotoService.uploadPhoto(file);
+            // Обрезка и уменьшение повторяются на сервере: клиент это уже сделал,
+            // но полагаться на него нельзя — файл может прийти в обход браузера.
+            MultipartFile square = avatarService.toSquare(file);
+            String url = r2PhotoService.uploadPhoto(square);
             user.setAvatarUrl(url);
             return ResponseEntity.ok(UserDto.from(userRepository.save(user)));
         } catch (IOException e) {

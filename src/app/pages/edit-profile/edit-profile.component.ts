@@ -35,7 +35,7 @@ import { AuthService } from '../../services/auth.service';
                     class="btn btn-secondary text-sm" [disabled]="avatarBusy()">
               {{ avatarBusy() ? 'Uploading...' : 'Change photo' }}
             </button>
-            <p class="text-xs text-gray-500 mt-2">JPEG, PNG or WebP. Square crop, resized to 400×400.</p>
+            <p class="text-xs text-gray-500 mt-2">JPEG, PNG or WebP.</p>
           </div>
         </div>
 
