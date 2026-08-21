@@ -61,13 +61,13 @@ import { environment } from '../../../environments/environment';
           </div>
         </div>
 
-        <div class="bg-gradient-to-br from-cyan-50 to-cyan-100 rounded-2xl shadow-md p-6 border border-cyan-200">
+        <div class="bg-gradient-to-br from-amber-50 to-amber-100 rounded-2xl shadow-md p-6 border border-amber-200">
           <div class="flex items-center justify-between">
             <div>
-              <p class="text-gray-600 text-sm font-medium">Total Views</p>
-              <p class="text-3xl font-bold text-mb-cyan mt-2">{{ totalViews() }}</p>
+              <p class="text-gray-600 text-sm font-medium">In Boost</p>
+              <p class="text-3xl font-bold text-amber-600 mt-2">{{ boostedCount() }}</p>
             </div>
-            <i class="fas fa-eye text-5xl text-mb-cyan opacity-20"></i>
+            <i class="fas fa-rocket text-5xl text-amber-600 opacity-20"></i>
           </div>
         </div>
 
@@ -234,6 +234,10 @@ export class ProfileComponent implements OnInit {
   loading = signal(true);
 
   totalViews = () => this.myListings().reduce((sum, l) => sum + (l.views || 0), 0);
+  /** Объявлений с действующим продвижением: истёкшие не считаются. */
+  boostedCount = () => this.myListings().filter(
+    l => l.promoted_until && new Date(l.promoted_until) > new Date()
+  ).length;
   activeCount = () => this.myListings().filter(l => l.is_active).length;
   profileScore = () => Math.min(85 + this.myListings().length * 2, 100);
 
