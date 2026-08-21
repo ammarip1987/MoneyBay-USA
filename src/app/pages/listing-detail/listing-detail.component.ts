@@ -416,7 +416,9 @@ export class ListingDetailComponent implements OnInit {
       this.loading.set(!passed && !alreadyShown);
 
       if (typeof window !== 'undefined') {
-        window.scrollTo({ top: 0, behavior: 'smooth' });
+        // Без плавности: объявление открывается сразу сверху, а не проезжает
+        // туда на глазах, показывая по дороге прежнюю страницу
+        window.scrollTo({ top: 0, behavior: 'auto' });
       }
 
       this.api.getListing(id).subscribe({
