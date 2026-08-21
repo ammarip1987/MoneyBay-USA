@@ -545,9 +545,11 @@ export class HomeComponent implements OnInit, OnDestroy {
         this.hasMore.set(data.has_next === true);
         this.totalPages.set(data.total_pages || 1);
 
+        // Подстраховка: если высота заглушки не совпала со списком, положение
+        // поправляется после его отрисовки. Прокрутка мгновенная, поэтому
+        // повторный вызов не заметен.
         if (this.pendingScroll) {
           this.pendingScroll = false;
-          // Кадр на отрисовку списка: до неё якорь стоит по прежней разметке
           requestAnimationFrame(() => this.scrollToListings());
         }
       },
@@ -573,10 +575,11 @@ export class HomeComponent implements OnInit, OnDestroy {
 
     this.pagingNow.set(true);
 
-    // Прокрутка после смены страницы, а не до: положение якоря считается по
-    // разметке, и до отрисовки нового списка оно относится к прежнему. Плавная
-    // прокрутка тогда идёт к точке, которая по дороге уезжает, и останавливает
-    // на плитках разделов.
+    // Прокрутка сразу, до ответа сервера: заглушка занимает то же место, что и
+    // список, поэтому якорь на месте и верх страницы не показывается вовсе.
+    if (typeof window !== 'undefined') {
+      requestAnimationFrame(() => this.scrollToListings());
+    }
     this.pendingScroll = true;
 
     this.router.navigate([], {
@@ -598,7 +601,9 @@ export class HomeComponent implements OnInit, OnDestroy {
     // Небольшой отступ под шапку. Больший подъём уводил выше якоря, на плитки
     // разделов.
     const top = anchor.getBoundingClientRect().top + window.scrollY - 16;
-    window.scrollTo({ top: Math.max(0, top), behavior: 'smooth' });
+    // Без плавности: страница открывается сразу на объявлениях, а не проезжает
+    // туда сверху на глазах у читающего.
+    window.scrollTo({ top: Math.max(0, top), behavior: 'auto' });
   }
 
   onAutocompleteSearch(query: string): void {
