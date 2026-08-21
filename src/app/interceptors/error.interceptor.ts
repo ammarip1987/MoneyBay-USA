@@ -21,10 +21,11 @@ export const errorInterceptor: HttpInterceptorFn = (req, next) => {
     catchError((err: unknown) => {
       if (
         err instanceof HttpErrorResponse &&
-        // 403 наравне с 401: Spring Security отвечает Forbidden на просроченный
-        // токен, и без этого сеанс не сбрасывался — опрос счётчика стучался
-        // каждые 20 секунд, набивая консоль ошибками
-        (err.status === 401 || err.status === 403) &&
+        // Только 401. Прежде сюда попадал и 403, чтобы сбрасывать просроченный
+        // токен, но Forbidden приходит и при нехватке прав, и когда сервер
+        // отвергает запрос под нагрузкой — из системы выбрасывало посреди
+        // работы. Просроченный токен отсеивает validateSession при запуске.
+        err.status === 401 &&
         !req.context.get(SKIP_SESSION_EXPIRED) &&
         !req.url.includes('/api/auth/') &&
         auth.getToken()
