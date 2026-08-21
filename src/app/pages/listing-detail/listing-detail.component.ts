@@ -250,12 +250,12 @@ import { ListingCardComponent } from '../../components/listing-card/listing-card
 
             @if (similar()!.from_seller.length > 0) {
               <section>
-                <div class="flex items-center justify-between mb-4 gap-4">
-                  <h3 class="text-2xl font-bold text-mb-dark">More from this Seller</h3>
+                <!-- Заголовка слева нет: его роль берёт на себя сама кнопка -->
+                <div class="flex items-center justify-end mb-4 gap-4">
                   <div class="flex items-center gap-2 flex-none">
                     <a [routerLink]="['/users', listing()!.user_id]"
                        class="px-4 py-2 rounded-full bg-gray-100 hover:bg-gray-200 text-sm font-medium text-gray-800 transition whitespace-nowrap">
-                      See all
+                      More from this Seller
                     </a>
                     @if (similar()!.from_seller.length > 3) {
                       <div class="hidden md:flex gap-2 flex-none">
