@@ -574,18 +574,21 @@ export class HomeComponent implements OnInit, OnDestroy {
     if (page < 1 || page > this.totalPages() || page === this.currentPage()) return;
 
     this.pagingNow.set(true);
-
-    // Прокрутка сразу, до ответа сервера: заглушка занимает то же место, что и
-    // список, поэтому якорь на месте и верх страницы не показывается вовсе.
-    if (typeof window !== 'undefined') {
-      requestAnimationFrame(() => this.scrollToListings());
-    }
     this.pendingScroll = true;
 
+    // Прокрутка после перехода, а не до: смена адреса включает восстановление
+    // положения (scrollPositionRestoration), которое ставит страницу в начало и
+    // перебивает вызов, сделанный раньше.
     this.router.navigate([], {
       relativeTo: this.route,
       queryParams: { page: page > 1 ? page : null },
       queryParamsHandling: 'merge'
+    }).then(() => {
+      if (typeof window !== 'undefined') {
+        // Заглушка уже на месте и занимает высоту списка, поэтому якорь стоит
+        // там же, где встанет после прихода данных
+        requestAnimationFrame(() => this.scrollToListings());
+      }
     });
   }
 
