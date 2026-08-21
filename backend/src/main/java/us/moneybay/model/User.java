@@ -26,6 +26,10 @@ public class User {
     private String phone;
     private String city;
 
+    /** Имя файла аватара в хранилище R2; пусто, если не загружен. */
+    @Column(name = "avatar_url")
+    private String avatarUrl;
+
     @Column(name = "is_admin")
     private boolean isAdmin = false;
 

@@ -221,6 +221,13 @@ export class ApiService {
     return this.http.put<User>(`${this.baseUrl}/api/profile`, data);
   }
 
+  /** Загрузка аватара. Размер подгоняется до 400x400 ещё на клиенте. */
+  uploadAvatar(file: File): Observable<User> {
+    const form = new FormData();
+    form.append('file', file);
+    return this.http.post<User>(`${this.baseUrl}/api/profile/avatar`, form);
+  }
+
   getUnreadCount(): Observable<{ count: number }> {
     return this.http.get<{ count: number }>(`${this.baseUrl}/api/unread-messages-count`);
   }

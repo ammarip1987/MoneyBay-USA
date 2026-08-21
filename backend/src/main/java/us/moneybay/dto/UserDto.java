@@ -13,6 +13,7 @@ public class UserDto {
     private String username;
     private String phone;
     private String city;
+    private String avatarUrl;
     private boolean isAdmin;
     private Instant createdAt;
 
@@ -23,6 +24,7 @@ public class UserDto {
         dto.username = user.getUsername();
         dto.phone = user.getPhone();
         dto.city = user.getCity();
+        dto.avatarUrl = user.getAvatarUrl();
         dto.isAdmin = user.isAdmin();
         dto.createdAt = user.getCreatedAt();
         return dto;

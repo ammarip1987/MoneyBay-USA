@@ -17,8 +17,12 @@ import { environment } from '../../../environments/environment';
         <div class="flex flex-col md:flex-row items-start md:items-center gap-8">
           <!-- Avatar -->
           <div class="flex-shrink-0">
-            <div class="w-32 h-32 bg-gradient-to-br from-mb-blue to-mb-cyan rounded-2xl flex items-center justify-center text-white text-5xl font-bold shadow-md">
-              {{ (user()?.email || '?')[0].toUpperCase() }}
+            <div class="w-32 h-32 bg-gradient-to-br from-mb-blue to-mb-cyan rounded-2xl overflow-hidden flex items-center justify-center text-white text-5xl font-bold shadow-md">
+              @if (user()?.avatarUrl) {
+                <img [src]="avatarUrl()" alt="" class="w-full h-full object-cover">
+              } @else {
+                {{ (user()?.email || '?')[0].toUpperCase() }}
+              }
             </div>
           </div>
 
@@ -234,6 +238,8 @@ export class ProfileComponent implements OnInit {
   loading = signal(true);
 
   totalViews = () => this.myListings().reduce((sum, l) => sum + (l.views || 0), 0);
+  avatarUrl = () => this.api.imageUrl(this.user()?.avatarUrl);
+
   /** Объявлений с действующим продвижением: истёкшие не считаются. */
   boostedCount = () => this.myListings().filter(
     l => l.promoted_until && new Date(l.promoted_until) > new Date()

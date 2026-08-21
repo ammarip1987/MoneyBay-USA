@@ -31,6 +31,8 @@ export interface User {
   username: string;
   phone?: string;
   city?: string;
+  /** Имя файла аватара в R2; пусто, если не загружен — тогда рисуется буква. */
+  avatarUrl?: string;
   is_admin: boolean;
   created_at: string;
 }
