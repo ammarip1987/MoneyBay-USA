@@ -186,13 +186,13 @@ import { ListingCardComponent } from '../../components/listing-card/listing-card
               <section>
                 <!-- Стрелки в строке заголовка, справа: не перекрывают карточки
                      и не зависят от высоты ряда -->
-                <div class="flex items-center justify-between mb-4 gap-4">
-                  <h3 class="text-2xl font-bold text-mb-dark">Similar Products in {{ listing()!.location }}</h3>
+                <!-- Заголовка слева нет: его роль берёт на себя сама кнопка -->
+                <div class="flex items-center justify-end mb-4 gap-4">
                   <div class="flex items-center gap-2 flex-none">
                     <a [routerLink]="['/']"
                        [queryParams]="{ city: listing()!.location }"
                        class="px-4 py-2 rounded-full bg-gray-100 hover:bg-gray-200 text-sm font-medium text-gray-800 transition whitespace-nowrap">
-                      See all
+                      Similar Products in {{ listing()!.location }}
                     </a>
                   @if (similar()!.same_location.length > 3) {
                     <div class="hidden md:flex gap-2 flex-none">
@@ -218,13 +218,13 @@ import { ListingCardComponent } from '../../components/listing-card/listing-card
 
             @if (similar()!.similar_price.length > 0) {
               <section>
-                <div class="flex items-center justify-between mb-4 gap-4">
-                  <h3 class="text-2xl font-bold text-mb-dark">Similar Price Range</h3>
+                <!-- Заголовка слева нет: его роль берёт на себя сама кнопка -->
+                <div class="flex items-center justify-end mb-4 gap-4">
                   <div class="flex items-center gap-2 flex-none">
                     <a [routerLink]="['/']"
                        [queryParams]="priceRangeParams()"
                        class="px-4 py-2 rounded-full bg-gray-100 hover:bg-gray-200 text-sm font-medium text-gray-800 transition whitespace-nowrap">
-                      See all
+                      Similar Price Range
                     </a>
                     @if (similar()!.similar_price.length > 3) {
                       <div class="hidden md:flex gap-2 flex-none">
