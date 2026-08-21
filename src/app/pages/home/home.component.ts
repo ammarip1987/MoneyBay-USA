@@ -393,6 +393,11 @@ export class HomeComponent implements OnInit, OnDestroy {
       if (sectionChanged) {
         this.subcategories.set([]);
         this.subsubcategories.set([]);
+        // Смена раздела внутри приложения — тот же случай, что перелистывание:
+        // раскладка знакома, меняется только набор карточек, поэтому кружок, а
+        // не скелет. При первой загрузке сюда не попадаем: страница приходит с
+        // сервера уже с карточками.
+        if (this.listings().length > 0) this.pagingNow.set(true);
       }
       this.searchQuery = params['q'] || '';
       this.cityFilter = params['city'] || '';
