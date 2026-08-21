@@ -73,14 +73,17 @@ interface Subcategory {
       <div class="mb-12">
         <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
           @for (cat of categories(); track cat.id) {
+            <!-- Колонка: значок сверху, описание прижато книзу. Иначе длинное
+                 название вытягивает плитку и содержимое соседних расходится по
+                 высоте. -->
             <a [routerLink]="['/']"
                [queryParams]="{category: cat.slug}"
-               class="card-hover p-6 text-center"
+               class="card-hover p-6 text-center flex flex-col"
                [style.background-color]="cat.color + '33'"
                [style.border]="'2px solid ' + cat.color">
               <div class="text-4xl mb-3 text-mb-blue" [innerHTML]="cat.icon"></div>
-              <h3 class="font-bold text-mb-dark mb-2">{{ cat.name }}</h3>
-              <p class="text-sm text-gray-600 mb-3">{{ cat.description }}</p>
+              <h3 class="font-bold text-mb-dark mb-2 line-clamp-2">{{ cat.name }}</h3>
+              <p class="text-sm text-gray-600 mt-auto line-clamp-2">{{ cat.description }}</p>
             </a>
           }
         </div>

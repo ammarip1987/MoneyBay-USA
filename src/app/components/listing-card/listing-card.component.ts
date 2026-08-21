@@ -10,7 +10,9 @@ import { ApiService } from '../../services/api.service';
   standalone: true,
   imports: [CommonModule, RouterLink],
   template: `
-    <div class="card-hover relative group"
+    <!-- h-full и колонка: карточка занимает всю высоту ячейки сетки, чтобы
+         блок описания мог растянуться и прижать дату к низу -->
+    <div class="card-hover relative group h-full flex flex-col"
          [class.ring-2]="listing.is_featured"
          [class.ring-mb-blue]="listing.is_featured">
 
@@ -91,13 +93,15 @@ import { ApiService } from '../../services/api.service';
         </div>
       }
 
-      <!-- Info -->
-      <a [routerLink]="['/listing', listing.id]" [state]="{ listing: listing }" class="block px-4 pt-2 pb-4 hover:bg-gray-50 transition">
+      <!-- Info: колонка, дата прижата к низу. Заголовок занимает одну или две
+           строки, и без этого дата у соседних карточек стояла бы на разной
+           высоте. -->
+      <a [routerLink]="['/listing', listing.id]" [state]="{ listing: listing }" class="flex flex-col flex-1 px-4 pt-2 pb-4 hover:bg-gray-50 transition">
         <h3 class="font-bold text-mb-dark text-lg mb-2 line-clamp-2">{{ listing.title }}</h3>
         <p class="text-sm text-gray-600 mb-2 line-clamp-1">
           {{ listing.location }}@if (listing.area) { · {{ listing.area }} }
         </p>
-        <p class="text-xs text-gray-500">{{ listing.created_at | date:'MM/dd/yyyy' }}</p>
+        <p class="text-xs text-gray-500 mt-auto">{{ listing.created_at | date:'MM/dd/yyyy' }}</p>
       </a>
     </div>
   `
