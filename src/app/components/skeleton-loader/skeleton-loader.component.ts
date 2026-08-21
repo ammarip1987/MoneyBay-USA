@@ -19,7 +19,7 @@ import { CommonModule } from '@angular/common';
       }
 
       @case ('listing-grid') {
-        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 xl:grid-cols-5 gap-6">
           @for (i of repeat(count); track i) {
             <div class="bg-white rounded-xl shadow overflow-hidden border border-gray-100">
               <div class="h-48 sm:h-64 bg-gray-200 animate-pulse"></div>

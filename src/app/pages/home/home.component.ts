@@ -219,7 +219,7 @@ interface Subcategory {
     }
 
     @if (listings().length > 0) {
-      <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mt-4">
+      <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 xl:grid-cols-5 gap-6 mt-4">
         @for (listing of listings(); track listing.id) {
           <app-listing-card [listing]="listing"></app-listing-card>
         }
@@ -272,7 +272,7 @@ interface Subcategory {
           </span>
         </div>
       } @else {
-        <app-skeleton-loader variant="listing-grid" [count]="8"></app-skeleton-loader>
+        <app-skeleton-loader variant="listing-grid" [count]="10"></app-skeleton-loader>
       }
     }
 

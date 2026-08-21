@@ -26,8 +26,8 @@ import java.util.*;
 @RequestMapping("/api/listings")
 public class ListingController {
 
-    /** Объявлений на странице: сетка выводит по четыре в ряд, выходит четыре ряда. */
-    private static final int PAGE_SIZE = 16;
+    /** Объявлений на странице: сетка выводит по пять в ряд, выходит 12 рядов. */
+    private static final int PAGE_SIZE = 60;
 
     @Value("${app.upload.dir:./uploads}")
     private String uploadDir;
