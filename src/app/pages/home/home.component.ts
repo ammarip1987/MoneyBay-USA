@@ -249,6 +249,8 @@ interface Subcategory {
       }
     }
 
+    <!-- Скелет карточек, а не кружок: он показывает будущую раскладку, поэтому
+         ожидание переносится легче, и подвал стоит на месте. -->
     @if (loading()) {
       <app-skeleton-loader variant="listing-grid" [count]="8"></app-skeleton-loader>
     }

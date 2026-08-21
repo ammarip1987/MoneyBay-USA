@@ -42,11 +42,21 @@ import { ApiService } from '../../services/api.service';
       @if (listing.images && listing.images.length > 0) {
         <a [routerLink]="['/listing', listing.id]" [state]="{ listing: listing }" class="block overflow-hidden">
           <div class="relative bg-gray-100 h-64 cursor-pointer">
+            <!-- Прогрессивная загрузка: место под снимок занято серой подложкой
+                 с первого кадра, само изображение проявляется по готовности.
+                 loading="lazy" откладывает загрузку тех, что вне экрана, — при
+                 прокрутке они подтягиваются по мере приближения. -->
             <img [src]="getImageUrl(listing.images[currentImage()])"
                  [alt]="listing.title"
-                 class="w-full h-full object-cover transition-opacity duration-300"
+                 class="w-full h-full object-cover transition-opacity duration-500"
+                 [class.opacity-0]="!imageLoaded()"
+                 [class.opacity-100]="imageLoaded()"
+                 (load)="imageLoaded.set(true)"
+                 (error)="imageLoaded.set(true)"
                  loading="lazy"
-                 decoding="async">
+                 decoding="async"
+                 width="600"
+                 height="450">
 
             @if (listing.images.length > 1) {
               <!-- Стрелки без подложки: тень делает их различимыми и на светлой,
@@ -114,6 +124,8 @@ export class ListingCardComponent {
 
   currentImage = signal(0);
   isFavorited = signal(false);
+  /** Загрузилось ли изображение: до этого видна серая подложка. */
+  imageLoaded = signal(false);
 
   ngOnInit(): void {
     this.isFavorited.set(this.listing.is_favorited || false);
@@ -132,6 +144,7 @@ export class ListingCardComponent {
     e.preventDefault();
     e.stopPropagation();
     const len = this.listing.images.length;
+    this.imageLoaded.set(false);
     this.currentImage.update(i => (i - 1 + len) % len);
   }
 
@@ -139,12 +152,14 @@ export class ListingCardComponent {
     e.preventDefault();
     e.stopPropagation();
     const len = this.listing.images.length;
+    this.imageLoaded.set(false);
     this.currentImage.update(i => (i + 1) % len);
   }
 
   setImage(index: number, e: Event): void {
     e.preventDefault();
     e.stopPropagation();
+    this.imageLoaded.set(false);
     this.currentImage.set(index);
   }
 
