@@ -21,8 +21,10 @@ RUN chmod +x ./mvnw && ./mvnw dependency:go-offline -B
 # Copy source code
 COPY src src
 
-# Build with more memory
-RUN ./mvnw package -DskipTests -B -Dmaven.test.skip=true || ./mvnw package -DskipTests -B
+# Тесты идут здесь, до упаковки: неудача останавливает сборку, и негодный образ
+# до ECS не доезжает. Профиль test поднимает H2, к рабочей базе обращений нет.
+# Занимают около полуминуты из трёх с половиной, что идёт вся сборка.
+RUN ./mvnw package -B -Dspring.profiles.active=test
 
 # headless: без графических библиотек и компилятора, только среда выполнения
 FROM amazoncorretto:25-al2023-headless
