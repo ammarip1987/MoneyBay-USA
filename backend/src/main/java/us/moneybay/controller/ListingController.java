@@ -45,6 +45,9 @@ public class ListingController {
     @org.springframework.beans.factory.annotation.Autowired
     private us.moneybay.service.ListingReviewService listingReviewService;
 
+    @Autowired
+    private us.moneybay.service.ListingCountService listingCountService;
+
     public ListingController(ListingRepository listingRepository,
                              CategoryRepository categoryRepository,
                              CityRepository cityRepository) {
@@ -129,10 +132,12 @@ public class ListingController {
 
         response.put("listings", rows.stream().map(ListingDto::from).toList());
         response.put("has_next", hasNext);
-        // Точного числа страниц нет — карусель показывает соседние и следующую,
-        // пока та существует. Подсчёт миллионов строк для этого не стоит.
-        response.put("total_pages", hasNext ? page + 1 : page);
-        response.put("total", -1);
+        // Число объявлений берётся из пересчёта раз в час, а не подсчётом на
+        // каждый заход: count(*) по 1.44 млн записей идёт пять секунд по ленте
+        // и двадцать девять по категории. Между пересчётами число отстаёт на
+        // проценты — для номера последней страницы это несущественно.
+        response.put("total", listingCountService.count(category));
+        response.put("total_pages", listingCountService.lastPage(category, PAGE_SIZE));
         return ResponseEntity.ok(response);
     }
 

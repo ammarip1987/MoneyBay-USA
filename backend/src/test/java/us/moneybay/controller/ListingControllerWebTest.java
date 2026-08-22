@@ -17,6 +17,7 @@ import us.moneybay.repository.ListingRepository;
 import us.moneybay.repository.UserRepository;
 import us.moneybay.security.JwtUtil;
 import us.moneybay.service.KeywordFilterService;
+import us.moneybay.service.ListingCountService;
 import us.moneybay.service.ListingReviewService;
 import us.moneybay.service.R2PhotoService;
 
@@ -45,7 +46,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
                 org.springframework.boot.autoconfigure.security.servlet.SecurityFilterAutoConfiguration.class
             })
 @AutoConfigureMockMvc(addFilters = false)
-class ListingControllerIT {
+class ListingControllerWebTest {
 
     @Autowired
     private MockMvc mvc;
@@ -56,6 +57,7 @@ class ListingControllerIT {
     @MockitoBean private R2PhotoService r2PhotoService;
     @MockitoBean private KeywordFilterService keywordFilterService;
     @MockitoBean private ListingReviewService listingReviewService;
+    @MockitoBean private ListingCountService listingCountService;
     // Фильтр разбора токена поднимается вместе с контекстом, хотя запросы здесь
     // идут без входа. Подменяется, чтобы не тянуть за собой security целиком.
     @MockitoBean private JwtUtil jwtUtil;
@@ -103,6 +105,24 @@ class ListingControllerIT {
            .andExpect(jsonPath("$.listings[0].created_at").value("2026-08-20T23:30:32Z"))
            .andExpect(jsonPath("$.listings[0].price").value(3673.21))
            .andExpect(jsonPath("$.listings[0].images").isArray());
+    }
+
+    @Test
+    @DisplayName("последняя страница считается по числу объявлений")
+    void lastPageComesFromTheCount() throws Exception {
+        when(listingRepository.searchSlice(any(), any(), any(), any(Pageable.class)))
+            .thenReturn(List.of(sample()));
+        when(listingRepository.findPromoted(any(), any(), any(Pageable.class)))
+            .thenReturn(List.of());
+        when(listingCountService.count(any())).thenReturn(1440004L);
+        when(listingCountService.lastPage(any(), anyInt())).thenReturn(24001);
+
+        // Прежде здесь стояло page + 1, и карусель запиралась на четвёртой
+        // странице, хотя объявления шли дальше
+        mvc.perform(get("/api/listings").param("page", "3"))
+           .andExpect(status().isOk())
+           .andExpect(jsonPath("$.total_pages").value(24001))
+           .andExpect(jsonPath("$.total").value(1440004));
     }
 
     @Test
