@@ -4,6 +4,9 @@ import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.ResponseCookie;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.web.bind.annotation.*;
@@ -16,6 +19,7 @@ import us.moneybay.security.JwtUtil;
 import us.moneybay.service.EmailVerificationService;
 import us.moneybay.service.RecaptchaService;
 
+import java.time.Duration;
 import java.util.Map;
 import java.util.Optional;
 
@@ -24,6 +28,19 @@ import java.util.Optional;
 public class AuthController {
 
     private static final Logger log = LoggerFactory.getLogger(AuthController.class);
+
+    /** Имя куки с обновляющим токеном. */
+    private static final String REFRESH_COOKIE = "mb_refresh";
+
+    @Value("${app.jwt.refresh-expiration}")
+    private long refreshExpiration;
+
+    /**
+     * Область куки. На production — .moneybay.us, чтобы её слал и сайт, и API;
+     * при локальном запуске пусто, иначе браузер куку с чужой областью отбросит.
+     */
+    @Value("${app.cookie.domain:}")
+    private String cookieDomain;
 
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
@@ -101,12 +118,94 @@ public class AuthController {
             .filter(u -> passwordEncoder.matches(req.getPassword(), u.getPassword()))
             .map(user -> {
                 String token = jwtUtil.generateToken(user.getId(), user.getEmail());
-                return ResponseEntity.ok((Object) new AuthDto.AuthResponse(token, UserDto.from(user)));
+                return ResponseEntity.ok()
+                    .header(HttpHeaders.SET_COOKIE, refreshCookie(
+                        jwtUtil.generateRefreshToken(user.getId(), user.getEmail())).toString())
+                    .body((Object) new AuthDto.AuthResponse(token, UserDto.from(user)));
             })
             .orElse(ResponseEntity.status(401).body(Map.of(
                 "code", "INVALID_CREDENTIALS",
                 "message", "Invalid email or password"
             )));
+    }
+
+    /**
+     * Кука с обновляющим токеном.
+     *
+     * httpOnly закрывает её от скриптов на странице — в этом весь смысл: токен
+     * доступа живёт в памяти вкладки и пропадает при перезагрузке, а продлить
+     * вход можно только этой кукой, до которой чужой скрипт не дотянется.
+     *
+     * sameSite=None нужен потому, что сайт и API на разных именах
+     * (moneybay.us и api.moneybay.us) — при Strict браузер куку бы не отправил.
+     * Защиту от подделки запросов держит проверка вида токена: обновляющий к
+     * защищённым адресам не подходит, а обновление отдаёт токен только тому,
+     * кто уже вошёл.
+     */
+    private ResponseCookie refreshCookie(String token) {
+        return buildRefreshCookie(token, Duration.ofMillis(refreshExpiration));
+    }
+
+    /** Та же кука с нулевым сроком: браузер её удаляет. */
+    private ResponseCookie clearedRefreshCookie() {
+        return buildRefreshCookie("", Duration.ZERO);
+    }
+
+    private ResponseCookie buildRefreshCookie(String token, Duration maxAge) {
+        ResponseCookie.ResponseCookieBuilder cookie = ResponseCookie.from(REFRESH_COOKIE, token)
+            .httpOnly(true)
+            .secure(true)
+            .sameSite("None")
+            .path("/api/auth")
+            .maxAge(maxAge);
+        // Область задаётся только когда она указана: пустая строка сделала бы
+        // куку недействительной, и при локальном запуске вход бы не держался
+        if (cookieDomain != null && !cookieDomain.isBlank()) {
+            cookie.domain(cookieDomain);
+        }
+        return cookie.build();
+    }
+
+    /**
+     * Новый токен доступа по куке.
+     *
+     * Вызывается, когда прежний истёк — фронт делает это сам и повторяет
+     * запрос, так что для вошедшего ничего не меняется.
+     */
+    @PostMapping("/refresh")
+    public ResponseEntity<?> refresh(
+            @CookieValue(name = REFRESH_COOKIE, required = false) String refreshToken) {
+
+        if (refreshToken == null || refreshToken.isBlank()
+                || !jwtUtil.isValid(refreshToken)
+                || !jwtUtil.isRefreshToken(refreshToken)) {
+            return ResponseEntity.status(401)
+                .header(HttpHeaders.SET_COOKIE, clearedRefreshCookie().toString())
+                .body(Map.of("code", "REFRESH_INVALID", "message", "Session expired"));
+        }
+
+        Long userId = jwtUtil.parseUserId(refreshToken);
+        return userRepository.findById(userId)
+            .map(user -> {
+                String token = jwtUtil.generateToken(user.getId(), user.getEmail());
+                // Кука выдаётся заново: иначе вход обрывался бы ровно через срок
+                // обновляющего токена, сколько бы человек ни пользовался сайтом
+                return ResponseEntity.ok()
+                    .header(HttpHeaders.SET_COOKIE, refreshCookie(
+                        jwtUtil.generateRefreshToken(user.getId(), user.getEmail())).toString())
+                    .body((Object) new AuthDto.AuthResponse(token, UserDto.from(user)));
+            })
+            .orElse(ResponseEntity.status(401)
+                .header(HttpHeaders.SET_COOKIE, clearedRefreshCookie().toString())
+                .body(Map.of("code", "USER_GONE", "message", "Session expired")));
+    }
+
+    /** Выход: кука удаляется, продлить вход больше нечем. */
+    @PostMapping("/logout")
+    public ResponseEntity<?> logout() {
+        return ResponseEntity.ok()
+            .header(HttpHeaders.SET_COOKIE, clearedRefreshCookie().toString())
+            .body(Map.of("success", true));
     }
 
     @PostMapping("/verify-email")

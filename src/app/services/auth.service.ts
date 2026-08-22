@@ -1,7 +1,7 @@
 import { Injectable, Injector, inject, signal, PLATFORM_ID, REQUEST } from '@angular/core';
 import { isPlatformBrowser } from '@angular/common';
 import { HttpClient, HttpContext } from '@angular/common/http';
-import { Observable, tap } from 'rxjs';
+import { Observable, tap, finalize, shareReplay } from 'rxjs';
 import { environment } from '../../environments/environment';
 import { User } from '../models/listing.model';
 import { SKIP_SESSION_EXPIRED } from '../interceptors/http-context.tokens';
@@ -17,21 +17,67 @@ export class AuthService {
   private platformId = inject(PLATFORM_ID);
   private injector = inject(Injector);
   private readonly baseUrl = environment.apiUrl;
-  private readonly tokenKey = 'mb_auth_token';
   private readonly userKey = 'mb_auth_user';
   private readonly hintKey = 'mb_auth_hint';
 
-  currentUser = signal<User | null>(this.loadUser());
-  isAuthenticated = signal<boolean>(!!this.getToken());
+  /**
+   * Токен доступа держится только здесь, в памяти вкладки.
+   *
+   * В localStorage его больше нет: оттуда его прочёл бы любой скрипт,
+   * попавший на страницу, и унёс бы вход целиком. Отсюда прочитать нечего —
+   * при перезагрузке значение пропадает, а вход восстанавливается запросом
+   * к /api/auth/refresh по куке, до которой скрипты не дотягиваются.
+   */
+  private accessToken: string | null = null;
 
+  /** Идёт ли обновление: параллельные запросы ждут его, а не шлют своё. */
+  private refreshing: Observable<LoginResponse> | null = null;
+
+  currentUser = signal<User | null>(this.loadUser());
+  isAuthenticated = signal<boolean>(false);
 
   constructor() {
-    // Вход мог появиться до введения метки: приводим cookie в соответствие
-    // с localStorage при запуске, иначе сервер считает вошедшего гостем
-    // и шапка меняется после гидратации
     if (this.isBrowser()) {
-      this.setAuthHint(this.isAuthenticated());
+      // Токена в памяти после перезагрузки нет — вход поднимается по куке.
+      // Пока запрос идёт, шапка рисуется по метке, иначе она мигала бы
+      // гостевым видом у вошедшего
+      this.isAuthenticated.set(this.authHint());
+      if (this.authHint()) this.restoreSession();
     }
+  }
+
+  /**
+   * Поднять вход после перезагрузки: кука с обновляющим токеном приходит сама,
+   * сервер отвечает новым токеном доступа.
+   */
+  private restoreSession(): void {
+    this.refreshToken().subscribe({
+      error: () => this.clearSession()
+    });
+  }
+
+  /**
+   * Новый токен доступа по куке.
+   *
+   * Запрос один на все ожидающие: без этого несколько одновременных ответов
+   * 401 запустили бы обновление каждый, и последний перебил бы токен, который
+   * уже разошёлся по остальным.
+   */
+  refreshToken(): Observable<LoginResponse> {
+    if (this.refreshing) return this.refreshing;
+
+    this.refreshing = this.http
+      .post<LoginResponse>(`${this.baseUrl}/api/auth/refresh`, {}, {
+        withCredentials: true,
+        context: new HttpContext().set(SKIP_SESSION_EXPIRED, true)
+      })
+      .pipe(
+        tap(res => this.setSession(res)),
+        finalize(() => { this.refreshing = null; }),
+        shareReplay(1)
+      );
+
+    return this.refreshing;
   }
   private isBrowser(): boolean {
     return isPlatformBrowser(this.platformId);
@@ -40,7 +86,7 @@ export class AuthService {
   login(email: string, password: string, recaptchaToken?: string): Observable<LoginResponse> {
     const body: Record<string, string> = { email, password };
     if (recaptchaToken) body['recaptcha_token'] = recaptchaToken;
-    return this.http.post<LoginResponse>(`${this.baseUrl}/api/auth/login`, body).pipe(
+    return this.http.post<LoginResponse>(`${this.baseUrl}/api/auth/login`, body, { withCredentials: true }).pipe(
       tap(res => this.setSession(res))
     );
   }
@@ -53,16 +99,27 @@ export class AuthService {
     };
     if (data.city) body['city'] = data.city;
     if (data.recaptchaToken) body['recaptcha_token'] = data.recaptchaToken;
-    return this.http.post<LoginResponse>(`${this.baseUrl}/api/auth/register`, body).pipe(
+    return this.http.post<LoginResponse>(`${this.baseUrl}/api/auth/register`, body, { withCredentials: true }).pipe(
       tap(res => this.setSession(res))
     );
   }
 
   logout(): void {
+    // Кука снимается на сервере: у неё HttpOnly, из скрипта её не удалить.
+    // Ответа не ждём — вход в этой вкладке гасится сразу
     if (this.isBrowser()) {
-      localStorage.removeItem(this.tokenKey);
-      localStorage.removeItem(this.userKey);
+      this.http.post(`${this.baseUrl}/api/auth/logout`, {}, {
+        withCredentials: true,
+        context: new HttpContext().set(SKIP_SESSION_EXPIRED, true)
+      }).subscribe({ error: () => {} });
     }
+    this.clearSession();
+  }
+
+  /** Забыть вход в этой вкладке, ничего не спрашивая у сервера. */
+  private clearSession(): void {
+    this.accessToken = null;
+    if (this.isBrowser()) localStorage.removeItem(this.userKey);
     this.setAuthHint(false);
     this.currentUser.set(null);
     this.isAuthenticated.set(false);
@@ -74,8 +131,7 @@ export class AuthService {
   }
 
   getToken(): string | null {
-    if (!this.isBrowser()) return null;
-    return localStorage.getItem(this.tokenKey);
+    return this.accessToken;
   }
 
   /**
@@ -84,6 +140,7 @@ export class AuthService {
    * doesn't show the user as logged in.
    */
   validateSession(): void {
+    // Токена в памяти нет — проверять нечего: вход поднимает restoreSession
     if (!this.getToken()) return;
     this.http
       .get(`${this.baseUrl}/api/profile`, {
@@ -106,7 +163,6 @@ export class AuthService {
       // Битое значение (частичная запись, ручная правка) не должно ронять
       // конструктор root-сервиса — чистим и продолжаем анонимно
       localStorage.removeItem(this.userKey);
-      localStorage.removeItem(this.tokenKey);
       return null;
     }
   }
@@ -143,8 +199,11 @@ export class AuthService {
       : `${this.hintKey}=; path=/; SameSite=Lax; max-age=0`;
   }
   setSession(res: LoginResponse): void {
+    // Токен — только в память. В localStorage кладётся сам пользователь: имя и
+    // город правами не распоряжаются, а без них шапка после перезагрузки
+    // пустовала бы до ответа сервера
+    this.accessToken = res.token;
     if (this.isBrowser()) {
-      localStorage.setItem(this.tokenKey, res.token);
       localStorage.setItem(this.userKey, JSON.stringify(res.user));
     }
     this.setAuthHint(true);

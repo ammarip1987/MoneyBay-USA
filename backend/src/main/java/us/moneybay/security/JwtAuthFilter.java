@@ -33,7 +33,9 @@ public class JwtAuthFilter extends OncePerRequestFilter {
         String header = request.getHeader("Authorization");
         if (header != null && header.startsWith("Bearer ")) {
             String token = header.substring(7);
-            if (jwtUtil.isValid(token)) {
+            // Обновляющий токен здесь не принимается: он живёт неделями, и
+            // допусти его фильтр — короткий срок токена доступа ничего бы не дал
+            if (jwtUtil.isValid(token) && jwtUtil.isAccessToken(token)) {
                 Long userId = jwtUtil.parseUserId(token);
                 Optional<User> userOpt = userRepository.findById(userId);
                 userOpt.ifPresent(user -> {

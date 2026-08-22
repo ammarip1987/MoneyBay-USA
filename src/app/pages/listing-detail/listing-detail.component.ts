@@ -179,7 +179,7 @@ import { ListingCardComponent } from '../../components/listing-card/listing-card
         }
 
         <!-- Similar Products -->
-        @if (similar() && (similar()!.same_location.length > 0 || similar()!.anywhere.length > 0 || similar()!.similar_price.length > 0 || similar()!.from_seller.length > 0)) {
+        @if (similar() && (similar()!.same_location.length > 0 || similar()!.anywhere.length > 0 || similar()!.from_seller.length > 0)) {
           <div class="mt-12 space-y-12">
 
             @if (similar()!.same_location.length > 0) {
@@ -249,38 +249,6 @@ import { ListingCardComponent } from '../../components/listing-card/listing-card
               </section>
             }
 
-            @if (similar()!.similar_price.length > 0) {
-              <section>
-                <!-- Заголовка слева нет: его роль берёт на себя сама кнопка -->
-                <div class="flex items-center justify-end mb-4 gap-4">
-                  <div class="flex items-center gap-2 flex-none">
-                    <a [routerLink]="['/']"
-                       [queryParams]="priceRangeParams()"
-                       class="px-4 py-2 rounded-full bg-gray-100 hover:bg-gray-200 text-sm font-medium text-gray-800 transition whitespace-nowrap">
-                      Similar Price Range
-                    </a>
-                    @if (similar()!.similar_price.length > 3) {
-                      <div class="hidden md:flex gap-2 flex-none">
-                        <button (click)="scrollRow(row2, -300)" class="w-10 h-10 rounded-lg bg-gray-100 flex items-center justify-center text-gray-700 hover:bg-gray-200 transition" aria-label="Previous">
-                          <i class="fas fa-chevron-left text-sm"></i>
-                        </button>
-                        <button (click)="scrollRow(row2, 300)" class="w-10 h-10 rounded-lg bg-gray-100 flex items-center justify-center text-gray-700 hover:bg-gray-200 transition" aria-label="Next">
-                          <i class="fas fa-chevron-right text-sm"></i>
-                        </button>
-                      </div>
-                    }
-                  </div>
-                </div>
-                <div class="flex gap-4 overflow-x-auto scrollbar-bottom pb-4 -mx-2 px-2 snap-x" #row2>
-                  @for (item of similar()!.similar_price; track item.id) {
-                    <div class="flex-none w-64 sm:w-72 snap-start">
-                      <app-listing-card [listing]="item"></app-listing-card>
-                    </div>
-                  }
-                </div>
-              </section>
-            }
-
             @if (similar()!.from_seller.length > 0) {
               <section>
                 <!-- Заголовка слева нет: его роль берёт на себя сама кнопка -->
@@ -341,14 +309,6 @@ export class ListingDetailComponent implements OnInit {
   private authReady = signal(false);
   signedIn = () => this.authReady() ? this.auth.isAuthenticated() : this.auth.authHint();
 
-  /** Диапазон цен для ссылки «See all»: тот же, по которому подбирались похожие. */
-  priceRangeParams = () => {
-    const price = this.listing()?.price ?? 0;
-    return {
-      price_min: Math.floor(price * 0.8),
-      price_max: Math.ceil(price * 1.2)
-    };
-  };
 
   constructor() {
     afterNextRender(() => {
