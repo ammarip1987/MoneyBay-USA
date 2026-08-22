@@ -56,6 +56,12 @@ class ListingDtoTest {
         l.setFeatured(false);
         l.setCreatedAt(Instant.parse("2026-08-20T23:30:32Z"));
         l.setStatus(Listing.ListingStatus.ACTIVE);
+
+        us.moneybay.model.User seller = new us.moneybay.model.User();
+        seller.setId(20068L);
+        seller.setUsername("seller20005");
+        l.setUser(seller);
+
         return l;
     }
 
@@ -120,6 +126,17 @@ class ListingDtoTest {
         assertTrue(json.get("price").isNull() || json.get("price").isNumber());
         assertTrue(json.get("promoted_until").isNull(),
             "promoted_until без продвижения должно быть null");
+    }
+
+    @Test
+    @DisplayName("имя продавца отдаётся, а почта — нет")
+    void sellerNameTravelsWithoutTheEmail() throws Exception {
+        JsonNode json = render(sample());
+
+        assertEquals("seller20005", json.get("user_name").asText());
+        // Почта — личные данные, покупателям её видеть незачем
+        assertFalse(json.has("email"), "почта продавца не должна уходить наружу");
+        assertFalse(json.has("user_email"), "почта продавца не должна уходить наружу");
     }
 
     @Test

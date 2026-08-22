@@ -255,7 +255,7 @@ import { ListingCardComponent } from '../../components/listing-card/listing-card
                   <div class="flex items-center gap-2 flex-none">
                     <a [routerLink]="['/users', listing()!.user_id]"
                        class="px-4 py-2 rounded-full bg-gray-100 hover:bg-gray-200 text-sm font-medium text-gray-800 transition whitespace-nowrap">
-                      More from this Seller
+                        More from {{ sellerName() }}
                     </a>
                     @if (similar()!.from_seller.length > 3) {
                       <div class="hidden md:flex gap-2 flex-none">
@@ -458,6 +458,12 @@ export class ListingDetailComponent implements OnInit {
       error: () => this.similar.set({ same_location: [], similar_price: [], from_seller: [] })
     });
   }
+
+  /**
+   * Имя продавца для подписи. Пока объявление не загрузилось — «this Seller»,
+   * иначе кнопка на миг показывала бы «More from » с пустым местом.
+   */
+  sellerName = (): string => this.listing()?.user_name || 'this Seller';
 
   scrollRow(element: HTMLElement, offset: number): void {
     element.scrollBy({ left: offset, behavior: 'smooth' });

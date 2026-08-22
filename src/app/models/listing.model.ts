@@ -13,6 +13,8 @@ export interface Listing {
   promoted_until?: string | null;
   created_at: string;
   user_id: number;
+  /** Имя продавца для подписи «More from …». */
+  user_name?: string | null;
   category_id: number;
 }
 
