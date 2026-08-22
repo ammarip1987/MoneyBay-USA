@@ -28,10 +28,10 @@ public class ListingDto {
     private Long userId;
     @JsonProperty("category_id")
     private Long categoryId;
-    @JsonProperty("created_at")
     private String status;
     /** Причины отклонения через запятую: показываются автору окном. */
     private String moderationReasons;
+    @JsonProperty("created_at")
     private Instant createdAt;
 
     public static ListingDto from(Listing listing) {

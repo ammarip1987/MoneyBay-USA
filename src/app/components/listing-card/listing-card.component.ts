@@ -111,7 +111,7 @@ import { ApiService } from '../../services/api.service';
         <p class="text-sm text-gray-600 mb-2 line-clamp-1">
           {{ listing.location }}@if (listing.area) { · {{ listing.area }} }
         </p>
-        <p class="text-xs text-gray-500 mt-auto">{{ listing.created_at | date:'MM/dd/yyyy' }}</p>
+        <p class="text-xs text-gray-500 mt-auto">{{ postedOn() }}</p>
       </a>
     </div>
   `
@@ -129,6 +129,20 @@ export class ListingCardComponent {
 
   ngOnInit(): void {
     this.isFavorited.set(this.listing.is_favorited || false);
+  }
+
+  /**
+   * Дата публикации строкой. DatePipe на нечитаемом значении бросает ошибку и
+   * гасит всю карточку — оставались белые рамки без заголовка и цены. Здесь
+   * разбор идёт сам, и при неудаче поле просто пустует.
+   */
+  postedOn(): string {
+    const raw = this.listing.created_at;
+    if (!raw) return '';
+    const d = new Date(raw);
+    if (isNaN(d.getTime())) return '';
+    const p = (n: number) => String(n).padStart(2, '0');
+    return `${p(d.getMonth() + 1)}/${p(d.getDate())}/${d.getFullYear()}`;
   }
 
   isPromoted(): boolean {
