@@ -173,7 +173,10 @@ export class NewListingComponent implements OnInit {
       next: (listing) => {
         this.loading.set(false);
         this.notification.success('Listing posted successfully!');
-        this.router.navigate(['/listing', listing.id]);
+        // На продвижение, а не сразу в объявление: продавец заинтересован в
+        // просмотрах именно сейчас, а не когда вспомнит про кнопку Boost.
+        // Пропустить можно одним нажатием.
+        this.router.navigate(['/promote', listing.id], { queryParams: { posted: 1 } });
       },
       error: (err) => {
         this.loading.set(false);

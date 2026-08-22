@@ -1,6 +1,6 @@
 import { Component, OnInit, inject, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { ActivatedRoute } from '@angular/router';
+import { ActivatedRoute, Router } from '@angular/router';
 import { ApiService } from '../../services/api.service';
 
 interface PricingTier {
@@ -17,8 +17,18 @@ interface PricingTier {
   template: `
     <div class="max-w-5xl mx-auto px-4 py-12 min-page">
       <div class="text-center mb-12">
-        <h1 class="text-4xl font-bold text-mb-dark mb-4">Boost Your Listing</h1>
-        <p class="text-gray-600 text-lg">Get up to 10x more views with premium placement</p>
+        @if (justPosted()) {
+          <!-- Приход сразу после публикации: сначала подтверждение, потом
+               предложение — иначе выглядит как условие, а не как выбор -->
+          <div class="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-green-50 text-green-700 text-sm font-medium mb-6">
+            <i class="fas fa-circle-check"></i> Your listing is live
+          </div>
+          <h1 class="text-4xl font-bold text-mb-dark mb-4">Want more people to see it?</h1>
+          <p class="text-gray-600 text-lg">Boosted listings sit at the top of the feed and their category</p>
+        } @else {
+          <h1 class="text-4xl font-bold text-mb-dark mb-4">Boost Your Listing</h1>
+          <p class="text-gray-600 text-lg">Boosted listings sit at the top of the feed and their category</p>
+        }
       </div>
 
       @if (error()) {
@@ -54,7 +64,7 @@ interface PricingTier {
               </li>
               <li class="flex items-start">
                 <i class="fas fa-check text-mb-green mr-2 mt-1"></i>
-                <span>Up to 10x more views</span>
+                <span>Stays on top the whole time</span>
               </li>
             </ul>
 
@@ -69,7 +79,13 @@ interface PricingTier {
         }
       </div>
 
-      <p class="text-center text-xs text-gray-500 mt-8">
+      <div class="text-center mt-8">
+        <button (click)="skip()" class="text-gray-600 hover:text-mb-blue text-sm underline">
+          {{ justPosted() ? 'Skip for now' : 'Back to my listing' }}
+        </button>
+      </div>
+
+      <p class="text-center text-xs text-gray-500 mt-6">
         Payment processed by Stripe. No subscription, one-time charge.
       </p>
     </div>
@@ -78,8 +94,11 @@ interface PricingTier {
 export class PromoteComponent implements OnInit {
   private api = inject(ApiService);
   private route = inject(ActivatedRoute);
+  private router = inject(Router);
 
   listingId = signal(0);
+  /** Пришли сразу после публикации: заголовок и надпись на кнопке иные. */
+  justPosted = signal(false);
   loading = signal(false);
   error = signal<string | null>(null);
 
@@ -91,6 +110,12 @@ export class PromoteComponent implements OnInit {
 
   ngOnInit(): void {
     this.listingId.set(Number(this.route.snapshot.paramMap.get('id')));
+    this.justPosted.set(this.route.snapshot.queryParamMap.get('posted') === '1');
+  }
+
+  /** Пропустить: объявление уже опубликовано, продвижение можно взять позже. */
+  skip(): void {
+    this.router.navigate(['/listing', this.listingId()]);
   }
 
   purchase(tier: PricingTier): void {

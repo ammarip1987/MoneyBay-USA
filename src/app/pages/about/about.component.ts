@@ -39,80 +39,17 @@ import { RouterLink } from '@angular/router';
         </ul>
       </div>
 
-      <!-- Testimonials -->
-      <div class="mt-16 mb-16">
-        <div class="text-center mb-12">
-          <h2 class="text-3xl font-bold text-mb-dark mb-4">What Users Say</h2>
-          <p class="text-gray-600">Join thousands of satisfied buyers and sellers</p>
-        </div>
-
-        <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
-          <div class="bg-white rounded-2xl shadow-lg p-8 border border-gray-100">
-            <div class="flex items-center gap-4 mb-4">
-              <div class="w-12 h-12 bg-mb-blue rounded-full flex items-center justify-center text-white font-bold">JS</div>
-              <div>
-                <p class="font-bold text-mb-dark">John Smith</p>
-                <p class="text-sm text-gray-500">Los Angeles, CA</p>
-              </div>
-            </div>
-            <div class="flex mb-3 text-yellow-400">★★★★★</div>
-            <p class="text-gray-700">"Sold my vintage camera in 3 days! The interface is so clean and the real-time chat made communication super easy. Highly recommend MoneyBay!"</p>
-          </div>
-
-          <div class="bg-white rounded-2xl shadow-lg p-8 border border-gray-100">
-            <div class="flex items-center gap-4 mb-4">
-              <div class="w-12 h-12 bg-mb-cyan rounded-full flex items-center justify-center text-white font-bold">MJ</div>
-              <div>
-                <p class="font-bold text-mb-dark">Maria Johnson</p>
-                <p class="text-sm text-gray-500">Austin, TX</p>
-              </div>
-            </div>
-            <div class="flex mb-3 text-yellow-400">★★★★★</div>
-            <p class="text-gray-700">"Found the perfect apartment listing. The search filters work great and the pricing is transparent. No hidden fees, just honest buying and selling."</p>
-          </div>
-
-          <div class="bg-white rounded-2xl shadow-lg p-8 border border-gray-100">
-            <div class="flex items-center gap-4 mb-4">
-              <div class="w-12 h-12 bg-mb-green rounded-full flex items-center justify-center text-white font-bold">RC</div>
-              <div>
-                <p class="font-bold text-mb-dark">Robert Chen</p>
-                <p class="text-sm text-gray-500">Seattle, WA</p>
-              </div>
-            </div>
-            <div class="flex mb-3 text-yellow-400">★★★★★</div>
-            <p class="text-gray-700">"As a seller, MoneyBay's boost feature actually works. Got 10x more views with the 48-hour plan. Worth every penny!"</p>
-          </div>
-        </div>
-      </div>
-
-      <!-- Stats -->
-      <div class="bg-gradient-to-r from-mb-dark to-mb-blue rounded-2xl p-12 text-white mb-16">
-        <div class="grid grid-cols-1 md:grid-cols-3 gap-8 text-center">
-          <div>
-            <p class="text-4xl font-bold">10K+</p>
-            <p class="text-blue-100 mt-2">Active Listings</p>
-          </div>
-          <div>
-            <p class="text-4xl font-bold">5K+</p>
-            <p class="text-blue-100 mt-2">Happy Users</p>
-          </div>
-          <div>
-            <p class="text-4xl font-bold">$2M+</p>
-            <p class="text-blue-100 mt-2">Transaction Value</p>
-          </div>
-        </div>
-      </div>
 
       <div class="prose max-w-none space-y-4 text-gray-700">
         <h2 class="text-2xl font-bold text-mb-dark">Trust & Safety</h2>
         <p>Your safety is our priority:</p>
         <ul class="list-disc pl-6 space-y-1">
-          <li>End-to-end encrypted messaging</li>
-          <li>AI-powered content moderation</li>
-          <li>SSL/TLS encryption for all connections</li>
-          <li>Secure payment processing via Stripe</li>
-          <li>Account verification system</li>
-          <li>Spam and fraud detection</li>
+          <li>Community flagging — listings hidden once enough people report them</li>
+          <li>Keyword filters for spam and prohibited items</li>
+          <li>Email verification on every account</li>
+          <li>TLS encryption on all connections</li>
+          <li>Payments handled by Stripe, card details never touch our servers</li>
+          <li>Phone numbers hidden behind a button, never listed openly</li>
         </ul>
 
         <h2 class="text-2xl font-bold text-mb-dark mt-8">Contact & Support</h2>
