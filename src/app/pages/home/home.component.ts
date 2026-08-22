@@ -257,6 +257,9 @@ interface Subcategory {
             <i class="fas fa-chevron-right"></i>
           </button>
         </nav>
+        @if (totalLabel()) {
+          <p class="text-center text-sm text-gray-500 -mt-4 pb-8">{{ totalLabel() }}</p>
+        }
       }
     }
 
@@ -318,39 +321,45 @@ export class HomeComponent implements OnInit, OnDestroy {
   hasMore = signal(true);
   currentPage = signal(1);
   totalPages = signal(1);
+  totalListings = signal(0);
 
   /**
-   * Номера для карусели: пять подряд вокруг текущей, плюс первая и последняя по
-   * краям. Ноль означает пропуск и рисуется многоточием — иначе при двадцати
-   * четырёх тысячах страниц ряд не поместился бы на экран.
+   * Номера для карусели: пять подряд вокруг текущей, первая слева. Ноль
+   * означает пропуск и рисуется многоточием.
    *
-   * Последняя приходит от сервера из пересчёта раз в час, а не подсчётом на
-   * каждый заход: count(*) по 1.44 млн записей идёт пять секунд.
+   * Номера последней страницы здесь нет: при двадцати четырёх тысячах он
+   * занимает полряда и ничего не говорит. Объём показан подписью под каруселью
+   * числом объявлений — оно понятнее, чем номер страницы, до которой никто не
+   * долистывает. Уйти вглубь по-прежнему можно стрелкой и адресом.
    */
   pageNumbers = (): number[] => {
     const total = this.totalPages();
     const cur = this.currentPage();
     const window = 5;
 
-    // Первая, последняя, пять подряд и два многоточия — девять мест
-    if (total <= window + 4) {
+    if (total <= window + 2) {
       return Array.from({ length: total }, (_, i) => i + 1);
     }
 
     // Окно держится в пять номеров и у краёв сдвигается внутрь, а не сжимается
     let from = Math.max(2, cur - Math.floor(window / 2));
-    let to = from + window - 1;
-    if (to > total - 1) {
-      to = total - 1;
-      from = Math.max(2, to - window + 1);
-    }
+    let to = Math.min(total, from + window - 1);
+    if (to === total) from = Math.max(2, to - window + 1);
 
     const pages: number[] = [1];
     if (from > 2) pages.push(0);
     for (let p = from; p <= to; p++) pages.push(p);
-    if (to < total - 1) pages.push(0);
-    pages.push(total);
+    if (to < total) pages.push(0);
     return pages;
+  };
+
+  /** Объём подписью: 1.4M, 120K, 3,751. */
+  totalLabel = (): string => {
+    const n = this.totalListings();
+    if (n <= 0) return '';
+    if (n >= 1_000_000) return `${(n / 1_000_000).toFixed(1).replace(/\.0$/, '')}M listings`;
+    if (n >= 1_000) return `${Math.round(n / 1_000)}K listings`;
+    return `${n.toLocaleString('en-US')} listings`;
   };
 
   selectedCategory = signal<string | null>(null);
@@ -561,6 +570,7 @@ export class HomeComponent implements OnInit, OnDestroy {
         this.pagingNow.set(false);
         this.hasMore.set(data.has_next === true);
         this.totalPages.set(data.total_pages || 1);
+        this.totalListings.set(data.total ?? 0);
 
         // Подстраховка: если высота заглушки не совпала со списком, положение
         // поправляется после его отрисовки. Прокрутка мгновенная, поэтому

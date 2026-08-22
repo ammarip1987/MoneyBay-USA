@@ -162,7 +162,7 @@ class ListingControllerWebTest {
     @Test
     @DisplayName("одно объявление отдаётся с теми же именами полей")
     void singleListingKeepsFieldNames() throws Exception {
-        when(listingRepository.findById(1229780L)).thenReturn(Optional.of(sample()));
+        when(listingRepository.findByIdWithUser(1229780L)).thenReturn(Optional.of(sample()));
 
         mvc.perform(get("/api/listings/1229780"))
            .andExpect(status().isOk())
@@ -173,17 +173,35 @@ class ListingControllerWebTest {
     }
 
     @Test
+    @DisplayName("объявление без цены и города не роняет подборки")
+    void similarSurvivesMissingPriceAndLocation() throws Exception {
+        Listing bare = new Listing();
+        bare.setId(677735L);
+        bare.setTitle("no price, no city");
+
+        when(listingRepository.findById(677735L)).thenReturn(Optional.of(bare));
+        when(listingRepository.findRelatedAnywhere(any(), any(), any())).thenReturn(List.of());
+        when(listingRepository.findRelatedFromSeller(any(), any(), any())).thenReturn(List.of());
+
+        // Прежде здесь умножалось price * 0.8 и весь ответ падал пятисоткой
+        mvc.perform(get("/api/listings/677735/similar"))
+           .andExpect(status().isOk())
+           .andExpect(jsonPath("$.same_location").isArray())
+           .andExpect(jsonPath("$.similar_price").isArray());
+    }
+
+    @Test
     @DisplayName("несуществующее объявление отвечает 404, а не пятисоткой")
     void missingListingIsNotFound() throws Exception {
-        when(listingRepository.findById(999999L)).thenReturn(Optional.empty());
+        when(listingRepository.findByIdWithUser(999999L)).thenReturn(Optional.empty());
 
         mvc.perform(get("/api/listings/999999"))
            .andExpect(status().isNotFound());
     }
 
     @Test
-    @DisplayName("подборки внутри объявления приходят тремя списками")
-    void similarComesAsThreeLists() throws Exception {
+    @DisplayName("подборки внутри объявления приходят четырьмя списками")
+    void similarComesAsFourLists() throws Exception {
         when(listingRepository.findById(1229780L)).thenReturn(Optional.of(sample()));
         when(listingRepository.findRelatedSameLocation(any(), any(), any()))
             .thenReturn(List.of(sample()));
@@ -191,10 +209,13 @@ class ListingControllerWebTest {
             .thenReturn(List.of());
         when(listingRepository.findRelatedFromSeller(any(), any(), any()))
             .thenReturn(List.of());
+        when(listingRepository.findRelatedAnywhere(any(), any(), any()))
+            .thenReturn(List.of(sample()));
 
         mvc.perform(get("/api/listings/1229780/similar"))
            .andExpect(status().isOk())
            .andExpect(jsonPath("$.same_location").isArray())
+           .andExpect(jsonPath("$.anywhere").isArray())
            .andExpect(jsonPath("$.similar_price").isArray())
            .andExpect(jsonPath("$.from_seller").isArray());
     }

@@ -30,9 +30,6 @@ public class ListingDto {
     private Long categoryId;
     @JsonProperty("created_at")
     private Instant createdAt;
-    /** Имя продавца для подписи «More from …»: почта наружу не идёт. */
-    @JsonProperty("user_name")
-    private String userName;
 
     public static ListingDto from(Listing listing) {
         ListingDto dto = new ListingDto();
@@ -50,7 +47,6 @@ public class ListingDto {
         dto.userId = listing.getUser() != null ? listing.getUser().getId() : null;
         dto.categoryId = listing.getCategory() != null ? listing.getCategory().getId() : null;
         dto.createdAt = listing.getCreatedAt();
-        dto.userName = listing.getUser() != null ? listing.getUser().getUsername() : null;
         return dto;
     }
 }

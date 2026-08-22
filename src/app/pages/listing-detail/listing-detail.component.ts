@@ -179,7 +179,7 @@ import { ListingCardComponent } from '../../components/listing-card/listing-card
         }
 
         <!-- Similar Products -->
-        @if (similar() && (similar()!.same_location.length > 0 || similar()!.similar_price.length > 0 || similar()!.from_seller.length > 0)) {
+        @if (similar() && (similar()!.same_location.length > 0 || similar()!.anywhere.length > 0 || similar()!.similar_price.length > 0 || similar()!.from_seller.length > 0)) {
           <div class="mt-12 space-y-12">
 
             @if (similar()!.same_location.length > 0) {
@@ -208,6 +208,39 @@ import { ListingCardComponent } from '../../components/listing-card/listing-card
                 </div>
                 <div class="flex gap-4 overflow-x-auto scrollbar-bottom pb-4 -mx-2 px-2 snap-x" #row1>
                   @for (item of similar()!.same_location; track item.id) {
+                    <div class="flex-none w-64 sm:w-72 snap-start">
+                      <app-listing-card [listing]="item"></app-listing-card>
+                    </div>
+                  }
+                </div>
+              </section>
+            }
+
+            @if (similar()!.anywhere.length > 0) {
+              <section>
+                <!-- Тот же раздел, но по всей площадке: подборка выше ограничена
+                     городом объявления, эта показывает остальные -->
+                <div class="flex items-center justify-end mb-4 gap-4">
+                  <div class="flex items-center gap-2 flex-none">
+                    <a [routerLink]="['/']"
+                       [queryParams]="{ category: categorySlug() }"
+                       class="px-4 py-2 rounded-full bg-gray-100 hover:bg-gray-200 text-sm font-medium text-gray-800 transition whitespace-nowrap">
+                      Similar Products
+                    </a>
+                    @if (similar()!.anywhere.length > 3) {
+                      <div class="hidden md:flex gap-2 flex-none">
+                        <button (click)="scrollRow(rowAny, -300)" class="w-10 h-10 rounded-lg bg-gray-100 flex items-center justify-center text-gray-700 hover:bg-gray-200 transition">
+                          <i class="fas fa-chevron-left text-sm"></i>
+                        </button>
+                        <button (click)="scrollRow(rowAny, 300)" class="w-10 h-10 rounded-lg bg-gray-100 flex items-center justify-center text-gray-700 hover:bg-gray-200 transition">
+                          <i class="fas fa-chevron-right text-sm"></i>
+                        </button>
+                      </div>
+                    }
+                  </div>
+                </div>
+                <div class="flex gap-4 overflow-x-auto scrollbar-bottom pb-4 -mx-2 px-2 snap-x" #rowAny>
+                  @for (item of similar()!.anywhere; track item.id) {
                     <div class="flex-none w-64 sm:w-72 snap-start">
                       <app-listing-card [listing]="item"></app-listing-card>
                     </div>
@@ -255,7 +288,7 @@ import { ListingCardComponent } from '../../components/listing-card/listing-card
                   <div class="flex items-center gap-2 flex-none">
                     <a [routerLink]="['/users', listing()!.user_id]"
                        class="px-4 py-2 rounded-full bg-gray-100 hover:bg-gray-200 text-sm font-medium text-gray-800 transition whitespace-nowrap">
-                        More from {{ sellerName() }}
+                        More from this Seller
                     </a>
                     @if (similar()!.from_seller.length > 3) {
                       <div class="hidden md:flex gap-2 flex-none">
@@ -455,7 +488,7 @@ export class ListingDetailComponent implements OnInit {
   loadSimilar(id: number): void {
     this.api.getSimilarListings(id).subscribe({
       next: (data) => this.similar.set(data),
-      error: () => this.similar.set({ same_location: [], similar_price: [], from_seller: [] })
+      error: () => this.similar.set({ same_location: [], anywhere: [], similar_price: [], from_seller: [] })
     });
   }
 
@@ -463,7 +496,9 @@ export class ListingDetailComponent implements OnInit {
    * Имя продавца для подписи. Пока объявление не загрузилось — «this Seller»,
    * иначе кнопка на миг показывала бы «More from » с пустым местом.
    */
-  sellerName = (): string => this.listing()?.user_name || 'this Seller';
+  /** Слаг категории для кнопки «Similar Products»: она ведёт в раздел. */
+  categorySlug = (): string | null => (this.listing() as any)?.category_slug || null;
+
 
   scrollRow(element: HTMLElement, offset: number): void {
     element.scrollBy({ left: offset, behavior: 'smooth' });

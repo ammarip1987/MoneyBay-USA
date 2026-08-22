@@ -270,7 +270,7 @@ public class ListingController {
 
     @GetMapping("/{id}")
     public ResponseEntity<?> get(@PathVariable Long id) {
-        return listingRepository.findById(id)
+        return listingRepository.findByIdWithUser(id)
             .map(listing -> {
                 listing.setViews(listing.getViews() + 1);
                 listingRepository.save(listing);
@@ -290,12 +290,25 @@ public class ListingController {
         Double price = listing.getPrice();
         String location = listing.getLocation();
 
-        List<Listing> sameLocation = listingRepository.findRelatedSameLocation(id, categoryId, location);
-        List<Listing> similarPrice = listingRepository.findRelatedSimilarPrice(id, categoryId, price * 0.8, price * 1.2);
+        // Подборка по городу нужна только когда город известен, а по цене —
+        // когда есть цена: без проверок умножение price * 0.8 роняло весь ответ
+        // пятисоткой на объявлениях, где эти поля пусты
+        List<Listing> sameLocation = location == null || location.isBlank()
+            ? List.of()
+            : listingRepository.findRelatedSameLocation(id, categoryId, location);
+
+        // Тот же раздел по всей площадке, за вычетом города из подборки выше
+        List<Listing> anywhere = listingRepository.findRelatedAnywhere(id, categoryId, location);
+
+        List<Listing> similarPrice = price == null || price <= 0
+            ? List.of()
+            : listingRepository.findRelatedSimilarPrice(id, categoryId, price * 0.8, price * 1.2);
+
         List<Listing> fromSeller = listingRepository.findRelatedFromSeller(id, categoryId, userId);
 
         Map<String, List<ListingDto>> response = new HashMap<>();
         response.put("same_location", sameLocation.stream().map(ListingDto::from).toList());
+        response.put("anywhere", anywhere.stream().map(ListingDto::from).toList());
         response.put("similar_price", similarPrice.stream().map(ListingDto::from).toList());
         response.put("from_seller", fromSeller.stream().map(ListingDto::from).toList());
         return ResponseEntity.ok(response);

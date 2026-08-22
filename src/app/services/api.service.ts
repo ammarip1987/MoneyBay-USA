@@ -29,6 +29,8 @@ export interface UsState {
 
 export interface SimilarListings {
   same_location: Listing[];
+  /** Тот же раздел по всей площадке, за вычетом города объявления. */
+  anywhere: Listing[];
   similar_price: Listing[];
   from_seller: Listing[];
 }

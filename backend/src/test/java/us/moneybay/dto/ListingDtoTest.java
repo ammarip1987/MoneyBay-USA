@@ -129,14 +129,15 @@ class ListingDtoTest {
     }
 
     @Test
-    @DisplayName("имя продавца отдаётся, а почта — нет")
-    void sellerNameTravelsWithoutTheEmail() throws Exception {
+    @DisplayName("почта продавца наружу не уходит")
+    void sellerEmailNeverShips() throws Exception {
         JsonNode json = render(sample());
 
-        assertEquals("seller20005", json.get("user_name").asText());
-        // Почта — личные данные, покупателям её видеть незачем
+        // Личные данные: покупателю довольно номера продавца, переписка идёт
+        // через площадку
         assertFalse(json.has("email"), "почта продавца не должна уходить наружу");
         assertFalse(json.has("user_email"), "почта продавца не должна уходить наружу");
+        assertFalse(json.has("user"), "продавец не должен уходить объектом целиком");
     }
 
     @Test

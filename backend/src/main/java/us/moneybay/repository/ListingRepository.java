@@ -9,6 +9,7 @@ import org.springframework.data.repository.query.Param;
 import org.springframework.transaction.annotation.Transactional;
 import us.moneybay.model.Listing;
 import java.util.List;
+import java.util.Optional;
 
 public interface ListingRepository extends JpaRepository<Listing, Long> {
 
@@ -17,6 +18,14 @@ public interface ListingRepository extends JpaRepository<Listing, Long> {
     @Transactional
     @Query("UPDATE Listing l SET l.category.id = :toId WHERE l.category.id = :fromId")
     int moveToCategory(@Param("fromId") Long fromId, @Param("toId") Long toId);
+
+    /**
+     * Объявление вместе с продавцом: подпись «More from …» берёт его имя, а
+     * связь у Listing отложенная — без JOIN FETCH обращение к имени вне сессии
+     * роняет ответ.
+     */
+    @Query("SELECT l FROM Listing l LEFT JOIN FETCH l.user WHERE l.id = :id")
+    Optional<Listing> findByIdWithUser(@Param("id") Long id);
 
     Page<Listing> findByIsActiveTrueAndIsDeletedFalse(Pageable pageable);
 
@@ -175,6 +184,17 @@ public interface ListingRepository extends JpaRepository<Listing, Long> {
     List<Listing> findRelatedSameLocation(@Param("excludeId") Long excludeId,
                                           @Param("categoryId") Long categoryId,
                                           @Param("location") String location);
+
+    // Та же категория, но без привязки к городу: показывает, что есть в разделе
+    // по всей площадке. Соседний findRelatedSameLocation ограничен одним городом
+    @Query("SELECT l FROM Listing l WHERE l.isActive = true AND l.isDeleted = false " +
+           "AND l.id <> :excludeId " +
+           "AND (:categoryId IS NULL OR l.category.id = :categoryId) " +
+           "AND (:location IS NULL OR l.location <> :location) " +
+           "ORDER BY l.createdAt DESC LIMIT 12")
+    List<Listing> findRelatedAnywhere(@Param("excludeId") Long excludeId,
+                                      @Param("categoryId") Long categoryId,
+                                      @Param("location") String location);
 
     @Query("SELECT l FROM Listing l WHERE l.isActive = true AND l.isDeleted = false " +
            "AND l.id <> :excludeId " +
