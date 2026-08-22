@@ -71,8 +71,8 @@ MoneyBay project is built in Enterprise using strict typing and preserving inher
 
 ### Testing & CI/CD
 
-- **JUnit + Spring Boot Test** — unit & integration тесты backend
-- **Vitest 4.0** — тесты frontend
+- **JUnit + Spring Boot Test** — unit и integration тесты backend, идут при сборке образа (см. [Testing](#testing))
+- **Vitest 4.0** — подключён для frontend, покрытие пока одним тестом
 - **GitHub Actions** — CI/CD pipeline с автодеплоем
 - **AWS CodeBuild** — native ARM64 image build
 - **Docker** — multi-stage build (Corretto JDK для компиляции, headless для запуска)
@@ -748,6 +748,45 @@ GET /api/us-cities?state=TX&q=San   → San Antonio, San Angelo, San Marcos
 `backend/src/main/resources/db/migration`. Они применяются при запуске, учёт ведётся в
 таблице `flyway_schema_history`. Данные городов заливает `V2__us_cities_data.sql`;
 повторный запуск безопасен — вставляются только отсутствующие записи.
+
+## Testing
+
+Тесты идут при сборке образа, до упаковки: неудача останавливает сборку, и
+негодный образ до ECS не доезжает. База не поднимается — репозитории подменены,
+профиль `test` берёт H2. Весь набор занимает около полуминуты из четырёх с
+половиной, что идёт сборка целиком.
+
+**Где лежат:** `backend/src/test/java/us/moneybay/`
+
+| Набор | Что закрывает |
+|---|---|
+| `dto/ListingDtoTest` | состав ответа по объявлению: имена полей, типы, разбор даты |
+| `service/ListingReviewServiceTest` | пороги проверки объявления при публикации, включая границы |
+| `controller/ListingControllerIT` | JSON ленты и одного объявления через стек Spring MVC |
+| `service/FlagListingServiceTest` | флаги и автобан |
+| `service/KeywordFilterServiceTest` | фильтры спама |
+| `MoneybayBackendApplicationTests` | контекст поднимается |
+
+**Зачем два уровня на одно и то же.** `ListingDtoTest` смотрит, что собирает DTO;
+`ListingControllerIT` — что уходит клиенту после отрисовки Spring. Дефект, ради
+которого это заведено, жил между ними: поле `status` встало между
+`@JsonProperty("created_at")` и полем `createdAt`, аннотация привязалась к
+статусу, и объявления уходили с `created_at = "ACTIVE"`. Код законный, сборка
+проходила, ошибка была только в том, что уходит наружу.
+
+**Запуск:**
+
+```
+cd backend
+./mvnw test                                    # весь набор
+./mvnw test -Dtest=ListingDtoTest              # один набор
+```
+
+**Frontend:** Vitest подключён, тест пока один (`src/app/app.spec.ts`), в сборку
+не включён — фронт собирает Cloudflare, а не CodeBuild.
+
+**Чего нет:** тестов против настоящей базы (нужен PostgreSQL в контейнере при
+сборке), E2E через браузер, линтеров и разбора зависимостей на изъяны.
 
 ## Configuration
 
