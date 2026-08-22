@@ -41,6 +41,8 @@ public class ListingController {
 
     @Autowired
     private us.moneybay.service.KeywordFilterService keywordFilterService;
+    @org.springframework.beans.factory.annotation.Autowired
+    private us.moneybay.service.ListingReviewService listingReviewService;
 
     public ListingController(ListingRepository listingRepository,
                              CategoryRepository categoryRepository,
@@ -314,6 +316,7 @@ public class ListingController {
         }
 
         applyKeywordModeration(listing);
+        applyReview(listing);
         return ResponseEntity.ok(ListingDto.from(listingRepository.save(listing)));
     }
 
@@ -358,10 +361,33 @@ public class ListingController {
         }
 
         applyKeywordModeration(listing);
+        applyReview(listing);
         return ResponseEntity.ok(ListingDto.from(listingRepository.save(listing)));
     }
 
     // severity 2 -> hide, severity 3 -> ban (CLAUDE.md, Trust & Safety)
+    /**
+     * Проверка при публикации. Объявление с замечаниями не удаляется — оно
+     * остаётся у автора, показывается окно с перечнем недочётов, и после правки
+     * проверка проходит заново.
+     */
+    private void applyReview(Listing listing) {
+        // Забаненное фильтром слов не перепроверяем: причина там серьёзнее
+        if (listing.getStatus() == Listing.ListingStatus.BANNED) return;
+
+        List<String> reasons = listingReviewService.review(listing);
+        listing.setModerationReasons(reasons.isEmpty() ? null : String.join(",", reasons));
+
+        if (listingReviewService.shouldReject(reasons)) {
+            listing.setStatus(Listing.ListingStatus.REJECTED);
+            listing.setActive(false);
+        } else if (listing.getStatus() == Listing.ListingStatus.REJECTED) {
+            // Недочёты исправлены — объявление снова показывается
+            listing.setStatus(Listing.ListingStatus.ACTIVE);
+            listing.setActive(true);
+        }
+    }
+
     private void applyKeywordModeration(Listing listing) {
         var result = keywordFilterService.checkContent(
             listing.getTitle() == null ? "" : listing.getTitle(),

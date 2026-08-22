@@ -2,6 +2,7 @@ import { Component, OnInit, inject, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ActivatedRoute, Router } from '@angular/router';
 import { ApiService } from '../../services/api.service';
+import { ModerationNoticeComponent } from '../../components/moderation-notice/moderation-notice.component';
 
 interface PricingTier {
   hours: number;
@@ -13,8 +14,15 @@ interface PricingTier {
 @Component({
   selector: 'app-promote',
   standalone: true,
-  imports: [CommonModule],
+  imports: [CommonModule, ModerationNoticeComponent],
   template: `
+    <!-- Замечания проверки: показываются поверх, пока автор их не закроет -->
+    <app-moderation-notice
+      [reasons]="moderationReasons()"
+      (edit)="goEdit()"
+      (dismiss)="moderationReasons.set(null)">
+    </app-moderation-notice>
+
     <div class="max-w-5xl mx-auto px-4 py-12 min-page">
       <div class="text-center mb-12">
         @if (justPosted()) {
@@ -101,6 +109,8 @@ export class PromoteComponent implements OnInit {
   justPosted = signal(false);
   loading = signal(false);
   error = signal<string | null>(null);
+  /** Замечания проверки, если объявление отклонено. */
+  moderationReasons = signal<string | null>(null);
 
   tiers: PricingTier[] = [
     { hours: 24, price: 1.99, label: '24h Boost' },
@@ -111,6 +121,19 @@ export class PromoteComponent implements OnInit {
   ngOnInit(): void {
     this.listingId.set(Number(this.route.snapshot.paramMap.get('id')));
     this.justPosted.set(this.route.snapshot.queryParamMap.get('posted') === '1');
+
+    // Замечания проверки берутся из самого объявления: сервер их туда пишет
+    if (this.listingId()) {
+      this.api.getListing(this.listingId()).subscribe({
+        next: (l) => this.moderationReasons.set((l as any).moderationReasons || null),
+        error: () => {}
+      });
+    }
+  }
+
+  /** Правка объявления по замечаниям проверки. */
+  goEdit(): void {
+    this.router.navigate(['/edit-listing', this.listingId()]);
   }
 
   /** Пропустить: объявление уже опубликовано, продвижение можно взять позже. */

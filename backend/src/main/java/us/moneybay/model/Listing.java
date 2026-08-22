@@ -59,6 +59,17 @@ public class Listing {
     @Column(name = "status", nullable = false)
     private ListingStatus status = ListingStatus.ACTIVE;
 
+    /**
+     * Причины отклонения через запятую: MISSING_PHOTOS, SHORT_DESCRIPTION и так
+     * далее. Показываются автору окном с указанием, что поправить.
+     */
+    @Column(name = "moderation_reasons", length = 500)
+    private String moderationReasons;
+
+    /** Пояснение проверяющего, если стандартных причин мало. */
+    @Column(name = "moderation_note", length = 1000)
+    private String moderationNote;
+
     @Column(name = "promoted_until")
     private Instant promotedUntil;
 
@@ -83,6 +94,7 @@ public class Listing {
         HIDDEN,      // скрыто по запросу юзера
         FLAGGED,     // объявление с флагами
         BANNED,      // забанено после 20 флагов
+        REJECTED,    // отклонено проверкой: причины в moderationReasons
         EXPIRED,     // истекло (опционально для будущего)
         DELETED      // удалено юзером/админом
     }
