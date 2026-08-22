@@ -320,9 +320,9 @@ export class HomeComponent implements OnInit, OnDestroy {
   totalPages = signal(1);
 
   /**
-   * Номера для карусели: первая, последняя, текущая и по соседу с ней. Ноль
-   * означает пропуск и рисуется многоточием — иначе при двадцати четырёх
-   * тысячах страниц ряд не поместился бы на экран.
+   * Номера для карусели: пять подряд вокруг текущей, плюс первая и последняя по
+   * краям. Ноль означает пропуск и рисуется многоточием — иначе при двадцати
+   * четырёх тысячах страниц ряд не поместился бы на экран.
    *
    * Последняя приходит от сервера из пересчёта раз в час, а не подсчётом на
    * каждый заход: count(*) по 1.44 млн записей идёт пять секунд.
@@ -330,16 +330,25 @@ export class HomeComponent implements OnInit, OnDestroy {
   pageNumbers = (): number[] => {
     const total = this.totalPages();
     const cur = this.currentPage();
-    if (total <= 7) return Array.from({ length: total }, (_, i) => i + 1);
+    const window = 5;
+
+    // Первая, последняя, пять подряд и два многоточия — девять мест
+    if (total <= window + 4) {
+      return Array.from({ length: total }, (_, i) => i + 1);
+    }
+
+    // Окно держится в пять номеров и у краёв сдвигается внутрь, а не сжимается
+    let from = Math.max(2, cur - Math.floor(window / 2));
+    let to = from + window - 1;
+    if (to > total - 1) {
+      to = total - 1;
+      from = Math.max(2, to - window + 1);
+    }
 
     const pages: number[] = [1];
-    const from = Math.max(2, cur - 1);
-    const to = Math.min(total - 1, cur + 1);
-
     if (from > 2) pages.push(0);
     for (let p = from; p <= to; p++) pages.push(p);
     if (to < total - 1) pages.push(0);
-
     pages.push(total);
     return pages;
   };
