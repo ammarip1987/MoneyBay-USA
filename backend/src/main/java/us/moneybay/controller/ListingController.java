@@ -21,6 +21,7 @@ import us.moneybay.service.R2PhotoService;
 import java.io.IOException;
 import java.nio.file.*;
 import java.util.*;
+import java.util.stream.Collectors;
 
 @RestController
 @RequestMapping("/api/listings")
@@ -64,19 +65,13 @@ public class ListingController {
         @RequestParam(name = "has_image", defaultValue = "false") boolean hasImage,
         @RequestParam(name = "posted_within", required = false) Integer postedWithinDays) {
 
-        // Порядок для выборки без фильтров задаётся в самом запросе — там же
-        // продвинутые выносятся вперёд. Этот Sort нужен ветке с расширенными
-        // фильтрами: promotedUntil по убыванию ставит непустые значения первыми.
-        // Просроченные там тоже попадут вперёд, но их единицы, а выборка узкая.
-        Sort boostFirst = Sort.by(Sort.Order.desc("promotedUntil").nullsLast());
+        // Только выбранная сортировка — под неё есть индексы. Продвинутые
+        // выносятся вперёд отдельным запросом ниже: добавь их сюда, и порядок
+        // перестанет ложиться на индекс, а база начнёт перебирать всю таблицу.
         Sort sortObj = switch (sort) {
-            case "price_asc" -> boostFirst.and(Sort.by(Sort.Direction.ASC, "price"));
-            case "price_desc" -> boostFirst.and(Sort.by(Sort.Direction.DESC, "price"));
-            default -> boostFirst.and(Sort.by(Sort.Direction.DESC, "createdAt"));
-        };
-        String sortBy = switch (sort) {
-            case "price_asc", "price_desc" -> sort;
-            default -> "newest";
+            case "price_asc" -> Sort.by(Sort.Direction.ASC, "price");
+            case "price_desc" -> Sort.by(Sort.Direction.DESC, "price");
+            default -> Sort.by(Sort.Direction.DESC, "createdAt");
         };
 
         city = resolveCity(city);
@@ -96,9 +91,12 @@ public class ListingController {
         response.put("page_size", PAGE_SIZE);
 
         if (advancedFilters) {
-            // С расширенными фильтрами выборка узкая, подсчёт недорог
+            // С расширенными фильтрами выборка узкая: и подсчёт, и вынос
+            // продвинутых по promotedUntil обходятся дёшево
+            PageRequest filtered = PageRequest.of(page - 1, PAGE_SIZE,
+                Sort.by(Sort.Order.desc("promotedUntil").nullsLast()).and(sortObj));
             Page<Listing> listings = listingRepository.searchAdvanced(
-                q, city, category, priceMin, priceMax, hasImage, postedAfter, pageRequest);
+                q, city, category, priceMin, priceMax, hasImage, postedAfter, filtered);
             response.put("listings", listings.getContent().stream().map(ListingDto::from).toList());
             response.put("total", listings.getTotalElements());
             response.put("has_next", listings.hasNext());
@@ -109,12 +107,25 @@ public class ListingController {
         // Без фильтров подсчёт всех строк читал бы таблицу целиком: на миллионах
         // записей это секунды, и запросы накапливались, забивая диск. Берём на
         // одну запись больше нужного — её наличие и означает следующую страницу.
-        // Без Sort: порядок задан в самом запросе, вместе с выносом продвинутых
-        PageRequest slice = PageRequest.of(page - 1, PAGE_SIZE + 1);
-        List<Listing> rows = listingRepository.searchSlice(q, city, category, sortBy, slice);
+        PageRequest slice = PageRequest.of(page - 1, PAGE_SIZE + 1, sortObj);
+        List<Listing> rows = listingRepository.searchSlice(q, city, category, slice);
 
         boolean hasNext = rows.size() > PAGE_SIZE;
         if (hasNext) rows = rows.subList(0, PAGE_SIZE);
+
+        // Продвинутые выносятся вперёд только на первой странице и отдельным
+        // запросом: сортировка по сроку продвижения в общей выборке не ложится
+        // на индекс, и база перебирала сотни тысяч строк.
+        if (page == 1 && (q == null || q.isBlank())) {
+            List<Listing> promoted = listingRepository.findPromoted(
+                city, category, PageRequest.of(0, 6));
+            if (!promoted.isEmpty()) {
+                Set<Long> ids = promoted.stream().map(Listing::getId).collect(Collectors.toSet());
+                List<Listing> merged = new ArrayList<>(promoted);
+                rows.stream().filter(l -> !ids.contains(l.getId())).forEach(merged::add);
+                rows = merged.size() > PAGE_SIZE ? merged.subList(0, PAGE_SIZE) : merged;
+            }
+        }
 
         response.put("listings", rows.stream().map(ListingDto::from).toList());
         response.put("has_next", hasNext);
