@@ -325,7 +325,7 @@ Git push → GitHub Actions → Docker build → ECR push → ECS update
 3. Собирает Docker образ из `backend/Dockerfile` (Java 25, Alpine)
 4. Загружает образ в AWS ECR (`moneybay-usa:latest` + git SHA)
 5. Обновляет ECS сервис — новая версия контейнера запускается автоматически
-6. Frontend деплоится отдельно, вручную: `npm run build` и `npx wrangler deploy`
+6. Frontend выкладывает Cloudflare по push в `main` — своей связкой с репозиторием, вне GitHub Actions. Занимает около минуты после коммита.
 
 ## Setup
 
@@ -373,7 +373,7 @@ Open http://localhost:1100
 |-------|---------|------|-----|-----|-----|-------|
 | **Dev (ng serve)** | `ng serve` | 1100 | ✅ | ❌ Off | ✅ Vite | **Ежедневная разработка, 95% времени** |
 | **Production-like local** | `ng build` + `npm run serve:ssr` | 4000 | ❌ | ✅ On | ✅ Express | Тестирование PWA + offline + bundle size |
-| **Production** | `npx wrangler deploy` + push в `main` | 443 | ❌ | ✅ On | Cloudflare Workers | Реальный production |
+| **Production** | push в `main` | 443 | ❌ | ✅ On | Cloudflare Workers | Реальный production |
 
 ### Mode 1: Dev (ежедневная разработка)
 
@@ -743,16 +743,11 @@ GET /api/us-cities?state=TX&q=San   → San Antonio, San Angelo, San Marcos
 таблицей `cities`, поэтому фильтры поиска, фасеты и субдомены не затронуты.
 Форма собирает эту строку из двух полей, `edit-listing` разбирает обратно.
 
-**Наполнение:** Flyway в проекте не подключён (нет зависимости в `pom.xml`, нет
-таблицы `flyway_schema_history`); схему создаёт `ddl-auto=update`, а файлы в
-`backend/src/main/resources/db/migration` применяются вручную. Таблицу создаёт
-Hibernate по сущности `UsCity`, данные заливаются скриптом
-`V103__us_cities_data.sql` через bastion. Повторный запуск безопасен — вставляются
-только отсутствующие записи.
-
-Файлы `V101__reset_cities.sql` и `V102__update_cities_to_states.sql` адресуют
-таблицу `city` в единственном числе, которой в базе нет. Они никогда не
-применялись — это мёртвый SQL, ориентироваться на него при чтении схемы нельзя.
+**Наполнение:** Flyway подключён (`flyway-core` в `pom.xml`, `spring.flyway.enabled=true`),
+схему держит `ddl-auto=validate` — Hibernate её не меняет, всё идёт миграциями из
+`backend/src/main/resources/db/migration`. Они применяются при запуске, учёт ведётся в
+таблице `flyway_schema_history`. Данные городов заливает `V2__us_cities_data.sql`;
+повторный запуск безопасен — вставляются только отсутствующие записи.
 
 ## Configuration
 
@@ -921,7 +916,8 @@ git push origin main
 GitHub Actions (`.github/workflows/deploy.yml`) запускает сборку в AWS CodeBuild,
 затем обновляет сервис ECS. Сам образ собирается не на раннере.
 
-**Frontend — вручную:**
+**Frontend — по push в `main`.** Cloudflare собирает и выкладывает воркер сам, около
+минуты после коммита. Внеочередная выкладка без коммита:
 
 ```
 npm run build
@@ -1407,7 +1403,6 @@ DELETE FROM users WHERE email LIKE '%@test.moneybay.us';
 - Оформление пустых состояний
 
 ### DevOps
-- Автоматический деплой frontend в составе CI (сейчас вручную)
 - Замена root-ключей AWS на пользователя IAM
 - Правило кэширования для `photos.moneybay.us` — сейчас `cf-cache-status: DYNAMIC`
 - Оповещения CloudWatch по ошибкам задачи
@@ -1697,7 +1692,7 @@ bastion.
 
 | Компонент | Сервис | Детали |
 |-----------|--------|--------|
-| **Frontend** | Cloudflare Workers | Воркер `moneybay-usa`, отрисовка SSR; деплой `npx wrangler deploy` |
+| **Frontend** | Cloudflare Workers | Воркер `moneybay-usa`, отрисовка SSR; выкладка по push в `main` |
 | **Backend** | AWS ECS Fargate | Сервис `moneybay-api`, cluster `default`, ARM64 |
 | **Database** | AWS RDS PostgreSQL 18.3 | `db-moneybay-usa.c18o4s6gatg6.us-east-2.rds.amazonaws.com`, db.t4g.micro |
 | **Load Balancer** | AWS ALB | `moneybay-alb-1342255176.us-east-2.elb.amazonaws.com` |
@@ -1785,7 +1780,7 @@ Git push → GitHub Actions → Docker build → ECR push → ECS update
 
 Время прохождения — около 3 минут, из них сборка образа меньше минуты.
 
-Только backend. Frontend деплоится вручную через `npx wrangler deploy`.
+Только backend. Frontend Cloudflare собирает и выкладывает сам по push в `main`.
 
 ### Docker Configuration
 
@@ -1825,7 +1820,8 @@ aws rds describe-db-instances --region us-east-2
 # Состояние сервиса
 aws ecs describe-services --region us-east-2 --cluster default --services moneybay-api
 
-# Frontend
+# Frontend — выкладка идёт по push в `main`. Команда ниже нужна только
+# для внеочередной выкладки без коммита
 npm run build
 npx wrangler deploy
 
