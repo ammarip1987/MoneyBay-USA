@@ -28,9 +28,6 @@ public class ListingDto {
     private Long userId;
     @JsonProperty("category_id")
     private Long categoryId;
-    private String status;
-    /** Причины отклонения через запятую: показываются автору окном. */
-    private String moderationReasons;
     @JsonProperty("created_at")
     private Instant createdAt;
 
@@ -50,8 +47,6 @@ public class ListingDto {
         dto.userId = listing.getUser() != null ? listing.getUser().getId() : null;
         dto.categoryId = listing.getCategory() != null ? listing.getCategory().getId() : null;
         dto.createdAt = listing.getCreatedAt();
-        dto.status = listing.getStatus() != null ? listing.getStatus().name() : null;
-        dto.moderationReasons = listing.getModerationReasons();
         return dto;
     }
 }
