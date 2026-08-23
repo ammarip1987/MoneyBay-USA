@@ -47,6 +47,18 @@ public class User {
     @Column(name = "created_at", updatable = false)
     private Instant createdAt;
 
+    /**
+     * Когда учётная запись будет стёрта.
+     *
+     * Закрытие не удаляет сразу: месяц данные держатся, и за это время человек
+     * может вернуться и восстановить вход. Так же поступают, когда учётную
+     * запись закрыл не владелец, а тот, кто получил к ней доступ.
+     *
+     * Пока срок стоит, вход не работает и объявления скрыты.
+     */
+    @Column(name = "deletion_scheduled_at")
+    private Instant deletionScheduledAt;
+
     @PrePersist
     protected void onCreate() {
         createdAt = Instant.now();

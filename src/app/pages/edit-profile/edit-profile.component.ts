@@ -41,8 +41,9 @@ import { AuthService } from '../../services/auth.service';
                 update the photo there and sign in again.
               </p>
             } @else {
-              <p class="text-sm text-gray-700">No profile photo</p>
-              <p class="text-xs text-gray-500 mt-2">
+              <!-- Подсказка стоит одна, без надписи об отсутствии снимка: пустое
+                   место и так видно, а две строки об одном читаются как укор -->
+              <p class="text-sm text-gray-600">
                 Sign in with Google or Facebook to show your photo here.
               </p>
             }
@@ -71,6 +72,65 @@ import { AuthService } from '../../services/auth.service';
           <button type="button" (click)="cancel()" class="btn btn-secondary">Cancel</button>
         </div>
       </form>
+
+      <!-- Закрытие учётной записи стоит отдельно и последним: рядом с обычными
+           настройками на него нажимают по ошибке -->
+      <div class="mt-8 border border-red-200 rounded-2xl p-6 bg-red-50/40">
+        @if (deletionScheduled()) {
+          <h2 class="text-lg font-bold text-red-800 mb-2">Account closing</h2>
+          <p class="text-sm text-gray-700 mb-4">
+            Your account and everything in it will be erased on
+            <strong>{{ deletionScheduled() | date:'MMMM d, yyyy' }}</strong>.
+            Your listings are hidden until then. You can still change your mind.
+          </p>
+          <button type="button" (click)="cancelDeletion()"
+                  class="btn btn-primary" [disabled]="deleting()">
+            {{ deleting() ? 'Working...' : 'Keep my account' }}
+          </button>
+        } @else {
+          <h2 class="text-lg font-bold text-red-800 mb-2">Delete account</h2>
+          <p class="text-sm text-gray-700 mb-4">
+            Your listings come down straight away. Everything else is kept for 30 days
+            in case you change your mind, then erased for good.
+          </p>
+          <button type="button" (click)="askToDelete()" class="btn bg-red-600 text-white hover:bg-red-700">
+            Delete my account
+          </button>
+        }
+      </div>
+
+      <!-- Пароль спрашивается здесь же: без него хватило бы чужого доступа к
+           открытой вкладке, чтобы закрыть учётную запись одним нажатием -->
+      @if (confirmOpen()) {
+        <div class="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4"
+             (click)="confirmOpen.set(false)">
+          <div class="bg-white rounded-2xl max-w-md w-full p-8 shadow-xl" (click)="$event.stopPropagation()">
+            <h2 class="text-xl font-bold text-mb-dark mb-3">Delete your account?</h2>
+            <p class="text-sm text-gray-700 mb-5">
+              Your listings will be hidden now and erased after 30 days, along with your
+              messages and saved items. Enter your password to confirm.
+            </p>
+
+            @if (deleteError()) {
+              <div class="bg-red-50 border border-red-200 text-red-700 rounded-lg p-3 mb-4 text-sm">
+                {{ deleteError() }}
+              </div>
+            }
+
+            <input type="password" [(ngModel)]="confirmPassword" name="confirmPassword"
+                   class="form-input mb-5" placeholder="Your password" autocomplete="current-password">
+
+            <div class="flex gap-3">
+              <button type="button" (click)="confirmDelete()"
+                      class="btn bg-red-600 text-white hover:bg-red-700 flex-1"
+                      [disabled]="deleting() || !confirmPassword">
+                {{ deleting() ? 'Working...' : 'Delete account' }}
+              </button>
+              <button type="button" (click)="confirmOpen.set(false)" class="btn btn-secondary">Cancel</button>
+            </div>
+          </div>
+        </div>
+      }
     </div>
   `
 })
@@ -85,6 +145,13 @@ export class EditProfileComponent implements OnInit {
   loading = signal(false);
   error = signal<string | null>(null);
 
+  /** Срок стирания, если учётная запись закрыта. */
+  deletionScheduled = signal<string | null>(null);
+  confirmOpen = signal(false);
+  confirmPassword = '';
+  deleting = signal(false);
+  deleteError = signal<string | null>(null);
+
   avatarPreview = signal<string | null>(null);
   /** Есть ли фотография от Google или Facebook. */
   hasSocialPhoto = signal(false);
@@ -97,6 +164,45 @@ export class EditProfileComponent implements OnInit {
    * своей не предусмотрена: снимок из социальной сети уже подтверждён ею, а
    * произвольный файл пришлось бы проверять на недопустимое содержимое.
    */
+  askToDelete(): void {
+    this.confirmPassword = '';
+    this.deleteError.set(null);
+    this.confirmOpen.set(true);
+  }
+
+  confirmDelete(): void {
+    this.deleting.set(true);
+    this.deleteError.set(null);
+    this.api.deleteAccount(this.confirmPassword).subscribe({
+      next: (res) => {
+        this.deleting.set(false);
+        this.confirmOpen.set(false);
+        this.confirmPassword = '';
+        this.deletionScheduled.set(res.deletion_scheduled_at);
+      },
+      error: (err) => {
+        this.deleting.set(false);
+        this.deleteError.set(
+          err?.status === 403 ? 'Password is incorrect' : 'Could not delete the account'
+        );
+      }
+    });
+  }
+
+  cancelDeletion(): void {
+    this.deleting.set(true);
+    this.api.cancelAccountDeletion().subscribe({
+      next: () => {
+        this.deleting.set(false);
+        this.deletionScheduled.set(null);
+      },
+      error: () => {
+        this.deleting.set(false);
+        this.error.set('Could not restore the account');
+      }
+    });
+  }
+
   private applyAvatar(url?: string | null, show?: boolean): void {
     this.hasSocialPhoto.set(!!url);
     this.showAvatar = show !== false;
@@ -125,6 +231,8 @@ export class EditProfileComponent implements OnInit {
         this.phone = data.phone || '';
         this.city = data.city || '';
         this.applyAvatar(data.avatarUrl, data.showAvatar);
+        // Закрытая учётная запись показывает срок стирания и предложение вернуться
+        this.deletionScheduled.set((data as any).deletionScheduledAt || null);
       }
     });
   }

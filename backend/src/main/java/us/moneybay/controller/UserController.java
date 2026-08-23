@@ -3,12 +3,15 @@ package us.moneybay.controller;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.web.bind.annotation.*;
+import us.moneybay.service.AccountDeletionService;
 import us.moneybay.dto.ListingDto;
 import us.moneybay.dto.UserDto;
 import us.moneybay.model.User;
 import us.moneybay.repository.ListingRepository;
 import us.moneybay.repository.UserRepository;
+import java.time.Instant;
 import java.util.List;
 import java.util.Map;
 
@@ -18,9 +21,17 @@ public class UserController {
 
     private final UserRepository userRepository;
     private final ListingRepository listingRepository;
-    public UserController(UserRepository userRepository, ListingRepository listingRepository) {
+    private final PasswordEncoder passwordEncoder;
+    private final AccountDeletionService accountDeletionService;
+
+    public UserController(UserRepository userRepository,
+                          ListingRepository listingRepository,
+                          PasswordEncoder passwordEncoder,
+                          AccountDeletionService accountDeletionService) {
         this.userRepository = userRepository;
         this.listingRepository = listingRepository;
+        this.passwordEncoder = passwordEncoder;
+        this.accountDeletionService = accountDeletionService;
     }
 
     @GetMapping("/profile")
@@ -28,6 +39,45 @@ public class UserController {
         if (auth == null) return ResponseEntity.status(401).build();
         User user = (User) auth.getPrincipal();
         return ResponseEntity.ok(UserDto.from(user));
+    }
+
+    /**
+     * Закрыть учётную запись.
+     *
+     * Данные держатся месяц: за это время можно вернуться, если закрытие вышло
+     * по ошибке или учётную запись закрыл не владелец. Пароль спрашивается,
+     * чтобы чужой человек за оставленным без присмотра устройством не закрыл
+     * её нажатием кнопки.
+     */
+    @PostMapping("/profile/delete")
+    public ResponseEntity<?> deleteAccount(Authentication auth,
+                                           @RequestBody Map<String, String> body) {
+        if (auth == null) return ResponseEntity.status(401).build();
+        User user = (User) auth.getPrincipal();
+
+        String password = body.get("password");
+        if (password == null || !passwordEncoder.matches(password, user.getPassword())) {
+            return ResponseEntity.status(403).body(Map.of(
+                "code", "PASSWORD_INVALID",
+                "message", "Password is incorrect"
+            ));
+        }
+
+        Instant when = accountDeletionService.scheduleDeletion(user);
+        return ResponseEntity.ok(Map.of(
+            "success", true,
+            "deletion_scheduled_at", when.toString()
+        ));
+    }
+
+    /** Передумал: объявления возвращаются, вход работает. */
+    @PostMapping("/profile/delete/cancel")
+    public ResponseEntity<?> cancelDeletion(Authentication auth) {
+        if (auth == null) return ResponseEntity.status(401).build();
+        User user = (User) auth.getPrincipal();
+
+        accountDeletionService.cancelDeletion(user);
+        return ResponseEntity.ok(Map.of("success", true));
     }
 
     @PutMapping("/profile")

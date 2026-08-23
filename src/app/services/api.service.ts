@@ -224,6 +224,20 @@ export class ApiService {
     return this.http.put<User>(`${this.baseUrl}/api/profile`, data);
   }
 
+  /**
+   * Закрыть учётную запись. Объявления скрываются сразу, данные стираются через
+   * месяц — до тех пор закрытие можно отменить.
+   */
+  deleteAccount(password: string): Observable<{ success: boolean; deletion_scheduled_at: string }> {
+    return this.http.post<{ success: boolean; deletion_scheduled_at: string }>(
+      `${this.baseUrl}/api/profile/delete`, { password });
+  }
+
+  cancelAccountDeletion(): Observable<{ success: boolean }> {
+    return this.http.post<{ success: boolean }>(
+      `${this.baseUrl}/api/profile/delete/cancel`, {});
+  }
+
   // --- Витрина продавца ---
 
   /** Витрина текущего пользователя; null, если не заведена. */

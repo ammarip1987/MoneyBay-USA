@@ -17,6 +17,12 @@ public class UserDto {
     private boolean showAvatar;
     private boolean isAdmin;
     private Instant createdAt;
+    /**
+     * Срок стирания закрытой учётной записи. Пока он стоит, вход работает, но
+     * страницы показывают предложение восстановить — иначе передумать было бы
+     * нельзя, а месяц ожидания для того и дан.
+     */
+    private Instant deletionScheduledAt;
 
     public static UserDto from(User user) {
         UserDto dto = new UserDto();
@@ -29,6 +35,7 @@ public class UserDto {
         dto.showAvatar = user.isShowAvatar();
         dto.isAdmin = user.isAdmin();
         dto.createdAt = user.getCreatedAt();
+        dto.deletionScheduledAt = user.getDeletionScheduledAt();
         return dto;
     }
 }
