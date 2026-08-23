@@ -28,7 +28,12 @@ export const errorInterceptor: HttpInterceptorFn = (req, next) => {
         err.status === 401 &&
         !req.context.get(SKIP_SESSION_EXPIRED) &&
         !req.url.includes('/api/auth/') &&
-        auth.getToken()
+        // Токен в памяти пропал — значит обновление по куке уже пробовали и
+        // получили отказ. Пока токен на месте, 401 разбирает authInterceptor:
+        // он берёт новый по куке и повторяет запрос, выбрасывать не за что.
+        // Прежде здесь стояло обратное условие, и первый же истёкший токен
+        // выкидывал из учётной записи, хотя вход можно было продлить
+        !auth.getToken()
       ) {
         auth.logout();
         notification.error('Session expired. Please log in again.');
