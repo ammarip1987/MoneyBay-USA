@@ -60,10 +60,16 @@ public class ListingCountService {
     public void refresh() {
         long started = System.currentTimeMillis();
 
-        Object estimate = em.createNativeQuery(
-                "SELECT reltuples::bigint FROM pg_class WHERE relname = 'listings'")
+        // Подсчёт точный, а не оценка из pg_class: та берётся из служебных
+        // данных и после крупного удаления завышает — удалённые строки остаются
+        // в счёте, пока их не уберёт уборка. После снятия 202939 объявлений
+        // оценка показывала 1873129 при 1237065 действительных.
+        //
+        // Пять секунд здесь не в тягость: раз в час, в стороне от запросов.
+        Object exact = em.createNativeQuery(
+                "SELECT count(*) FROM listings WHERE is_active AND NOT is_deleted")
             .getSingleResult();
-        total = estimate == null ? 0 : ((Number) estimate).longValue();
+        total = exact == null ? 0 : ((Number) exact).longValue();
 
         @SuppressWarnings("unchecked")
         List<Object[]> rows = em.createNativeQuery(
