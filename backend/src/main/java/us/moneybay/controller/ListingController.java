@@ -96,14 +96,19 @@ public class ListingController {
         if (advancedFilters) {
             // С расширенными фильтрами выборка узкая: и подсчёт, и вынос
             // продвинутых по promotedUntil обходятся дёшево
-            PageRequest filtered = PageRequest.of(page - 1, PAGE_SIZE,
-                Sort.by(Sort.Order.desc("promotedUntil").nullsLast()).and(sortObj));
-            Page<Listing> listings = listingRepository.searchAdvanced(
-                q, city, category, priceMin, priceMax, hasImage, postedAfter, filtered);
-            response.put("listings", listings.getContent().stream().map(ListingDto::from).toList());
-            response.put("total", listings.getTotalElements());
-            response.put("has_next", listings.hasNext());
-            response.put("total_pages", listings.getTotalPages());
+            // Запрашивается на одну запись больше нужного: её наличие и означает
+            // следующую страницу. Подсчёт всех строк для этого не нужен
+            List<Listing> found = listingRepository.searchAdvanced(
+                q, city, category, priceMin, priceMax, hasImage, postedAfter,
+                PAGE_SIZE + 1, (page - 1) * PAGE_SIZE);
+
+            boolean more = found.size() > PAGE_SIZE;
+            if (more) found = found.subList(0, PAGE_SIZE);
+
+            response.put("listings", found.stream().map(ListingDto::from).toList());
+            response.put("has_next", more);
+            response.put("total_pages", more ? page + 1 : page);
+            response.put("total", -1);
             return ResponseEntity.ok(response);
         }
 
@@ -111,7 +116,13 @@ public class ListingController {
         // записей это секунды, и запросы накапливались, забивая диск. Берём на
         // одну запись больше нужного — её наличие и означает следующую страницу.
         PageRequest slice = PageRequest.of(page - 1, PAGE_SIZE + 1, sortObj);
-        List<Listing> rows = listingRepository.searchSlice(q, city, category, slice);
+
+        // Поиск по словам идёт отдельным запросом: он опирается на полнотекстовый
+        // индекс, тогда как обычная лента — на индекс по дате
+        List<Listing> rows = (q == null || q.isBlank())
+            ? listingRepository.searchSlice(city, category, slice)
+            : listingRepository.searchByText(q, city, category,
+                  PAGE_SIZE + 1, (page - 1) * PAGE_SIZE);
 
         boolean hasNext = rows.size() > PAGE_SIZE;
         if (hasNext) rows = rows.subList(0, PAGE_SIZE);
@@ -246,7 +257,7 @@ public class ListingController {
         List<Listing> matches = listingRepository.suggestByTitlePrefix(query, city, pageReq);
 
         if (matches.size() < limit) {
-            List<Listing> more = listingRepository.suggestByTitleContains(query, city, pageReq);
+            List<Listing> more = listingRepository.suggestByTitleContains(query, city, limit);
             for (Listing m : more) {
                 if (matches.stream().noneMatch(x -> x.getId().equals(m.getId()))) {
                     matches.add(m);

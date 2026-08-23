@@ -82,13 +82,40 @@ public interface ListingRepository extends JpaRepository<Listing, Long> {
      * ставятся впереди уже в контроллере: их единицы.
      */
     @Query("SELECT l FROM Listing l WHERE l.isActive = true AND l.isDeleted = false " +
-           "AND (COALESCE(:q, '') = '' OR LOWER(l.title) LIKE LOWER(CONCAT('%', :q, '%')) OR LOWER(l.description) LIKE LOWER(CONCAT('%', :q, '%'))) " +
            "AND (COALESCE(:city, '') = '' OR l.location = :city) " +
            "AND (COALESCE(:categorySlug, '') = '' OR l.category.slug = :categorySlug)")
-    List<Listing> searchSlice(@Param("q") String q,
-                              @Param("city") String city,
+    List<Listing> searchSlice(@Param("city") String city,
                               @Param("categorySlug") String categorySlug,
                               Pageable pageable);
+
+    /**
+     * Поиск по словам.
+     *
+     * Запрос к базе напрямую: JPQL полнотекстового поиска не знает, а он здесь
+     * необходим — отбор LIKE '%слово%' индекс не берёт, и на 1.2 млн записей
+     * поиск по «house» не отвечал дольше десяти минут.
+     *
+     * plainto_tsquery разбирает введённое как обычный текст: знаки препинания и
+     * лишние пробелы не роняют запрос, что было бы с to_tsquery.
+     *
+     * Сортировка по свежести, а не по совпадению: на площадке объявлений свежее
+     * важнее похожего, и упорядочивание по ts_rank потребовало бы вычислять
+     * оценку для каждой найденной строки.
+     */
+    @Query(value = "SELECT l.* FROM listings l " +
+                   "LEFT JOIN categories c ON c.id = l.category_id " +
+                   "WHERE l.is_active AND NOT l.is_deleted " +
+                   "AND to_tsvector('english', coalesce(l.title, '') || ' ' || coalesce(l.description, '')) " +
+                   "    @@ plainto_tsquery('english', :q) " +
+                   "AND (COALESCE(:city, '') = '' OR l.location = :city) " +
+                   "AND (COALESCE(:categorySlug, '') = '' OR c.slug = :categorySlug) " +
+                   "ORDER BY l.created_at DESC LIMIT :limit OFFSET :offset",
+           nativeQuery = true)
+    List<Listing> searchByText(@Param("q") String q,
+                               @Param("city") String city,
+                               @Param("categorySlug") String categorySlug,
+                               @Param("limit") int limit,
+                               @Param("offset") int offset);
 
     /** Объявления с действующим продвижением — их немного, отбор дешёвый. */
     @Query("SELECT l FROM Listing l WHERE l.isActive = true AND l.isDeleted = false " +
@@ -100,24 +127,38 @@ public interface ListingRepository extends JpaRepository<Listing, Long> {
                                @Param("categorySlug") String categorySlug,
                                Pageable pageable);
 
-    @Query("SELECT l FROM Listing l WHERE l.isActive = true AND l.isDeleted = false " +
-           "AND (COALESCE(:q, '') = '' OR LOWER(l.title) LIKE LOWER(CONCAT('%', :q, '%')) OR LOWER(l.description) LIKE LOWER(CONCAT('%', :q, '%'))) " +
-           "AND (COALESCE(:city, '') = '' OR l.location = :city) " +
-           "AND (COALESCE(:categorySlug, '') = '' OR l.category.slug = :categorySlug) " +
-           "AND (:priceMin IS NULL OR l.price >= :priceMin) " +
-           "AND (:priceMax IS NULL OR l.price <= :priceMax) " +
-           "AND (:hasImage = false OR SIZE(l.images) > 0) " +
-           // CAST обязателен: без него PostgreSQL не выводит тип для null и
-           // отвечает "could not determine data type of parameter"
-           "AND (CAST(:postedAfter AS timestamp) IS NULL OR l.createdAt >= :postedAfter)")
-    Page<Listing> searchAdvanced(@Param("q") String q,
-                                  @Param("city") String city,
-                                  @Param("categorySlug") String categorySlug,
-                                  @Param("priceMin") Double priceMin,
-                                  @Param("priceMax") Double priceMax,
-                                  @Param("hasImage") boolean hasImage,
-                                  @Param("postedAfter") java.time.Instant postedAfter,
-                                  Pageable pageable);
+    /**
+     * Расширенные фильтры: цена, наличие снимков, давность.
+     *
+     * Запрос к базе напрямую — слово поиска сверяется полнотекстовым индексом.
+     * Прежде здесь стоял LIKE '%слово%', который индекс не берёт: с заданным
+     * словом запрос читал таблицу целиком и не отвечал.
+     */
+    @Query(value = "SELECT l.* FROM listings l " +
+                   "LEFT JOIN categories c ON c.id = l.category_id " +
+                   "WHERE l.is_active AND NOT l.is_deleted " +
+                   "AND (COALESCE(:q, '') = '' OR " +
+                   "     to_tsvector('english', coalesce(l.title, '') || ' ' || coalesce(l.description, '')) " +
+                   "     @@ plainto_tsquery('english', :q)) " +
+                   "AND (COALESCE(:city, '') = '' OR l.location = :city) " +
+                   "AND (COALESCE(:categorySlug, '') = '' OR c.slug = :categorySlug) " +
+                   "AND (CAST(:priceMin AS double precision) IS NULL OR l.price >= :priceMin) " +
+                   "AND (CAST(:priceMax AS double precision) IS NULL OR l.price <= :priceMax) " +
+                   "AND (:hasImage = false OR EXISTS " +
+                   "     (SELECT 1 FROM listing_images i WHERE i.listing_id = l.id)) " +
+                   "AND (CAST(:postedAfter AS timestamptz) IS NULL OR l.created_at >= :postedAfter) " +
+                   "ORDER BY (l.promoted_until > now()) DESC NULLS LAST, l.created_at DESC " +
+                   "LIMIT :limit OFFSET :offset",
+           nativeQuery = true)
+    List<Listing> searchAdvanced(@Param("q") String q,
+                                 @Param("city") String city,
+                                 @Param("categorySlug") String categorySlug,
+                                 @Param("priceMin") Double priceMin,
+                                 @Param("priceMax") Double priceMax,
+                                 @Param("hasImage") boolean hasImage,
+                                 @Param("postedAfter") java.time.Instant postedAfter,
+                                 @Param("limit") int limit,
+                                 @Param("offset") int offset);
 
 
     @Query("SELECT l.price FROM Listing l WHERE l.isActive = true AND l.isDeleted = false " +
@@ -166,13 +207,23 @@ public interface ListingRepository extends JpaRepository<Listing, Long> {
                                        @Param("city") String city,
                                        Pageable pageable);
 
-    @Query("SELECT l FROM Listing l WHERE l.isActive = true AND l.isDeleted = false " +
-           "AND LOWER(l.title) LIKE LOWER(CONCAT('%', :q, '%')) " +
-           "AND (:city IS NULL OR l.location = :city) " +
-           "ORDER BY l.createdAt DESC")
+    /**
+     * Подсказки по словам заголовка и описания.
+     *
+     * Прежде здесь стоял LIKE '%слово%' по заголовку — он индекс не берёт, и
+     * подсказки не отвечали дольше тридцати секунд. Полнотекстовый индекс тот
+     * же, что у поиска.
+     */
+    @Query(value = "SELECT l.* FROM listings l " +
+                   "WHERE l.is_active AND NOT l.is_deleted " +
+                   "AND to_tsvector('english', coalesce(l.title, '') || ' ' || coalesce(l.description, '')) " +
+                   "    @@ plainto_tsquery('english', :q) " +
+                   "AND (:city IS NULL OR l.location = :city) " +
+                   "ORDER BY l.created_at DESC LIMIT :limit",
+           nativeQuery = true)
     List<Listing> suggestByTitleContains(@Param("q") String q,
                                          @Param("city") String city,
-                                         Pageable pageable);
+                                         @Param("limit") int limit);
 
     @Query("SELECT l FROM Listing l WHERE l.isActive = true AND l.isDeleted = false " +
            "AND l.id <> :excludeId " +

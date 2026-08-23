@@ -646,6 +646,10 @@ export class HomeComponent implements OnInit, OnDestroy {
     if (this.searchQuery) params.q = this.searchQuery;
     if (this.cityFilter) params.city = this.cityFilter;
     if (this.selectedCategory()) params.category = this.selectedCategory();
+
+    // Прокрутка к найденному, как при переходе между страницами: иначе человек
+    // остаётся на плитке категорий и не видит, что поиск отработал
+    this.pendingScroll = true;
     this.router.navigate(['/'], { queryParams: params });
   }
 
