@@ -210,6 +210,7 @@ interface Subcategory {
       <app-filter-drawer
         [open]="drawerOpen()"
         [filters]="currentFilters()"
+        [states]="states()"
         (close)="drawerOpen.set(false)"
         (apply$)="onFiltersChange($event)">
       </app-filter-drawer>

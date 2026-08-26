@@ -121,7 +121,7 @@ import { ApiService } from '../../services/api.service';
               </h3>
               <div class="text-sm text-gray-600 space-y-1 bg-gray-50 rounded-lg p-3">
                 @if (filters.category) { <p>Category: <strong>{{ filters.category }}</strong></p> }
-                @if (filters.city) { <p>City: <strong>{{ filters.city }}</strong></p> }
+                @if (filters.city) { <p>State: <strong>{{ placeLabel() }}</strong></p> }
                 @if (filters.q) { <p>Search: <strong>"{{ filters.q }}"</strong></p> }
                 @if (!filters.category && !filters.city && !filters.q) {
                   <p class="text-gray-400 italic">No category, city or search query applied</p>
@@ -148,6 +148,14 @@ import { ApiService } from '../../services/api.service';
 export class FilterDrawerComponent implements OnInit, OnChanges {
   @Input() open = false;
   @Input() filters: ListingFilters = {};
+  /** Штаты: нужны, чтобы показать название вместо кода из двух букв. */
+  @Input() states: { code: string; name: string }[] = [];
+
+  /** Название штата для перечня применённого: «Arkansas» вместо «AR». */
+  placeLabel = (): string => {
+    const value = this.filters.city || '';
+    return this.states.find(s => s.code === value)?.name || value;
+  };
   @Output() close = new EventEmitter<void>();
   @Output() apply$ = new EventEmitter<ListingFilters>();
 
