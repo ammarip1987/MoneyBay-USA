@@ -191,6 +191,21 @@ class ListingControllerWebTest {
     }
 
     @Test
+    @DisplayName("несуществующая категория отвечает пусто, а не висит")
+    void unknownCategoryReturnsEmpty() throws Exception {
+        when(categoryRepository.existsBySlug("vehicles")).thenReturn(false);
+
+        // Прежде такой слаг уходил в выборку, и планировщик перебирал всю
+        // таблицу в поисках страницы, которую нечем набрать: ответа не было
+        // дольше десяти минут
+        mvc.perform(get("/api/listings").param("category", "vehicles"))
+           .andExpect(status().isOk())
+           .andExpect(jsonPath("$.listings").isArray())
+           .andExpect(jsonPath("$.listings").isEmpty())
+           .andExpect(jsonPath("$.has_next").value(false));
+    }
+
+    @Test
     @DisplayName("несуществующее объявление отвечает 404, а не пятисоткой")
     void missingListingIsNotFound() throws Exception {
         when(listingRepository.findByIdWithUser(999999L)).thenReturn(Optional.empty());

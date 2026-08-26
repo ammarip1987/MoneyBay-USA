@@ -79,6 +79,22 @@ public class ListingController {
 
         city = resolveCity(city);
 
+        // Несуществующий слаг отсекается сразу. Иначе планировщик идёт по индексу
+        // даты, набирая страницу, и перебирает всю таблицу — подходящих строк
+        // нет ни одной. Запрос по «vehicles» (верный слаг — «auto») не отвечал
+        // дольше десяти минут.
+        if (category != null && !category.isBlank()
+                && !categoryRepository.existsBySlug(category)) {
+            Map<String, Object> empty = new HashMap<>();
+            empty.put("listings", List.of());
+            empty.put("page", page < 1 ? 1 : page);
+            empty.put("page_size", PAGE_SIZE);
+            empty.put("has_next", false);
+            empty.put("total_pages", 1);
+            empty.put("total", 0);
+            return ResponseEntity.ok(empty);
+        }
+
         java.time.Instant postedAfter = null;
         if (postedWithinDays != null && postedWithinDays > 0) {
             postedAfter = java.time.Instant.now().minus(postedWithinDays, java.time.temporal.ChronoUnit.DAYS);

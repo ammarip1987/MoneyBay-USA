@@ -8,6 +8,9 @@ import java.util.Optional;
 public interface CategoryRepository extends JpaRepository<Category, Long> {
     Optional<Category> findBySlug(String slug);
 
+    /** Есть ли такая категория. Отсекает несуществующий слаг до выборки. */
+    boolean existsBySlug(String slug);
+
     /**
      * Плитки на главной идут по алфавиту. Без сортировки база отдаёт строки в
      * произвольном порядке, и он менялся между запросами.
