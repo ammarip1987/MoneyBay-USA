@@ -36,9 +36,6 @@ import { environment } from '../../../environments/environment';
           <div class="flex-1">
             <h1 class="text-4xl font-bold text-mb-dark mb-2">{{ user()?.username }}</h1>
             <p class="text-gray-600 text-lg mb-4 break-all">{{ user()?.email }}</p>
-            <p class="text-gray-500 text-sm mb-6">
-              Member since {{ user()?.created_at | date:'longDate' }}
-            </p>
 
             <!-- Action Buttons -->
             <div class="flex flex-wrap gap-2">
