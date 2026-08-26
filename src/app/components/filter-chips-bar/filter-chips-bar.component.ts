@@ -76,6 +76,11 @@ import { ListingFilters, SORT_OPTIONS } from '../../models/listing-filters.model
           {{ getPostedLabel() }}
           <i class="fas fa-times text-xs"></i>
         </button>
+      } @else {
+        <button (click)="openDrawer.emit()"
+                class="px-4 py-2 bg-white border border-gray-300 rounded-full text-sm hover:border-mb-blue transition">
+          Date posted
+        </button>
       }
 
       @if (activeFilterCount() > 0) {
