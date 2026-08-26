@@ -173,14 +173,26 @@ export class FilterDrawerComponent implements OnInit, OnChanges {
     this.loadFacets();
   }
 
+  /** Была ли панель открыта на прошлой проверке. */
+  private wasOpen = false;
+
+  /**
+   * Поля заполняются в миг открытия, а не при каждом изменении входов.
+   *
+   * Прежде условие смотрело только на open, и любое обновление входа —
+   * например, пришедший список штатов — перезаписывало введённые цены
+   * значениями из отбора. Человек набирал границы, и они пропадали до нажатия
+   * Apply.
+   */
   ngOnChanges(): void {
-    if (this.open) {
+    if (this.open && !this.wasOpen) {
       this.priceMin = this.filters.price_min;
       this.priceMax = this.filters.price_max;
       this.hasImage = this.filters.has_image || false;
       this.postedWithin = this.filters.posted_within;
       this.loadFacets();
     }
+    this.wasOpen = this.open;
   }
 
   loadFacets(): void {
