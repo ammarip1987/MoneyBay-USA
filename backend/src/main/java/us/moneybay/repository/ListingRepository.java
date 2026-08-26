@@ -157,7 +157,11 @@ public interface ListingRepository extends JpaRepository<Listing, Long> {
                    "AND (:hasImage = false OR EXISTS " +
                    "     (SELECT 1 FROM listing_images i WHERE i.listing_id = l.id)) " +
                    "AND (CAST(:postedAfter AS timestamptz) IS NULL OR l.created_at >= :postedAfter) " +
-                   "ORDER BY (l.promoted_until > now()) DESC NULLS LAST, l.created_at DESC " +
+                   // Сортировка только по дате: вычисляемое выражение
+                   // (promoted_until > now()) индекс не берёт, и база сортировала
+                   // весь отбор целиком. Продвинутые ставятся вперёд в
+                   // контроллере отдельным запросом — их единицы
+                   "ORDER BY l.created_at DESC " +
                    "LIMIT :limit OFFSET :offset",
            nativeQuery = true)
     List<Listing> searchAdvanced(@Param("q") String q,
