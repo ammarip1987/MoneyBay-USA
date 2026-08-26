@@ -62,49 +62,6 @@ import { environment } from '../../../environments/environment';
         </div>
       </div>
 
-      <!-- Stats Grid -->
-      <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-        <div class="bg-gradient-to-br from-blue-50 to-blue-100 rounded-2xl shadow-md p-6 border border-blue-200">
-          <div class="flex items-center justify-between">
-            <div>
-              <p class="text-gray-600 text-sm font-medium">Active Listings</p>
-              <p class="text-3xl font-bold text-mb-blue mt-2">{{ myListings().length }}</p>
-            </div>
-            <i class="fas fa-list text-5xl text-mb-blue opacity-20"></i>
-          </div>
-        </div>
-
-        <div class="bg-gradient-to-br from-amber-50 to-amber-100 rounded-2xl shadow-md p-6 border border-amber-200">
-          <div class="flex items-center justify-between">
-            <div>
-              <p class="text-gray-600 text-sm font-medium">In Boost</p>
-              <p class="text-3xl font-bold text-amber-600 mt-2">{{ boostedCount() }}</p>
-            </div>
-            <i class="fas fa-rocket text-5xl text-amber-600 opacity-20"></i>
-          </div>
-        </div>
-
-        <div class="bg-gradient-to-br from-green-50 to-green-100 rounded-2xl shadow-md p-6 border border-green-200">
-          <div class="flex items-center justify-between">
-            <div>
-              <p class="text-gray-600 text-sm font-medium">Active</p>
-              <p class="text-3xl font-bold text-mb-green mt-2">{{ activeCount() }}</p>
-            </div>
-            <i class="fas fa-check-circle text-5xl text-mb-green opacity-20"></i>
-          </div>
-        </div>
-
-        <div class="bg-gradient-to-br from-purple-50 to-purple-100 rounded-2xl shadow-md p-6 border border-purple-200">
-          <div class="flex items-center justify-between">
-            <div>
-              <p class="text-gray-600 text-sm font-medium">Profile Score</p>
-              <p class="text-3xl font-bold text-purple-600 mt-2">{{ profileScore() }}%</p>
-            </div>
-            <i class="fas fa-star text-5xl text-purple-600 opacity-20"></i>
-          </div>
-        </div>
-      </div>
-
       <!-- Main Content Grid -->
       <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
         <!-- Left Column -->
@@ -248,13 +205,6 @@ export class ProfileComponent implements OnInit {
 
   totalViews = () => this.myListings().reduce((sum, l) => sum + (l.views || 0), 0);
   avatarUrl = () => this.api.imageUrl(this.user()?.avatarUrl);
-
-  /** Объявлений с действующим продвижением: истёкшие не считаются. */
-  boostedCount = () => this.myListings().filter(
-    l => l.promoted_until && new Date(l.promoted_until) > new Date()
-  ).length;
-  activeCount = () => this.myListings().filter(l => l.is_active).length;
-  profileScore = () => Math.min(85 + this.myListings().length * 2, 100);
 
   ngOnInit(): void {
     this.user.set(this.auth.currentUser());
