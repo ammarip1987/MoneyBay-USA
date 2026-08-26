@@ -69,8 +69,9 @@ import { ListingFilters, SORT_OPTIONS } from '../../models/listing-filters.model
              1.2 млн записей идёт до пяти секунд, и держать из-за него карточки
              нельзя -->
         @if (matchCount) {
-          <span class="text-sm text-gray-700 font-medium">
-            {{ matchCount.count | number }} of {{ matchCount.total | number }} listings:
+          <span class="text-sm text-gray-700">
+            Selected <strong>{{ matchCount.count | number }}</strong> listings
+            from {{ matchCount.total | number }}:
           </span>
         } @else {
           <span class="text-sm text-gray-600">Filtered by:</span>
