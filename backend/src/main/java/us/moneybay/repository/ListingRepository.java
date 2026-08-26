@@ -81,16 +81,16 @@ public interface ListingRepository extends JpaRepository<Listing, Long> {
      * шесть секунд. Продвинутые запрашиваются отдельно (findPromoted) и
      * ставятся впереди уже в контроллере: их единицы.
      */
-    // Запрос к базе напрямую: отбор по штату идёт через right(location, 2), а на
-    // это выражение есть индекс. JPQL такой вызов не выражает, а LIKE '%, CA'
-    // индекс бы не взял — база читала бы все объявления
-    @Query(value = "SELECT l.* FROM listings l " +
-                   "LEFT JOIN categories c ON c.id = l.category_id " +
-                   "WHERE l.is_active AND NOT l.is_deleted " +
-                   "AND (COALESCE(:city, '') = '' OR l.location = :city) " +
-                   "AND (COALESCE(:state, '') = '' OR right(l.location, 2) = :state) " +
-                   "AND (COALESCE(:categorySlug, '') = '' OR c.slug = :categorySlug) ",
-           nativeQuery = true)
+    // JPQL, а не запрос к базе напрямую: Pageable несёт выбранную сортировку, а
+    // для родного запроса Spring её не подставляет — лента отвечала пятисоткой.
+    //
+    // Отбор по штату идёт через SUBSTRING по концу строки. Индекс
+    // idx_listings_state построен на right(location, 2), и PostgreSQL сводит к
+    // нему это выражение сам.
+    @Query("SELECT l FROM Listing l WHERE l.isActive = true AND l.isDeleted = false " +
+           "AND (COALESCE(:city, '') = '' OR l.location = :city) " +
+           "AND (COALESCE(:state, '') = '' OR SUBSTRING(l.location, LENGTH(l.location) - 1, 2) = :state) " +
+           "AND (COALESCE(:categorySlug, '') = '' OR l.category.slug = :categorySlug)")
     List<Listing> searchSlice(@Param("city") String city,
                               @Param("state") String state,
                               @Param("categorySlug") String categorySlug,
