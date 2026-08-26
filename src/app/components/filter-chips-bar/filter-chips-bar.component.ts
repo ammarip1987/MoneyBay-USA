@@ -22,22 +22,30 @@ import { ListingFilters, SORT_OPTIONS } from '../../models/listing-filters.model
            а не городом — «Los Angeles, CA» отсекал бы объявления из Delano и
            Corona, тоже калифорнийских. Точное место ищут строкой поиска -->
 
-      <div class="relative">
-        <select [ngModel]="selectedState"
-                (ngModelChange)="onStateChange($event)"
-                name="stateChip"
-                [class.bg-mb-blue]="selectedState"
-                [class.text-white]="selectedState"
-                [class.border-mb-blue]="selectedState"
-                class="appearance-none pl-4 pr-9 py-2 bg-white border border-gray-300 rounded-full text-sm font-medium hover:border-mb-blue transition cursor-pointer">
-          <option value="">Choose state</option>
-          @for (s of states; track s.code) {
-            <option [value]="s.code">{{ s.name }}, {{ s.code }}</option>
-          }
-        </select>
-        <i class="fas fa-chevron-down text-xs absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none"
-           [class.text-white]="selectedState" [class.text-gray-400]="!selectedState"></i>
-      </div>
+      <!-- Выбранный штат — кнопка с крестиком, как у прочих применённых
+           отборов. Список показывается, только пока штат не выбран: в
+           выпадающем списке выбранное значение теряется среди пятидесяти
+           прочих, а кнопка называет его прямо и снимается одним нажатием -->
+      @if (selectedState) {
+        <button (click)="clearCity()"
+                class="inline-flex items-center gap-2 px-4 py-2 bg-mb-blue text-white rounded-full text-sm font-medium hover:bg-blue-700 transition">
+          {{ stateLabel() }}
+          <i class="fas fa-times text-xs"></i>
+        </button>
+      } @else {
+        <div class="relative">
+          <select [ngModel]="selectedState"
+                  (ngModelChange)="onStateChange($event)"
+                  name="stateChip"
+                  class="appearance-none pl-4 pr-9 py-2 bg-white border border-gray-300 rounded-full text-sm font-medium hover:border-mb-blue transition cursor-pointer">
+            <option value="">Choose state</option>
+            @for (s of states; track s.code) {
+              <option [value]="s.code">{{ s.name }}, {{ s.code }}</option>
+            }
+          </select>
+          <i class="fas fa-chevron-down text-xs text-gray-400 absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none"></i>
+        </div>
+      }
 
       @if (filters.price_min !== undefined || filters.price_max !== undefined) {
         <button (click)="clearPrice()"
@@ -103,8 +111,14 @@ export class FilterChipsBarComponent {
   @Input() states: { code: string; name: string }[] = [];
   @Output() stateChange = new EventEmitter<string>();
 
-  /** Выбранный штат. Держится здесь, чтобы список оставался открытым. */
+  /** Выбранный штат: код из двух букв. */
   selectedState = '';
+
+  /** Название выбранного штата для кнопки: «California, CA». */
+  stateLabel = (): string => {
+    const found = this.states.find(s => s.code === this.selectedState);
+    return found ? `${found.name}, ${found.code}` : this.selectedState;
+  };
   @Output() filtersChange = new EventEmitter<ListingFilters>();
   @Output() openDrawer = new EventEmitter<void>();
 
@@ -113,6 +127,10 @@ export class FilterChipsBarComponent {
 
   ngOnChanges(): void {
     this.currentSort = this.filters.sort || 'newest';
+    // Выбор восстанавливается из отбора: при перезагрузке страницы поле пустое,
+    // хотя штат стоит в адресе, и кнопка не показывалась бы
+    const city = this.filters.city || '';
+    this.selectedState = /^[A-Z]{2}$/.test(city) ? city : '';
   }
 
   activeFilterCount(): number {
