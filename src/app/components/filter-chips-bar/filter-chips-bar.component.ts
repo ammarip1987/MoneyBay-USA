@@ -18,9 +18,10 @@ import { ListingFilters, SORT_OPTIONS } from '../../models/listing-filters.model
         }
       </button>
 
-      <!-- Место стоит первым: по нему отбирают чаще прочего.
-           Сперва штат, затем город внутри него — иначе выбор «Los Angeles, CA»
-           отсекал бы объявления из Delano и Corona, тоже калифорнийских -->
+      <!-- Штат стоит первым: по месту отбирают чаще прочего. Отбор идёт штатом,
+           а не городом — «Los Angeles, CA» отсекал бы объявления из Delano и
+           Corona, тоже калифорнийских. Точное место ищут строкой поиска -->
+
       <div class="relative">
         <select [ngModel]="selectedState"
                 (ngModelChange)="onStateChange($event)"
@@ -31,33 +32,12 @@ import { ListingFilters, SORT_OPTIONS } from '../../models/listing-filters.model
                 class="appearance-none pl-4 pr-9 py-2 bg-white border border-gray-300 rounded-full text-sm font-medium hover:border-mb-blue transition cursor-pointer">
           <option value="">Choose state</option>
           @for (s of states; track s.code) {
-            <option [value]="s.code">{{ s.name }}</option>
+            <option [value]="s.code">{{ s.code }} — {{ s.name }}</option>
           }
         </select>
         <i class="fas fa-chevron-down text-xs absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none"
            [class.text-white]="selectedState" [class.text-gray-400]="!selectedState"></i>
       </div>
-
-      <!-- Города появляются, когда выбран штат: без него их четыре с лишним
-           тысячи, и списком это не окинуть -->
-      @if (selectedState && cities.length > 0) {
-        <div class="relative">
-          <select [ngModel]="selectedCity"
-                  (ngModelChange)="onCityChange($event)"
-                  name="cityChip"
-                  [class.bg-mb-blue]="selectedCity"
-                  [class.text-white]="selectedCity"
-                  [class.border-mb-blue]="selectedCity"
-                  class="appearance-none pl-4 pr-9 py-2 bg-white border border-gray-300 rounded-full text-sm font-medium hover:border-mb-blue transition cursor-pointer">
-            <option value="">All cities</option>
-            @for (c of cities; track c) {
-              <option [value]="c">{{ c }}</option>
-            }
-          </select>
-          <i class="fas fa-chevron-down text-xs absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none"
-             [class.text-white]="selectedCity" [class.text-gray-400]="!selectedCity"></i>
-        </div>
-      }
 
       @if (filters.price_min !== undefined || filters.price_max !== undefined) {
         <button (click)="clearPrice()"
@@ -119,21 +99,12 @@ import { ListingFilters, SORT_OPTIONS } from '../../models/listing-filters.model
 })
 export class FilterChipsBarComponent {
   @Input() filters: ListingFilters = {};
-  /** Города выбранного штата. Пока штат не выбран — пусто. */
-  @Input() cities: string[] = [];
   /** Штаты: код и название. */
   @Input() states: { code: string; name: string }[] = [];
   @Output() stateChange = new EventEmitter<string>();
 
-  /**
-   * Выбранное держится здесь, а не выводится из filters.city.
-   *
-   * В отбор уходит одно значение — либо код штата, либо город. Но список
-   * городов должен оставаться открытым и после выбора города, иначе сменить его
-   * было бы нельзя, не сбрасывая штат.
-   */
+  /** Выбранный штат. Держится здесь, чтобы список оставался открытым. */
   selectedState = '';
-  selectedCity = '';
   @Output() filtersChange = new EventEmitter<ListingFilters>();
   @Output() openDrawer = new EventEmitter<void>();
 
@@ -165,13 +136,9 @@ export class FilterChipsBarComponent {
     this.filtersChange.emit({ ...this.filters, has_image: !this.filters.has_image });
   }
 
-  /**
-   * Выбран штат. Города для него запрашивает главная — здесь только сообщается,
-   * какой нужен, и отбор ставится на его код.
-   */
+  /** Выбран штат: отбор ставится на его код, отсюда же он и снимается. */
   onStateChange(code: string): void {
     this.selectedState = code;
-    this.selectedCity = '';
 
     if (!code) {
       this.clearCity();
@@ -181,15 +148,9 @@ export class FilterChipsBarComponent {
     this.filtersChange.emit({ ...this.filters, city: code });
   }
 
-  /** Выбран город. Пустое значение возвращает отбор ко всему штату. */
-  onCityChange(city: string): void {
-    this.selectedCity = city;
-    this.filtersChange.emit({ ...this.filters, city: city || this.selectedState });
-  }
-
+  /** Снять отбор по месту. */
   clearCity(): void {
     this.selectedState = '';
-    this.selectedCity = '';
     const { city, ...rest } = this.filters;
     this.filtersChange.emit(rest);
   }

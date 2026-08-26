@@ -203,8 +203,6 @@ interface Subcategory {
       <app-filter-chips-bar
         [filters]="currentFilters()"
         [states]="states()"
-        [cities]="citiesOfState()"
-        (stateChange)="loadCitiesOfState($event)"
         (filtersChange)="onFiltersChange($event)"
         (openDrawer)="drawerOpen.set(true)">
       </app-filter-chips-bar>
@@ -314,20 +312,6 @@ export class HomeComponent implements OnInit, OnDestroy {
   cities = signal<City[]>([]);
   /** Штаты для отбора: 51 запись, включая округ Колумбия. */
   states = signal<UsState[]>([]);
-  /** Города выбранного штата. Все четыре тысячи разом списком не окинуть. */
-  citiesOfState = signal<string[]>([]);
-
-  /** Запросить города штата. Вызывается, когда штат выбран в полосе фильтров. */
-  loadCitiesOfState(code: string): void {
-    if (!code) {
-      this.citiesOfState.set([]);
-      return;
-    }
-    this.api.getCitiesOfState(code).subscribe({
-      next: (list) => this.citiesOfState.set(list),
-      error: () => this.citiesOfState.set([])
-    });
-  }
   subcategories = signal<Subcategory[]>([]);
   subsubcategories = signal<Subcategory[]>([]);
   // Начинаем с true: иначе пустое состояние мелькает до первого запроса
