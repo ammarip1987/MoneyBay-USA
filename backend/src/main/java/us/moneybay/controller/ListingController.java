@@ -114,9 +114,16 @@ public class ListingController {
             // продвинутых по promotedUntil обходятся дёшево
             // Запрашивается на одну запись больше нужного: её наличие и означает
             // следующую страницу. Подсчёт всех строк для этого не нужен
-            List<Listing> found = listingRepository.searchAdvanced(
-                q, city, category, priceMin, priceMax, hasImage, postedAfter,
-                PAGE_SIZE + 1, (page - 1) * PAGE_SIZE);
+            // Два запроса вместо одного с условием по параметру: планировщик
+            // строит план, не зная значения, и на отборе по снимкам перебирал
+            // миллион строк вместо четырёх подходящих
+            List<Listing> found = hasImage
+                ? listingRepository.searchAdvanced(
+                      q, city, category, priceMin, priceMax, postedAfter,
+                      PAGE_SIZE + 1, (page - 1) * PAGE_SIZE)
+                : listingRepository.searchAdvancedAnyImage(
+                      q, city, category, priceMin, priceMax, postedAfter,
+                      PAGE_SIZE + 1, (page - 1) * PAGE_SIZE);
 
             boolean more = found.size() > PAGE_SIZE;
             if (more) found = found.subList(0, PAGE_SIZE);

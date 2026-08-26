@@ -154,13 +154,13 @@ public interface ListingRepository extends JpaRepository<Listing, Long> {
                    "AND (COALESCE(:categorySlug, '') = '' OR c.slug = :categorySlug) " +
                    "AND (CAST(:priceMin AS double precision) IS NULL OR l.price >= :priceMin) " +
                    "AND (CAST(:priceMax AS double precision) IS NULL OR l.price <= :priceMax) " +
-                   // Соединение, а не EXISTS: планировщик ожидал от подзапроса
-                   // половину таблицы, шёл по индексу даты набирать страницу и
-                   // перебирал миллион строк — при том что снимки есть у
-                   // считаных объявлений. С соединением отбор начинается с
-                   // малой таблицы снимков
-                   "AND (:hasImage = false OR l.id IN " +
-                   "     (SELECT DISTINCT i.listing_id FROM listing_images i)) " +
+                   // Соединение с таблицей снимков, а не условие через параметр:
+                   // при «:hasImage = false OR …» планировщик строит план, не
+                   // зная значения, ожидает половину таблицы и перебирает
+                   // миллион строк. Здесь отбор всегда начинается с малой
+                   // таблицы, а без надобности запрос сюда просто не заходит —
+                   // контроллер выбирает searchSlice
+                   "AND l.id IN (SELECT i.listing_id FROM listing_images i) " +
                    "AND (CAST(:postedAfter AS timestamptz) IS NULL OR l.created_at >= :postedAfter) " +
                    // Сортировка только по дате: вычисляемое выражение
                    // (promoted_until > now()) индекс не берёт, и база сортировала
@@ -174,10 +174,39 @@ public interface ListingRepository extends JpaRepository<Listing, Long> {
                                  @Param("categorySlug") String categorySlug,
                                  @Param("priceMin") Double priceMin,
                                  @Param("priceMax") Double priceMax,
-                                 @Param("hasImage") boolean hasImage,
                                  @Param("postedAfter") java.time.Instant postedAfter,
                                  @Param("limit") int limit,
                                  @Param("offset") int offset);
+
+    /**
+     * То же, но без отбора по снимкам.
+     *
+     * Два запроса вместо одного с условием «:hasImage = false OR …»: с
+     * параметром планировщик строит план, не зная значения, и на «true»
+     * перебирал миллион строк вместо четырёх подходящих.
+     */
+    @Query(value = "SELECT l.* FROM listings l " +
+                   "LEFT JOIN categories c ON c.id = l.category_id " +
+                   "WHERE l.is_active AND NOT l.is_deleted " +
+                   "AND (COALESCE(:q, '') = '' OR " +
+                   "     to_tsvector('english', coalesce(l.title, '') || ' ' || coalesce(l.description, '')) " +
+                   "     @@ plainto_tsquery('english', :q)) " +
+                   "AND (COALESCE(:city, '') = '' OR l.location = :city) " +
+                   "AND (COALESCE(:categorySlug, '') = '' OR c.slug = :categorySlug) " +
+                   "AND (CAST(:priceMin AS double precision) IS NULL OR l.price >= :priceMin) " +
+                   "AND (CAST(:priceMax AS double precision) IS NULL OR l.price <= :priceMax) " +
+                   "AND (CAST(:postedAfter AS timestamptz) IS NULL OR l.created_at >= :postedAfter) " +
+                   "ORDER BY l.created_at DESC " +
+                   "LIMIT :limit OFFSET :offset",
+           nativeQuery = true)
+    List<Listing> searchAdvancedAnyImage(@Param("q") String q,
+                                         @Param("city") String city,
+                                         @Param("categorySlug") String categorySlug,
+                                         @Param("priceMin") Double priceMin,
+                                         @Param("priceMax") Double priceMax,
+                                         @Param("postedAfter") java.time.Instant postedAfter,
+                                         @Param("limit") int limit,
+                                         @Param("offset") int offset);
 
 
     @Query("SELECT l.price FROM Listing l WHERE l.isActive = true AND l.isDeleted = false " +
