@@ -81,10 +81,18 @@ public interface ListingRepository extends JpaRepository<Listing, Long> {
      * шесть секунд. Продвинутые запрашиваются отдельно (findPromoted) и
      * ставятся впереди уже в контроллере: их единицы.
      */
-    @Query("SELECT l FROM Listing l WHERE l.isActive = true AND l.isDeleted = false " +
-           "AND (COALESCE(:city, '') = '' OR l.location = :city) " +
-           "AND (COALESCE(:categorySlug, '') = '' OR l.category.slug = :categorySlug)")
+    // Запрос к базе напрямую: отбор по штату идёт через right(location, 2), а на
+    // это выражение есть индекс. JPQL такой вызов не выражает, а LIKE '%, CA'
+    // индекс бы не взял — база читала бы все объявления
+    @Query(value = "SELECT l.* FROM listings l " +
+                   "LEFT JOIN categories c ON c.id = l.category_id " +
+                   "WHERE l.is_active AND NOT l.is_deleted " +
+                   "AND (COALESCE(:city, '') = '' OR l.location = :city) " +
+                   "AND (COALESCE(:state, '') = '' OR right(l.location, 2) = :state) " +
+                   "AND (COALESCE(:categorySlug, '') = '' OR c.slug = :categorySlug) ",
+           nativeQuery = true)
     List<Listing> searchSlice(@Param("city") String city,
+                              @Param("state") String state,
                               @Param("categorySlug") String categorySlug,
                               Pageable pageable);
 
@@ -108,11 +116,13 @@ public interface ListingRepository extends JpaRepository<Listing, Long> {
                    "AND to_tsvector('english', coalesce(l.title, '') || ' ' || coalesce(l.description, '')) " +
                    "    @@ plainto_tsquery('english', :q) " +
                    "AND (COALESCE(:city, '') = '' OR l.location = :city) " +
+                   "AND (COALESCE(:state, '') = '' OR right(l.location, 2) = :state) " +
                    "AND (COALESCE(:categorySlug, '') = '' OR c.slug = :categorySlug) " +
                    "ORDER BY l.created_at DESC LIMIT :limit OFFSET :offset",
            nativeQuery = true)
     List<Listing> searchByText(@Param("q") String q,
                                @Param("city") String city,
+                               @Param("state") String state,
                                @Param("categorySlug") String categorySlug,
                                @Param("limit") int limit,
                                @Param("offset") int offset);

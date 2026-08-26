@@ -18,27 +18,44 @@ import { ListingFilters, SORT_OPTIONS } from '../../models/listing-filters.model
         }
       </button>
 
-      <!-- Город стоит первым: по нему отбирают чаще прочего. Прежде он был
-           отдельным списком над объявлениями, из-за чего строка поиска в
-           категории выглядела иначе, чем на главной -->
-      @if (filters.city) {
-        <button (click)="clearCity()"
-                class="inline-flex items-center gap-2 px-4 py-2 bg-mb-blue text-white rounded-full text-sm font-medium hover:bg-blue-700 transition">
-          {{ filters.city }}
-          <i class="fas fa-times text-xs"></i>
-        </button>
-      } @else {
+      <!-- Место стоит первым: по нему отбирают чаще прочего.
+           Сперва штат, затем город внутри него — иначе выбор «Los Angeles, CA»
+           отсекал бы объявления из Delano и Corona, тоже калифорнийских -->
+      <div class="relative">
+        <select [ngModel]="selectedState"
+                (ngModelChange)="onStateChange($event)"
+                name="stateChip"
+                [class.bg-mb-blue]="selectedState"
+                [class.text-white]="selectedState"
+                [class.border-mb-blue]="selectedState"
+                class="appearance-none pl-4 pr-9 py-2 bg-white border border-gray-300 rounded-full text-sm font-medium hover:border-mb-blue transition cursor-pointer">
+          <option value="">Choose state</option>
+          @for (s of states; track s.code) {
+            <option [value]="s.code">{{ s.name }}</option>
+          }
+        </select>
+        <i class="fas fa-chevron-down text-xs absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none"
+           [class.text-white]="selectedState" [class.text-gray-400]="!selectedState"></i>
+      </div>
+
+      <!-- Города появляются, когда выбран штат: без него их четыре с лишним
+           тысячи, и списком это не окинуть -->
+      @if (selectedState && cities.length > 0) {
         <div class="relative">
-          <select [ngModel]="filters.city || ''"
+          <select [ngModel]="selectedCity"
                   (ngModelChange)="onCityChange($event)"
                   name="cityChip"
-                  class="appearance-none pl-4 pr-9 py-2 bg-white border border-gray-300 rounded-full text-sm hover:border-mb-blue transition cursor-pointer">
+                  [class.bg-mb-blue]="selectedCity"
+                  [class.text-white]="selectedCity"
+                  [class.border-mb-blue]="selectedCity"
+                  class="appearance-none pl-4 pr-9 py-2 bg-white border border-gray-300 rounded-full text-sm font-medium hover:border-mb-blue transition cursor-pointer">
             <option value="">All cities</option>
             @for (c of cities; track c) {
               <option [value]="c">{{ c }}</option>
             }
           </select>
-          <i class="fas fa-chevron-down text-xs text-gray-400 absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none"></i>
+          <i class="fas fa-chevron-down text-xs absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none"
+             [class.text-white]="selectedCity" [class.text-gray-400]="!selectedCity"></i>
         </div>
       }
 
@@ -102,8 +119,21 @@ import { ListingFilters, SORT_OPTIONS } from '../../models/listing-filters.model
 })
 export class FilterChipsBarComponent {
   @Input() filters: ListingFilters = {};
-  /** Города для отбора. Приходят с главной, чтобы не запрашивать их дважды. */
+  /** Города выбранного штата. Пока штат не выбран — пусто. */
   @Input() cities: string[] = [];
+  /** Штаты: код и название. */
+  @Input() states: { code: string; name: string }[] = [];
+  @Output() stateChange = new EventEmitter<string>();
+
+  /**
+   * Выбранное держится здесь, а не выводится из filters.city.
+   *
+   * В отбор уходит одно значение — либо код штата, либо город. Но список
+   * городов должен оставаться открытым и после выбора города, иначе сменить его
+   * было бы нельзя, не сбрасывая штат.
+   */
+  selectedState = '';
+  selectedCity = '';
   @Output() filtersChange = new EventEmitter<ListingFilters>();
   @Output() openDrawer = new EventEmitter<void>();
 
@@ -135,15 +165,31 @@ export class FilterChipsBarComponent {
     this.filtersChange.emit({ ...this.filters, has_image: !this.filters.has_image });
   }
 
-  onCityChange(city: string): void {
-    if (city) {
-      this.filtersChange.emit({ ...this.filters, city });
-    } else {
+  /**
+   * Выбран штат. Города для него запрашивает главная — здесь только сообщается,
+   * какой нужен, и отбор ставится на его код.
+   */
+  onStateChange(code: string): void {
+    this.selectedState = code;
+    this.selectedCity = '';
+
+    if (!code) {
       this.clearCity();
+      return;
     }
+    this.stateChange.emit(code);
+    this.filtersChange.emit({ ...this.filters, city: code });
+  }
+
+  /** Выбран город. Пустое значение возвращает отбор ко всему штату. */
+  onCityChange(city: string): void {
+    this.selectedCity = city;
+    this.filtersChange.emit({ ...this.filters, city: city || this.selectedState });
   }
 
   clearCity(): void {
+    this.selectedState = '';
+    this.selectedCity = '';
     const { city, ...rest } = this.filters;
     this.filtersChange.emit(rest);
   }

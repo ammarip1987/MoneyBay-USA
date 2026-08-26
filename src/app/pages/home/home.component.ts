@@ -2,7 +2,7 @@ import { Component, OnInit, OnDestroy, inject, signal, effect, ViewChild, Elemen
 import { CommonModule, isPlatformBrowser } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { RouterLink, ActivatedRoute, Router } from '@angular/router';
-import { ApiService } from '../../services/api.service';
+import { ApiService, UsState } from '../../services/api.service';
 import { CityContextService } from '../../services/city-context.service';
 import { GeolocationService } from '../../services/geolocation.service';
 import { SeoService } from '../../services/seo.service';
@@ -202,7 +202,9 @@ interface Subcategory {
     @if (selectedCategory()) {
       <app-filter-chips-bar
         [filters]="currentFilters()"
-        [cities]="cityNames()"
+        [states]="states()"
+        [cities]="citiesOfState()"
+        (stateChange)="loadCitiesOfState($event)"
         (filtersChange)="onFiltersChange($event)"
         (openDrawer)="drawerOpen.set(true)">
       </app-filter-chips-bar>
@@ -310,8 +312,22 @@ export class HomeComponent implements OnInit, OnDestroy {
   // возврате на главную плитки уже на месте и не перерисовываются
   categories = this.api.categories;
   cities = signal<City[]>([]);
-  /** Названия городов для полосы фильтров: там нужен список строк, не записей. */
-  cityNames = () => this.cities().map(c => c.name);
+  /** Штаты для отбора: 51 запись, включая округ Колумбия. */
+  states = signal<UsState[]>([]);
+  /** Города выбранного штата. Все четыре тысячи разом списком не окинуть. */
+  citiesOfState = signal<string[]>([]);
+
+  /** Запросить города штата. Вызывается, когда штат выбран в полосе фильтров. */
+  loadCitiesOfState(code: string): void {
+    if (!code) {
+      this.citiesOfState.set([]);
+      return;
+    }
+    this.api.getCitiesOfState(code).subscribe({
+      next: (list) => this.citiesOfState.set(list),
+      error: () => this.citiesOfState.set([])
+    });
+  }
   subcategories = signal<Subcategory[]>([]);
   subsubcategories = signal<Subcategory[]>([]);
   // Начинаем с true: иначе пустое состояние мелькает до первого запроса
@@ -393,6 +409,10 @@ export class HomeComponent implements OnInit, OnDestroy {
     this.api.getCities().subscribe({
       next: (data) => this.cities.set(data),
       error: () => this.cities.set([])
+    });
+    this.api.getStates().subscribe({
+      next: (data) => this.states.set(data),
+      error: () => this.states.set([])
     });
 
     this.route.queryParams.subscribe(params => {

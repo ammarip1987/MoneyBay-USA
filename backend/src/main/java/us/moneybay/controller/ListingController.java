@@ -119,9 +119,14 @@ public class ListingController {
 
         // Поиск по словам идёт отдельным запросом: он опирается на полнотекстовый
         // индекс, тогда как обычная лента — на индекс по дате
+        // Значение может быть городом («Delano, CA») или кодом штата («CA») —
+        // отбор идёт либо по строке целиком, либо по её концу
+        String cityOnly = cityOf(city);
+        String stateOnly = stateOf(city);
+
         List<Listing> rows = (q == null || q.isBlank())
-            ? listingRepository.searchSlice(city, category, slice)
-            : listingRepository.searchByText(q, city, category,
+            ? listingRepository.searchSlice(cityOnly, stateOnly, category, slice)
+            : listingRepository.searchByText(q, cityOnly, stateOnly, category,
                   PAGE_SIZE + 1, (page - 1) * PAGE_SIZE);
 
         boolean hasNext = rows.size() > PAGE_SIZE;
@@ -235,6 +240,24 @@ public class ListingController {
             if (match.isPresent()) return match.get().getName();
         }
         return city;
+    }
+
+    /**
+     * Код штата, если в переданном значении он один — «CA» вместо «Delano, CA».
+     *
+     * Место хранится одной строкой, отдельного столбца под штат нет. Значение из
+     * двух заглавных букв без запятой — это штат, отбор идёт по концу строки.
+     * Всё прочее считается городом и сверяется целиком.
+     */
+    private static String stateOf(String value) {
+        if (value == null || value.isBlank()) return null;
+        String trimmed = value.trim();
+        return trimmed.matches("[A-Z]{2}") ? trimmed : null;
+    }
+
+    /** Город, если передан именно он, а не код штата. */
+    private static String cityOf(String value) {
+        return stateOf(value) == null ? value : null;
     }
 
     @GetMapping("/suggest")

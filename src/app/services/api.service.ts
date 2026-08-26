@@ -1,7 +1,7 @@
 import { Injectable, inject, signal } from '@angular/core';
 import { HttpClient, HttpParams } from '@angular/common/http';
 import { Observable, of } from 'rxjs';
-import { tap } from 'rxjs/operators';
+import { tap, map } from 'rxjs/operators';
 import { environment } from '../../environments/environment';
 import { Listing, Category, City, User, Message, PaginatedListings } from '../models/listing.model';
 import { Storefront, PublicStorefront } from '../models/storefront.model';
@@ -189,6 +189,17 @@ export class ApiService {
   getCities(): Observable<City[]> {
     return this.cached('cities', () =>
       this.http.get<City[]>(`${this.baseUrl}/api/cities`));
+  }
+
+  /**
+   * Города одного штата. Запрашиваются по выбору штата, а не все сразу: в
+   * объявлениях четыре с лишним тысячи разных мест.
+   */
+  getCitiesOfState(code: string): Observable<string[]> {
+    return this.cached(`us-cities:${code}`, () =>
+      this.http.get<{ name: string }[]>(`${this.baseUrl}/api/us-cities`, {
+        params: { state: code }
+      }).pipe(map(list => list.map(c => c.name))));
   }
 
   getSubcategories(categorySlug: string): Observable<any[]> {

@@ -12,7 +12,9 @@ import { ApiService } from '../../services/api.service';
     @if (open) {
       <div class="fixed inset-0 z-50 bg-black/50 backdrop-blur-sm transition-opacity"
            (click)="close.emit()">
-        <aside class="absolute right-0 top-0 bottom-0 w-full sm:w-96 bg-white shadow-2xl flex flex-col"
+        <!-- Слева, с той же стороны, где кнопка Filters: панель выезжает там, куда
+             человек только что нажал, а не через весь экран -->
+        <aside class="absolute left-0 top-0 bottom-0 w-full sm:w-96 bg-white shadow-2xl flex flex-col"
                (click)="$event.stopPropagation()">
 
           <header class="flex justify-between items-center p-4 border-b border-gray-200 bg-mb-dark text-white">
