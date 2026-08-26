@@ -18,6 +18,30 @@ import { ListingFilters, SORT_OPTIONS } from '../../models/listing-filters.model
         }
       </button>
 
+      <!-- Город стоит первым: по нему отбирают чаще прочего. Прежде он был
+           отдельным списком над объявлениями, из-за чего строка поиска в
+           категории выглядела иначе, чем на главной -->
+      @if (filters.city) {
+        <button (click)="clearCity()"
+                class="inline-flex items-center gap-2 px-4 py-2 bg-mb-blue text-white rounded-full text-sm font-medium hover:bg-blue-700 transition">
+          {{ filters.city }}
+          <i class="fas fa-times text-xs"></i>
+        </button>
+      } @else {
+        <div class="relative">
+          <select [ngModel]="filters.city || ''"
+                  (ngModelChange)="onCityChange($event)"
+                  name="cityChip"
+                  class="appearance-none pl-4 pr-9 py-2 bg-white border border-gray-300 rounded-full text-sm hover:border-mb-blue transition cursor-pointer">
+            <option value="">All cities</option>
+            @for (c of cities; track c) {
+              <option [value]="c">{{ c }}</option>
+            }
+          </select>
+          <i class="fas fa-chevron-down text-xs text-gray-400 absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none"></i>
+        </div>
+      }
+
       @if (filters.price_min !== undefined || filters.price_max !== undefined) {
         <button (click)="clearPrice()"
                 class="inline-flex items-center gap-2 px-4 py-2 bg-mb-blue text-white rounded-full text-sm font-medium hover:bg-blue-700 transition">
@@ -78,6 +102,8 @@ import { ListingFilters, SORT_OPTIONS } from '../../models/listing-filters.model
 })
 export class FilterChipsBarComponent {
   @Input() filters: ListingFilters = {};
+  /** Города для отбора. Приходят с главной, чтобы не запрашивать их дважды. */
+  @Input() cities: string[] = [];
   @Output() filtersChange = new EventEmitter<ListingFilters>();
   @Output() openDrawer = new EventEmitter<void>();
 
@@ -107,6 +133,19 @@ export class FilterChipsBarComponent {
 
   toggleHasImage(): void {
     this.filtersChange.emit({ ...this.filters, has_image: !this.filters.has_image });
+  }
+
+  onCityChange(city: string): void {
+    if (city) {
+      this.filtersChange.emit({ ...this.filters, city });
+    } else {
+      this.clearCity();
+    }
+  }
+
+  clearCity(): void {
+    const { city, ...rest } = this.filters;
+    this.filtersChange.emit(rest);
   }
 
   clearPrice(): void {

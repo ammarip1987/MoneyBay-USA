@@ -49,22 +49,18 @@ interface Subcategory {
         </div>
       </div>
     } @else {
-      <div class="bg-white rounded-lg shadow p-6 mb-8">
-        <div class="flex gap-4 items-center flex-wrap">
-          <div class="flex-1 min-w-64">
-            <app-search-autocomplete
-              placeholder="Search listings..."
-              [initialQuery]="searchQuery"
-              (search)="onAutocompleteSearch($event)"></app-search-autocomplete>
-          </div>
-          <select [(ngModel)]="cityFilter" name="city" class="form-input flex-1 min-w-48">
-            <option value="">All cities</option>
-            @for (c of cities(); track c.id) {
-              <option [value]="c.name">{{ c.name }}</option>
-            }
-          </select>
-          <button (click)="search()" class="btn btn-primary">Search</button>
+      <!-- Тот же вид, что на главной: строка не меняет расположения при переходе
+           в раздел. Город ушёл в полосу фильтров, к цене и прочему -->
+      <div class="max-w-3xl mx-auto bg-white rounded-xl shadow-lg p-2 flex flex-col sm:flex-row gap-2 border border-gray-100 mb-8">
+        <div class="flex-1">
+          <app-search-autocomplete
+            placeholder="Search listings..."
+            [initialQuery]="searchQuery"
+            (search)="onAutocompleteSearch($event)"></app-search-autocomplete>
         </div>
+        <button (click)="search()" class="px-6 py-2 bg-mb-blue hover:bg-blue-700 text-white font-bold rounded-lg transition">
+          Search
+        </button>
       </div>
     }
 
@@ -206,6 +202,7 @@ interface Subcategory {
     @if (selectedCategory()) {
       <app-filter-chips-bar
         [filters]="currentFilters()"
+        [cities]="cityNames()"
         (filtersChange)="onFiltersChange($event)"
         (openDrawer)="drawerOpen.set(true)">
       </app-filter-chips-bar>
@@ -313,6 +310,8 @@ export class HomeComponent implements OnInit, OnDestroy {
   // возврате на главную плитки уже на месте и не перерисовываются
   categories = this.api.categories;
   cities = signal<City[]>([]);
+  /** Названия городов для полосы фильтров: там нужен список строк, не записей. */
+  cityNames = () => this.cities().map(c => c.name);
   subcategories = signal<Subcategory[]>([]);
   subsubcategories = signal<Subcategory[]>([]);
   // Начинаем с true: иначе пустое состояние мелькает до первого запроса
