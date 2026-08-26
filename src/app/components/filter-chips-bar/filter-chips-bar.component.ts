@@ -70,7 +70,7 @@ import { ListingFilters, SORT_OPTIONS } from '../../models/listing-filters.model
              нельзя -->
         @if (matchCount) {
           <span class="text-sm text-gray-700">
-            Selected <strong>{{ matchCount.count | number }}</strong> listings
+            Selected <strong>{{ matchCount.count | number }}</strong> products
             from {{ matchCount.total | number }}:
           </span>
         } @else {
