@@ -154,8 +154,13 @@ public interface ListingRepository extends JpaRepository<Listing, Long> {
                    "AND (COALESCE(:categorySlug, '') = '' OR c.slug = :categorySlug) " +
                    "AND (CAST(:priceMin AS double precision) IS NULL OR l.price >= :priceMin) " +
                    "AND (CAST(:priceMax AS double precision) IS NULL OR l.price <= :priceMax) " +
-                   "AND (:hasImage = false OR EXISTS " +
-                   "     (SELECT 1 FROM listing_images i WHERE i.listing_id = l.id)) " +
+                   // Соединение, а не EXISTS: планировщик ожидал от подзапроса
+                   // половину таблицы, шёл по индексу даты набирать страницу и
+                   // перебирал миллион строк — при том что снимки есть у
+                   // считаных объявлений. С соединением отбор начинается с
+                   // малой таблицы снимков
+                   "AND (:hasImage = false OR l.id IN " +
+                   "     (SELECT DISTINCT i.listing_id FROM listing_images i)) " +
                    "AND (CAST(:postedAfter AS timestamptz) IS NULL OR l.created_at >= :postedAfter) " +
                    // Сортировка только по дате: вычисляемое выражение
                    // (promoted_until > now()) индекс не берёт, и база сортировала
