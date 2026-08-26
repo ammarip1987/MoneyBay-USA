@@ -8,7 +8,10 @@ import { ListingFilters, SORT_OPTIONS } from '../../models/listing-filters.model
   standalone: true,
   imports: [CommonModule, FormsModule],
   template: `
-    <div class="flex items-center gap-2 flex-wrap py-3 border-b border-gray-100">
+    <!-- Верхняя строка: чем отбирать. Ниже — отдельной полосой то, что уже
+         отобрано. Прежде применённое и неприменённое стояло вперемешку, и
+         разобрать, что действует, а что лишь открывает панель, было нельзя -->
+    <div class="flex items-center gap-2 flex-wrap py-3">
       <button (click)="openDrawer.emit()"
               class="inline-flex items-center gap-2 px-4 py-2 bg-white border border-gray-300 rounded-full text-sm font-medium hover:border-mb-blue transition shadow-sm">
         <i class="fas fa-sliders"></i>
@@ -18,77 +21,34 @@ import { ListingFilters, SORT_OPTIONS } from '../../models/listing-filters.model
         }
       </button>
 
-      <!-- Штат стоит первым: по месту отбирают чаще прочего. Отбор идёт штатом,
-           а не городом — «Los Angeles, CA» отсекал бы объявления из Delano и
-           Corona, тоже калифорнийских. Точное место ищут строкой поиска -->
+      <!-- Отбор идёт штатом, а не городом: «Los Angeles, CA» отсекал бы
+           объявления из Delano и Corona, тоже калифорнийских. Точное место
+           ищут строкой поиска -->
+      <div class="relative">
+        <select [ngModel]="selectedState"
+                (ngModelChange)="onStateChange($event)"
+                name="stateChip"
+                class="appearance-none pl-4 pr-9 py-2 bg-white border border-gray-300 rounded-full text-sm font-medium hover:border-mb-blue transition cursor-pointer">
+          <option value="">Choose state</option>
+          @for (s of states; track s.code) {
+            <option [value]="s.code">{{ s.name }}, {{ s.code }}</option>
+          }
+        </select>
+        <i class="fas fa-chevron-down text-xs text-gray-400 absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none"></i>
+      </div>
 
-      <!-- Выбранный штат — кнопка с крестиком, как у прочих применённых
-           отборов. Список показывается, только пока штат не выбран: в
-           выпадающем списке выбранное значение теряется среди пятидесяти
-           прочих, а кнопка называет его прямо и снимается одним нажатием -->
-      @if (selectedState) {
-        <button (click)="clearCity()"
-                class="inline-flex items-center gap-2 px-4 py-2 bg-mb-blue text-white rounded-full text-sm font-medium hover:bg-blue-700 transition">
-          {{ stateLabel() }}
-          <i class="fas fa-times text-xs"></i>
-        </button>
-      } @else {
-        <div class="relative">
-          <select [ngModel]="selectedState"
-                  (ngModelChange)="onStateChange($event)"
-                  name="stateChip"
-                  class="appearance-none pl-4 pr-9 py-2 bg-white border border-gray-300 rounded-full text-sm font-medium hover:border-mb-blue transition cursor-pointer">
-            <option value="">Choose state</option>
-            @for (s of states; track s.code) {
-              <option [value]="s.code">{{ s.name }}, {{ s.code }}</option>
-            }
-          </select>
-          <i class="fas fa-chevron-down text-xs text-gray-400 absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none"></i>
-        </div>
-      }
+      <button (click)="toggleHasImage()"
+              [class.bg-mb-blue]="filters.has_image"
+              [class.text-white]="filters.has_image"
+              [class.border-mb-blue]="filters.has_image"
+              class="px-4 py-2 bg-white border border-gray-300 rounded-full text-sm hover:border-mb-blue transition">
+        Has image
+      </button>
 
-      <!-- Только применённое. Кнопки Price и Date posted убраны: они открывали
-           ту же панель, что и Filters, и повторяли её без нужды -->
-      @if (filters.price_min !== undefined || filters.price_max !== undefined) {
-        <button (click)="clearPrice()"
-                class="inline-flex items-center gap-2 px-4 py-2 bg-mb-blue text-white rounded-full text-sm font-medium hover:bg-blue-700 transition">
-          \${{ filters.price_min || 0 }} - \${{ filters.price_max || '∞' }}
-          <i class="fas fa-times text-xs"></i>
-        </button>
-      }
-
-      @if (filters.has_image) {
-        <button (click)="toggleHasImage()"
-                class="inline-flex items-center gap-2 px-4 py-2 bg-mb-blue text-white rounded-full text-sm font-medium hover:bg-blue-700 transition">
-          Has image
-          <i class="fas fa-times text-xs"></i>
-        </button>
-      } @else {
-        <button (click)="toggleHasImage()"
-                class="px-4 py-2 bg-white border border-gray-300 rounded-full text-sm hover:border-mb-blue transition">
-          Has image
-        </button>
-      }
-
-      @if (filters.posted_within) {
-        <button (click)="clearPostedWithin()"
-                class="inline-flex items-center gap-2 px-4 py-2 bg-mb-blue text-white rounded-full text-sm font-medium hover:bg-blue-700 transition">
-          {{ getPostedLabel() }}
-          <i class="fas fa-times text-xs"></i>
-        </button>
-      } @else {
-        <button (click)="openDrawer.emit()"
-                class="px-4 py-2 bg-white border border-gray-300 rounded-full text-sm hover:border-mb-blue transition">
-          Date posted
-        </button>
-      }
-
-      @if (activeFilterCount() > 0) {
-        <button (click)="clearAll()"
-                class="ml-2 text-sm text-red-600 hover:text-red-700 hover:underline">
-          Clear all
-        </button>
-      }
+      <button (click)="openDrawer.emit()"
+              class="px-4 py-2 bg-white border border-gray-300 rounded-full text-sm hover:border-mb-blue transition">
+        Date posted
+      </button>
 
       <div class="flex-1"></div>
 
@@ -100,6 +60,51 @@ import { ListingFilters, SORT_OPTIONS } from '../../models/listing-filters.model
         }
       </select>
     </div>
+
+    <!-- Что отобрано: рамка появляется, только когда есть чему в ней быть -->
+    @if (appliedCount() > 0) {
+      <div class="flex items-center gap-2 flex-wrap px-4 py-3 mb-3 border border-mb-blue rounded-lg bg-white">
+        <span class="text-sm text-gray-600">Filtered by:</span>
+
+        @if (selectedState) {
+          <button (click)="clearCity()"
+                  class="inline-flex items-center gap-2 px-3 py-1 bg-gray-100 rounded text-sm hover:bg-gray-200 transition">
+            {{ stateLabel() }}
+            <i class="fas fa-times text-xs text-gray-500"></i>
+          </button>
+        }
+
+        @if (filters.price_min !== undefined || filters.price_max !== undefined) {
+          <button (click)="clearPrice()"
+                  class="inline-flex items-center gap-2 px-3 py-1 bg-gray-100 rounded text-sm hover:bg-gray-200 transition">
+            \${{ filters.price_min || 0 }} – \${{ filters.price_max || '∞' }}
+            <i class="fas fa-times text-xs text-gray-500"></i>
+          </button>
+        }
+
+        @if (filters.has_image) {
+          <button (click)="toggleHasImage()"
+                  class="inline-flex items-center gap-2 px-3 py-1 bg-gray-100 rounded text-sm hover:bg-gray-200 transition">
+            Has image
+            <i class="fas fa-times text-xs text-gray-500"></i>
+          </button>
+        }
+
+        @if (filters.posted_within) {
+          <button (click)="clearPostedWithin()"
+                  class="inline-flex items-center gap-2 px-3 py-1 bg-gray-100 rounded text-sm hover:bg-gray-200 transition">
+            {{ getPostedLabel() }}
+            <i class="fas fa-times text-xs text-gray-500"></i>
+          </button>
+        }
+
+        <button (click)="clearAll()"
+                class="ml-auto inline-flex items-center gap-1 text-sm text-gray-600 hover:text-red-600 transition">
+          Clear all
+          <i class="fas fa-times text-xs"></i>
+        </button>
+      </div>
+    }
   `
 })
 export class FilterChipsBarComponent {
@@ -128,6 +133,17 @@ export class FilterChipsBarComponent {
     // хотя штат стоит в адресе, и кнопка не показывалась бы
     const city = this.filters.city || '';
     this.selectedState = /^[A-Z]{2}$/.test(city) ? city : '';
+  }
+
+  /**
+   * Сколько отборов применено — вместе со штатом.
+   *
+   * Отличается от activeFilterCount: тот считает только то, что скрыто за
+   * кнопкой Filters, и показывается на ней числом. Этот решает, показывать ли
+   * полосу применённого.
+   */
+  appliedCount(): number {
+    return this.activeFilterCount() + (this.selectedState ? 1 : 0);
   }
 
   activeFilterCount(): number {
@@ -180,10 +196,16 @@ export class FilterChipsBarComponent {
     this.filtersChange.emit(rest);
   }
 
+  /**
+   * Снять всё, что показано в полосе применённого — штат в том числе.
+   *
+   * Раздел и слово поиска остаются: их выбирают не здесь, и Clear all под ними
+   * не подписан.
+   */
   clearAll(): void {
+    this.selectedState = '';
     this.filtersChange.emit({
       q: this.filters.q,
-      city: this.filters.city,
       category: this.filters.category,
       sort: this.filters.sort
     });
