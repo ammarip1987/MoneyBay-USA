@@ -28,7 +28,7 @@ import { ListingFilters, SORT_OPTIONS } from '../../models/listing-filters.model
         <select [ngModel]="selectedState"
                 (ngModelChange)="onStateChange($event)"
                 name="stateChip"
-                class="appearance-none pl-4 pr-9 py-2 bg-white border border-gray-300 rounded-full text-sm font-medium hover:border-mb-blue transition cursor-pointer">
+                class="appearance-none pl-4 pr-9 py-2 bg-white border border-gray-300 rounded-full text-sm font-medium hover:border-gray-300 focus:border-gray-300 focus:outline-none focus:ring-0 transition cursor-pointer">
           <option value="">Choose state</option>
           @for (s of states; track s.code) {
             <option [value]="s.code">{{ s.name }}, {{ s.code }}</option>
