@@ -47,16 +47,13 @@ import { ListingFilters, SORT_OPTIONS } from '../../models/listing-filters.model
         </div>
       }
 
+      <!-- Только применённое. Кнопки Price и Date posted убраны: они открывали
+           ту же панель, что и Filters, и повторяли её без нужды -->
       @if (filters.price_min !== undefined || filters.price_max !== undefined) {
         <button (click)="clearPrice()"
                 class="inline-flex items-center gap-2 px-4 py-2 bg-mb-blue text-white rounded-full text-sm font-medium hover:bg-blue-700 transition">
           \${{ filters.price_min || 0 }} - \${{ filters.price_max || '∞' }}
           <i class="fas fa-times text-xs"></i>
-        </button>
-      } @else {
-        <button (click)="openDrawer.emit()"
-                class="px-4 py-2 bg-white border border-gray-300 rounded-full text-sm hover:border-mb-blue transition">
-          Price
         </button>
       }
 
@@ -78,11 +75,6 @@ import { ListingFilters, SORT_OPTIONS } from '../../models/listing-filters.model
                 class="inline-flex items-center gap-2 px-4 py-2 bg-mb-blue text-white rounded-full text-sm font-medium hover:bg-blue-700 transition">
           {{ getPostedLabel() }}
           <i class="fas fa-times text-xs"></i>
-        </button>
-      } @else {
-        <button (click)="openDrawer.emit()"
-                class="px-4 py-2 bg-white border border-gray-300 rounded-full text-sm hover:border-mb-blue transition">
-          Date posted
         </button>
       }
 
