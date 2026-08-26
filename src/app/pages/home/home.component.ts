@@ -456,6 +456,14 @@ export class HomeComponent implements OnInit, OnDestroy {
     if (filters.has_image) queryParams.has_image = 'true';
     if (filters.posted_within) queryParams.posted_within = filters.posted_within;
 
+    // Подкатегория сохраняется: без неё смена порядка или цены уводила из
+    // раздела наверх, к плиткам, и выбранная ветка терялась
+    if (this.selectedSub()) queryParams.sub = this.selectedSub();
+    if (this.selectedSubSub()) queryParams.subsub = this.selectedSubSub();
+
+    // Прокрутка к объявлениям, как при листании и поиске: человек менял порядок,
+    // глядя на карточки, и должен остаться на них, а не оказаться у плиток
+    this.pendingScroll = true;
     this.router.navigate(['/'], { queryParams });
   }
 

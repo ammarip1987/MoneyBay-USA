@@ -1,5 +1,6 @@
 package us.moneybay.dto;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import us.moneybay.model.User;
@@ -16,6 +17,16 @@ public class UserDto {
     private String avatarUrl;
     private boolean showAvatar;
     private boolean isAdmin;
+    /**
+     * Дата заведения учётной записи под именем created_at: страницы читают
+     * именно его, а открытый профиль (собирается вручную, минуя этот класс) так
+     * его и отдавал. Без имени поле уходило как createdAt, и в профиле на месте
+     * даты было пусто.
+     *
+     * Остальные поля имён не несут намеренно: фронт читает их как avatarUrl и
+     * showAvatar, и переименование сломало бы шесть с лишним мест.
+     */
+    @JsonProperty("created_at")
     private Instant createdAt;
     /**
      * Срок стирания закрытой учётной записи. Пока он стоит, вход работает, но
