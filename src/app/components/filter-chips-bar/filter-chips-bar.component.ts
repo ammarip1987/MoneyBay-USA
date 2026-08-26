@@ -37,9 +37,10 @@ import { ListingFilters, SORT_OPTIONS } from '../../models/listing-filters.model
         <i class="fas fa-chevron-down text-xs text-gray-400 absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none"></i>
       </div>
 
+      <!-- Без подсветки: применённое видно в полосе ниже. Прежде здесь
+           переключался text-white, а bg-white из общего перечня перебивал
+           bg-mb-blue — надпись пропадала на белом -->
       <button (click)="toggleHasImage()"
-              [class.bg-mb-blue]="filters.has_image"
-              [class.text-white]="filters.has_image"
               [class.border-mb-blue]="filters.has_image"
               class="px-4 py-2 bg-white border border-gray-300 rounded-full text-sm hover:border-mb-blue transition">
         Has image
