@@ -56,6 +56,46 @@ public class ListingController {
         this.cityRepository = cityRepository;
     }
 
+    /**
+     * Сколько объявлений подходит под отбор.
+     *
+     * Отдельным адресом, а не полем в ленте: подсчёт идёт до пяти секунд, и
+     * держать из-за него карточки нельзя. Страница показывает объявления сразу
+     * и дописывает число, когда оно придёт.
+     */
+    @GetMapping("/count")
+    public ResponseEntity<Map<String, Object>> count(
+        @RequestParam(required = false) String q,
+        @RequestParam(required = false) String city,
+        @RequestParam(required = false) String category,
+        @RequestParam(name = "price_min", required = false) Double priceMin,
+        @RequestParam(name = "price_max", required = false) Double priceMax,
+        @RequestParam(name = "has_image", defaultValue = "false") boolean hasImage,
+        @RequestParam(name = "posted_within", required = false) Integer postedWithinDays) {
+
+        city = resolveCity(city);
+
+        if (category != null && !category.isBlank()
+                && !categoryRepository.existsBySlug(category)) {
+            return ResponseEntity.ok(Map.of("count", 0L));
+        }
+
+        java.time.Instant postedAfter = null;
+        if (postedWithinDays != null && postedWithinDays > 0) {
+            postedAfter = java.time.Instant.now()
+                .minus(postedWithinDays, java.time.temporal.ChronoUnit.DAYS);
+        }
+
+        long found = listingRepository.countMatching(
+            q, cityOf(city), stateOf(city), category,
+            priceMin, priceMax, hasImage, postedAfter);
+
+        return ResponseEntity.ok(Map.of(
+            "count", found,
+            "total", listingCountService.count(category)
+        ));
+    }
+
     @GetMapping
     public ResponseEntity<Map<String, Object>> list(
         @RequestParam(defaultValue = "1") int page,

@@ -203,6 +203,7 @@ interface Subcategory {
       <app-filter-chips-bar
         [filters]="currentFilters()"
         [states]="states()"
+        [matchCount]="matchCount()"
         (filtersChange)="onFiltersChange($event)"
         (openDrawer)="drawerOpen.set(true)">
       </app-filter-chips-bar>
@@ -313,6 +314,20 @@ export class HomeComponent implements OnInit, OnDestroy {
   cities = signal<City[]>([]);
   /** Штаты для отбора: 51 запись, включая округ Колумбия. */
   states = signal<UsState[]>([]);
+
+  /**
+   * Сколько подходит под отбор и сколько всего. Приходит отдельным запросом
+   * после ленты — подсчёт идёт до пяти секунд.
+   */
+  matchCount = signal<{ count: number; total: number } | null>(null);
+
+  /** Сужен ли показ хоть чем-нибудь: без этого считать нечего. */
+  hasNarrowing = (): boolean => {
+    const adv = this.advancedFilters();
+    return !!(this.cityFilter || this.searchQuery
+      || adv.price_min !== undefined || adv.price_max !== undefined
+      || adv.has_image || adv.posted_within);
+  };
   subcategories = signal<Subcategory[]>([]);
   subsubcategories = signal<Subcategory[]>([]);
   // Начинаем с true: иначе пустое состояние мелькает до первого запроса
@@ -567,6 +582,17 @@ export class HomeComponent implements OnInit, OnDestroy {
     if (adv.price_max !== undefined) params.price_max = adv.price_max;
     if (adv.has_image) params.has_image = true;
     if (adv.posted_within) params.posted_within = adv.posted_within;
+
+    // Подсчёт отобранного идёт своим чередом, не задерживая карточки: он занимает
+    // до пяти секунд, и число дописывается в полосу, когда придёт
+    this.matchCount.set(null);
+    if (this.hasNarrowing()) {
+      const { page, sort, ...countParams } = params;
+      this.api.getMatchCount(countParams).subscribe({
+        next: (r) => this.matchCount.set(r),
+        error: () => this.matchCount.set(null)
+      });
+    }
 
     if (!this.api.hasCachedListings(params)) {
       this.loading.set(true);

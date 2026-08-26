@@ -179,6 +179,36 @@ public interface ListingRepository extends JpaRepository<Listing, Long> {
                                  @Param("offset") int offset);
 
     /**
+     * Сколько объявлений подходит под отбор.
+     *
+     * Запрашивается отдельно от самой ленты и после неё: подсчёт по 1.2 млн
+     * записей идёт до пяти секунд, и ждать его перед показом карточек нельзя.
+     * Оценка из плана запроса не годится — она расходится с правдой втрое.
+     */
+    @Query(value = "SELECT count(*) FROM listings l " +
+                   "LEFT JOIN categories c ON c.id = l.category_id " +
+                   "WHERE l.is_active AND NOT l.is_deleted " +
+                   "AND (COALESCE(:q, '') = '' OR " +
+                   "     to_tsvector('english', coalesce(l.title, '') || ' ' || coalesce(l.description, '')) " +
+                   "     @@ plainto_tsquery('english', :q)) " +
+                   "AND (COALESCE(:city, '') = '' OR l.location = :city) " +
+                   "AND (COALESCE(:state, '') = '' OR right(l.location, 2) = :state) " +
+                   "AND (COALESCE(:categorySlug, '') = '' OR c.slug = :categorySlug) " +
+                   "AND (CAST(:priceMin AS double precision) IS NULL OR l.price >= :priceMin) " +
+                   "AND (CAST(:priceMax AS double precision) IS NULL OR l.price <= :priceMax) " +
+                   "AND (:hasImage = false OR l.id IN (SELECT i.listing_id FROM listing_images i)) " +
+                   "AND (CAST(:postedAfter AS timestamptz) IS NULL OR l.created_at >= :postedAfter)",
+           nativeQuery = true)
+    long countMatching(@Param("q") String q,
+                       @Param("city") String city,
+                       @Param("state") String state,
+                       @Param("categorySlug") String categorySlug,
+                       @Param("priceMin") Double priceMin,
+                       @Param("priceMax") Double priceMax,
+                       @Param("hasImage") boolean hasImage,
+                       @Param("postedAfter") java.time.Instant postedAfter);
+
+    /**
      * То же, но без отбора по снимкам.
      *
      * Два запроса вместо одного с условием «:hasImage = false OR …»: с

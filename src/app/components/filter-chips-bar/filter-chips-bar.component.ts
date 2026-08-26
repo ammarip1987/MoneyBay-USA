@@ -65,7 +65,16 @@ import { ListingFilters, SORT_OPTIONS } from '../../models/listing-filters.model
     <!-- Что отобрано: рамка появляется, только когда есть чему в ней быть -->
     @if (appliedCount() > 0) {
       <div class="flex items-center gap-2 flex-wrap px-4 py-3 mb-3 border border-mb-blue rounded-lg bg-white">
-        <span class="text-sm text-gray-600">Filtered by:</span>
+        <!-- Число приходит отдельным запросом и дописывается сюда: подсчёт по
+             1.2 млн записей идёт до пяти секунд, и держать из-за него карточки
+             нельзя -->
+        @if (matchCount) {
+          <span class="text-sm text-gray-700 font-medium">
+            {{ matchCount.count | number }} of {{ matchCount.total | number }} listings:
+          </span>
+        } @else {
+          <span class="text-sm text-gray-600">Filtered by:</span>
+        }
 
         @if (selectedState) {
           <button (click)="clearCity()"
@@ -112,6 +121,8 @@ export class FilterChipsBarComponent {
   @Input() filters: ListingFilters = {};
   /** Штаты: код и название. */
   @Input() states: { code: string; name: string }[] = [];
+  /** Сколько подошло и сколько всего. Приходит позже ленты. */
+  @Input() matchCount: { count: number; total: number } | null = null;
   @Output() stateChange = new EventEmitter<string>();
 
   /** Выбранный штат: код из двух букв. */

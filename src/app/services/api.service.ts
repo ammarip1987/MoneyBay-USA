@@ -122,6 +122,24 @@ export class ApiService {
       this.http.get<PaginatedListings>(`${this.baseUrl}/api/listings`, { params: httpParams }));
   }
 
+  /**
+   * Сколько объявлений подходит под отбор.
+   *
+   * Отдельным запросом после ленты: подсчёт идёт до пяти секунд, и держать из-за
+   * него карточки нельзя.
+   */
+  getMatchCount(params: Record<string, unknown> = {}): Observable<{ count: number; total: number }> {
+    let httpParams = new HttpParams();
+    Object.entries(params).forEach(([key, value]) => {
+      if (value !== undefined && value !== '' && value !== false && value !== null) {
+        httpParams = httpParams.set(key, String(value));
+      }
+    });
+    return this.cached(`count?${httpParams.toString()}`, () =>
+      this.http.get<{ count: number; total: number }>(
+        `${this.baseUrl}/api/listings/count`, { params: httpParams }));
+  }
+
   getFacets(category?: string, city?: string): Observable<any> {
     let httpParams = new HttpParams();
     if (category) httpParams = httpParams.set('category', category);
