@@ -50,11 +50,11 @@ interface Subcategory {
       <!-- Оставшиеся две трети первого экрана. Ниже этой высоты не сжимается,
            но и не ограничивается ею: на телефоне двенадцать плиток в столбец
            всё равно выше экрана, и обрезать их нельзя -->
-      <div class="min-h-[calc(65vh-2rem)] flex flex-col mb-16">
+      <div class="min-h-[calc(65vh-2rem)] flex flex-col mb-20">
         <!-- Место под плитки занято с первого кадра: без этого лента
              подпрыгивает, когда категории приходят -->
         @if (categories().length === 0) {
-          <div class="flex-1 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-2 opacity-0">
+          <div class="flex-1 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 opacity-0">
             @for (i of [1, 2, 3, 4, 5, 6, 7, 8, 9, 11, 12, 13]; track i) {
               <div class="p-2 flex flex-col items-center">
                 <div class="w-8 h-8 mb-1"></div>
@@ -69,7 +69,9 @@ interface Subcategory {
              строку. Прежде ряды не влезали и третий уходил за край -->
         <!-- Сетка растянута на всю отведённую высоту: ряды делят её поровну,
              а не жмутся к верху, оставляя пустоту внизу -->
-        <div class="flex-1 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-2">
+             Пять в ряд, как у объявлений, здесь не годятся: двенадцать категорий
+             дали бы два полных ряда и два места в третьем
+        <div class="flex-1 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
           @for (cat of categories(); track cat.id) {
             <!-- При наведении ничего не меняется: указатель мыши и так
                  показывает, что плитка нажимается -->
