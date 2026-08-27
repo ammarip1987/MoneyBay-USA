@@ -53,38 +53,30 @@ interface Subcategory {
       <div class="min-h-[calc(65vh-2rem)] flex flex-col justify-start mb-16">
         <!-- Место под плитки занято с первого кадра: без этого лента
              подпрыгивает, когда категории приходят -->
-        <!-- Заглушка повторяет строение плитки, а не просто занимает место:
-             значок, две строки названия, строка описания. Прежде это был серый
-             прямоугольник в 168 пикселей, тогда как плитка занимает 204 — при
-             подстановке страница дёргалась -->
-        <!-- Заглушка только пока категорий нет вовсе. Место под них занято
-             постоянной высотой блока выше, поэтому подстановка не дёргает
-             страницу, а мелькания серых форм поверх пришедших с сервера
-             плиток не происходит -->
         @if (categories().length === 0) {
-          <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 opacity-0">
+          <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-2 opacity-0">
             @for (i of [1, 2, 3, 4, 5, 6, 7, 8, 9, 11, 12, 13]; track i) {
-              <div class="p-4 flex flex-col items-center">
-                <div class="w-10 h-10 mb-2"></div>
-                <div class="h-4 mb-1"></div>
-                <div class="h-4 mb-1"></div>
-                <div class="h-3"></div>
+              <div class="p-2 flex flex-col items-center">
+                <div class="w-8 h-8 mb-1"></div>
+                <div class="h-5"></div>
+                <div class="h-4"></div>
               </div>
             }
           </div>
         } @else {
-        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+        <!-- Плитки сжаты так, чтобы три ряда умещались в отведённые две трети
+             экрана: меньше значок, одна строка под название, описание в одну
+             строку. Прежде ряды не влезали и третий уходил за край -->
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-2">
           @for (cat of categories(); track cat.id) {
             <!-- При наведении ничего не меняется: указатель мыши и так
-                 показывает, что плитка нажимается.
-                 Постоянная высота под название — чтобы описания в соседних
-                 плитках стояли на одном уровне при названиях разной длины -->
+                 показывает, что плитка нажимается -->
             <a [routerLink]="['/']"
                [queryParams]="{category: cat.slug}"
-               class="p-4 text-center flex flex-col items-center focus:outline-none">
-              <div class="text-4xl mb-2 text-mb-blue" [innerHTML]="cat.icon"></div>
-              <h3 class="font-bold text-mb-dark line-clamp-2 min-h-[3rem] flex items-center justify-center">{{ cat.name }}</h3>
-              <p class="text-sm text-gray-600 line-clamp-2 -mt-1">{{ cat.description }}</p>
+               class="p-2 text-center flex flex-col items-center focus:outline-none">
+              <div class="text-3xl mb-1 text-mb-blue" [innerHTML]="cat.icon"></div>
+              <h3 class="font-bold text-mb-dark text-sm line-clamp-1">{{ cat.name }}</h3>
+              <p class="text-xs text-gray-600 line-clamp-1">{{ cat.description }}</p>
             </a>
           }
         </div>
