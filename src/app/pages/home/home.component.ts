@@ -33,17 +33,19 @@ interface Subcategory {
     <!-- Строка одна на оба случая; на главной за ней светлая подложка.
          Отступы у неё малые: с прежними py-8 sm:py-12 строка стояла ниже, чем
          в разделе, и раскладка прыгала при переходе -->
-    <div class="mb-6 mt-6">
+    <div class="mb-6 mt-10">
+      <!-- Кнопка слева от строки: нажимают её реже, чем набирают, и справа она
+           перехватывала взгляд раньше самого поля -->
       <div class="max-w-3xl mx-auto bg-white rounded-xl shadow-lg p-2 flex flex-col sm:flex-row gap-2 border border-gray-100">
+        <button (click)="search()" class="px-6 py-2 bg-mb-blue hover:bg-blue-700 text-white font-bold rounded-lg transition-all text-sm">
+          Search
+        </button>
         <div class="flex-1">
           <app-search-autocomplete
             placeholder="Search listings..."
             [initialQuery]="searchQuery"
             (search)="onAutocompleteSearch($event)"></app-search-autocomplete>
         </div>
-        <button (click)="search()" class="px-6 py-2 bg-mb-blue hover:bg-blue-700 text-white font-bold rounded-lg transition-all text-sm">
-          Search
-        </button>
       </div>
     </div>
 
@@ -53,21 +55,25 @@ interface Subcategory {
            и человек прокручивает к ним, а не встречает их вперемешку с
            разделами. Заголовок над лентой убран — под плитками он читался
            как их продолжение -->
-      <div class="min-h-[calc(100vh-16rem)] flex flex-col justify-center mb-8">
+      <div class="min-h-[calc(100vh-14rem)] flex flex-col justify-center mb-16">
         <!-- Место под плитки занято с первого кадра: без этого лента
              подпрыгивает, когда категории приходят -->
         <!-- Заглушка повторяет строение плитки, а не просто занимает место:
              значок, две строки названия, строка описания. Прежде это был серый
              прямоугольник в 168 пикселей, тогда как плитка занимает 204 — при
              подстановке страница дёргалась -->
+        <!-- Заглушка только пока категорий нет вовсе. Место под них занято
+             постоянной высотой блока выше, поэтому подстановка не дёргает
+             страницу, а мелькания серых форм поверх пришедших с сервера
+             плиток не происходит -->
         @if (categories().length === 0) {
-          <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+          <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 opacity-0">
             @for (i of [1, 2, 3, 4, 5, 6, 7, 8, 9, 11, 12, 13]; track i) {
               <div class="p-4 flex flex-col items-center">
-                <div class="w-10 h-10 bg-gray-200 rounded animate-pulse mb-2"></div>
-                <div class="w-3/4 h-4 bg-gray-200 rounded animate-pulse mb-1"></div>
-                <div class="w-1/2 h-4 bg-gray-200 rounded animate-pulse mb-1"></div>
-                <div class="w-5/6 h-3 bg-gray-200 rounded animate-pulse"></div>
+                <div class="w-10 h-10 mb-2"></div>
+                <div class="h-4 mb-1"></div>
+                <div class="h-4 mb-1"></div>
+                <div class="h-3"></div>
               </div>
             }
           </div>
