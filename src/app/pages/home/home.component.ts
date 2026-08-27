@@ -74,7 +74,7 @@ interface Subcategory {
                  строки в соседних плитках стояли вразнобой -->
             <a [routerLink]="['/']"
                [queryParams]="{category: cat.slug}"
-               class="p-6 text-center flex flex-col bg-white shadow-md hover:shadow-lg transition-shadow duration-200">
+               class="p-6 text-center flex flex-col bg-white shadow-md hover:shadow-lg transition-shadow duration-200 focus:outline-none">
               <div class="text-4xl mb-3 text-mb-blue" [innerHTML]="cat.icon"></div>
               <h3 class="font-bold text-mb-dark mb-2 line-clamp-2 min-h-[3.5rem] flex items-center justify-center">{{ cat.name }}</h3>
               <p class="text-sm text-gray-600 line-clamp-2">{{ cat.description }}</p>
