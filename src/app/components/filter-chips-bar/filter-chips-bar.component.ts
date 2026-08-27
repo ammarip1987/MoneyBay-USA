@@ -65,9 +65,6 @@ import { ListingFilters, SORT_OPTIONS } from '../../models/listing-filters.model
     <!-- Что отобрано: рамка появляется, только когда есть чему в ней быть -->
     @if (appliedCount() > 0) {
       <div class="flex items-center gap-2 flex-wrap px-4 py-3 mb-3 border border-mb-blue rounded-lg bg-white">
-        <!-- Число приходит отдельным запросом и дописывается сюда: подсчёт по
-             1.2 млн записей идёт до пяти секунд, и держать из-за него карточки
-             нельзя -->
         <!-- Надпись одна и та же, пока идёт подсчёт: меняются только числа,
              когда придут. Прежде здесь стояло «Filtered by:», сменявшееся на
              «Selected …» через несколько секунд, и полоса мигала при каждой
@@ -75,7 +72,9 @@ import { ListingFilters, SORT_OPTIONS } from '../../models/listing-filters.model
         <span class="text-sm text-gray-700">
           Selected
           @if (matchCount) {
-            <strong>{{ matchCount.count | number }}</strong> products
+            <!-- Число проступает плавно: подсчёт идёт секунды, и появление
+                 рывком читается как подмена -->
+            <strong class="count-appear">{{ matchCount.count | number }}</strong> products
             from {{ matchCount.total | number }}:
           } @else {
             <span class="inline-block w-10 h-3 bg-gray-200 rounded animate-pulse align-middle"></span>
@@ -115,14 +114,27 @@ import { ListingFilters, SORT_OPTIONS } from '../../models/listing-filters.model
           </button>
         }
 
+        <!-- Сразу за кнопками отбора, а не у правого края: читается как их
+             продолжение — снять то, что перечислено слева -->
         <button (click)="clearAll()"
-                class="ml-auto inline-flex items-center gap-1 text-sm text-gray-600 hover:text-red-600 transition">
-          Clear all
+                class="inline-flex items-center gap-1 text-sm text-gray-600 hover:text-red-600 transition">
+          Clean
           <i class="fas fa-times text-xs"></i>
         </button>
       </div>
     }
-  `
+  `,
+  styles: [`
+    /* Число проступает и слегка приподнимается: подсчёт идёт секунды, и
+       появление рывком читается как подмена значения */
+    .count-appear {
+      animation: count-in 260ms ease-out;
+    }
+    @keyframes count-in {
+      from { opacity: 0; transform: translateY(3px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+  `]
 })
 export class FilterChipsBarComponent {
   @Input() filters: ListingFilters = {};
