@@ -221,7 +221,7 @@ interface Subcategory {
         }
       </div>
 
-      @if (totalPages() > 1) {
+      @if (!selectedCategory() && totalPages() > 1) {
         <nav class="py-8 flex justify-center items-center gap-1 flex-wrap" aria-label="Pagination">
           <button (click)="goToPage(currentPage() - 1)"
                   [disabled]="currentPage() <= 1"
@@ -256,6 +256,32 @@ interface Subcategory {
         @if (totalLabel()) {
           <p class="text-center text-sm text-gray-500 -mt-4 pb-8">{{ totalLabel() }}</p>
         }
+      }
+
+      <!-- Внутри категории — подгрузка кнопкой с полосой хода: человек листает
+           один раздел подряд, и номера страниц ему ни к чему. На главной
+           номера остаются: там переходят к нужной странице сразу -->
+      @if (selectedCategory() && listings().length > 0) {
+        <div class="py-8 flex flex-col items-center gap-3">
+          @if (matchCount()) {
+            <p class="text-sm text-gray-600">
+              You've viewed <strong>{{ listings().length | number }}</strong>
+              of {{ matchCount()!.count | number }} listings
+            </p>
+            <div class="w-64 h-1.5 bg-gray-200 rounded-full overflow-hidden">
+              <div class="h-full bg-mb-dark rounded-full transition-all duration-300"
+                   [style.width.%]="viewedPercent()"></div>
+            </div>
+          }
+
+          @if (hasMore()) {
+            <button (click)="loadMore()"
+                    [disabled]="loadingMore()"
+                    class="text-mb-blue hover:underline text-sm font-medium disabled:opacity-50">
+              {{ loadingMore() ? 'Loading...' : 'Show more' }}
+            </button>
+          }
+        </div>
       }
     }
     <!-- Скелет только при первой загрузке, когда показывать ещё нечего. Смена
@@ -311,7 +337,7 @@ export class HomeComponent implements OnInit, OnDestroy {
   /** Сужен ли показ хоть чем-нибудь: без этого считать нечего. */
   hasNarrowing = (): boolean => {
     const adv = this.advancedFilters();
-    return !!(this.cityFilter || this.searchQuery
+    return !!(this.selectedCategory() || this.cityFilter || this.searchQuery
       || adv.price_min !== undefined || adv.price_max !== undefined
       || adv.has_image || adv.posted_within);
   };
@@ -638,6 +664,26 @@ export class HomeComponent implements OnInit, OnDestroy {
    * Переход на страницу через адрес: номер попадает в queryParams, поэтому
    * ссылку можно сохранить, а возврат назад возвращает на прежнюю страницу.
    */
+  /**
+   * Догрузить следующую страницу к показанным.
+   *
+   * Внутри категории вместо перехода по номерам: карточки добавляются к уже
+   * показанным, страница не перерисовывается заново.
+   */
+  loadMore(): void {
+    if (this.loadingMore() || !this.hasMore()) return;
+    this.loadingMore.set(true);
+    this.currentPage.update(p => p + 1);
+    this.loadListings(true);
+  }
+
+  /** Доля показанного от найденного — для полосы хода. */
+  viewedPercent = (): number => {
+    const total = this.matchCount()?.count ?? 0;
+    if (total <= 0) return 0;
+    return Math.min(100, Math.round(this.listings().length / total * 100));
+  };
+
   goToPage(page: number): void {
     if (page < 1 || page > this.totalPages() || page === this.currentPage()) return;
 
