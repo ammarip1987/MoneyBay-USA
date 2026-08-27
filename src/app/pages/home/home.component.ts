@@ -426,6 +426,16 @@ export class HomeComponent implements OnInit, OnDestroy {
         (params['sub'] || null) !== this.selectedSub() ||
         (params['subsub'] || null) !== this.selectedSubSub();
 
+      // Смена отбора меняет набор карточек так же, как смена раздела, и должна
+      // показывать то же ожидание. Прежде сюда входили только раздел с
+      // подразделом, и при выборе штата место под объявлениями пустовало
+      const filterChanged =
+        (params['city'] || '') !== this.cityFilter ||
+        (params['price_min'] || '') !== String(this.advancedFilters().price_min ?? '') ||
+        (params['price_max'] || '') !== String(this.advancedFilters().price_max ?? '') ||
+        (params['has_image'] === 'true') !== !!this.advancedFilters().has_image ||
+        (params['posted_within'] || '') !== String(this.advancedFilters().posted_within ?? '');
+
       this.selectedCategory.set(params['category'] || null);
       this.selectedSub.set(params['sub'] || null);
       this.selectedSubSub.set(params['subsub'] || null);
@@ -438,6 +448,13 @@ export class HomeComponent implements OnInit, OnDestroy {
         // не скелет. При первой загрузке сюда не попадаем: страница приходит с
         // сервера уже с карточками.
         if (this.listings().length > 0) this.pagingNow.set(true);
+      }
+
+      // Отбор сменился — карточки уходят, и на их месте показывается ожидание:
+      // иначе под полосой фильтров остаётся пустое место, пока идёт запрос
+      if (filterChanged && this.listings().length > 0) {
+        this.pagingNow.set(true);
+        this.loading.set(true);
       }
       this.searchQuery = params['q'] || '';
       this.cityFilter = params['city'] || '';
