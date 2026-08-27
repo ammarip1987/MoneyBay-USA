@@ -262,13 +262,13 @@ interface Subcategory {
            один раздел подряд, и номера страниц ему ни к чему. На главной
            номера остаются: там переходят к нужной странице сразу -->
       @if (selectedCategory() && listings().length > 0) {
-        <div class="py-8 flex flex-col items-center gap-3">
+        <div class="py-8 flex flex-col items-center gap-2 max-w-md mx-auto w-full">
           @if (matchCount()) {
             <p class="text-sm text-gray-600">
               You've viewed <strong>{{ listings().length | number }}</strong>
               of {{ matchCount()!.count | number }} listings
             </p>
-            <div class="w-64 h-1.5 bg-gray-200 rounded-full overflow-hidden">
+            <div class="w-full h-1.5 bg-gray-200 rounded-full overflow-hidden">
               <div class="h-full bg-mb-dark rounded-full transition-all duration-300"
                    [style.width.%]="viewedPercent()"></div>
             </div>
@@ -277,7 +277,7 @@ interface Subcategory {
           @if (hasMore()) {
             <button (click)="loadMore()"
                     [disabled]="loadingMore()"
-                    class="text-mb-blue hover:underline text-sm font-medium disabled:opacity-50">
+                    class="mt-1 text-mb-blue hover:text-blue-700 text-sm disabled:opacity-50">
               {{ loadingMore() ? 'Loading...' : 'Show more' }}
             </button>
           }
