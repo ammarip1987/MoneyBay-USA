@@ -67,17 +67,17 @@ interface Subcategory {
         }
         <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
           @for (cat of categories(); track cat.id) {
-            <!-- Колонка: значок сверху, описание прижато книзу. Иначе длинное
-                 название вытягивает плитку и содержимое соседних расходится по
-                 высоте. -->
             <!-- Без своего цвета: двенадцать разноцветных плиток спорили за
-                 внимание, а различает их название, не оттенок -->
+                 внимание, а различает их название, не оттенок.
+                 Под название отведена постоянная высота в две строки: иначе у
+                 коротких названий описание поднималось, у длинных опускалось, и
+                 строки в соседних плитках стояли вразнобой -->
             <a [routerLink]="['/']"
                [queryParams]="{category: cat.slug}"
-               class="card-hover p-6 text-center flex flex-col bg-white border border-gray-200 hover:border-mb-blue transition">
+               class="p-6 text-center flex flex-col bg-white shadow-md hover:shadow-lg transition-shadow duration-200">
               <div class="text-4xl mb-3 text-mb-blue" [innerHTML]="cat.icon"></div>
-              <h3 class="font-bold text-mb-dark mb-2 line-clamp-2">{{ cat.name }}</h3>
-              <p class="text-sm text-gray-600 mt-auto line-clamp-2">{{ cat.description }}</p>
+              <h3 class="font-bold text-mb-dark mb-2 line-clamp-2 min-h-[3.5rem] flex items-center justify-center">{{ cat.name }}</h3>
+              <p class="text-sm text-gray-600 line-clamp-2">{{ cat.description }}</p>
             </a>
           }
         </div>
