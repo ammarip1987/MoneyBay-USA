@@ -205,8 +205,11 @@ public class ListingController {
         // запросом: сортировка по сроку продвижения в общей выборке не ложится
         // на индекс, и база перебирала сотни тысяч строк.
         if (page == 1 && (q == null || q.isBlank())) {
+            // Город, а не исходное значение: при отборе по штату сюда уходило
+            // «CA», запрос искал место с таким названием и, не найдя, читал
+            // таблицу целиком — пять секунд на ответ
             List<Listing> promoted = listingRepository.findPromoted(
-                city, category, PageRequest.of(0, 6));
+                cityOnly, category, PageRequest.of(0, 6));
             if (!promoted.isEmpty()) {
                 Set<Long> ids = promoted.stream().map(Listing::getId).collect(Collectors.toSet());
                 List<Listing> merged = new ArrayList<>(promoted);
