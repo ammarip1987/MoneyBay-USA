@@ -51,7 +51,7 @@ interface Subcategory {
     } @else {
       <!-- Тот же вид, что на главной: строка не меняет расположения при переходе
            в раздел. Город ушёл в полосу фильтров, к цене и прочему -->
-      <div class="max-w-3xl mx-auto bg-white rounded-xl shadow-lg p-2 flex flex-col sm:flex-row gap-2 border border-gray-100 mb-8">
+      <div class="max-w-3xl mx-auto bg-white rounded-xl shadow-lg p-2 flex flex-col sm:flex-row gap-2 border border-gray-100 mb-6 -mt-2">
         <div class="flex-1">
           <app-search-autocomplete
             placeholder="Search listings..."
