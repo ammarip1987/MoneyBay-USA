@@ -58,10 +58,19 @@ interface Subcategory {
       <div class="mb-8">
         <!-- Место под плитки занято с первого кадра: без этого лента
              подпрыгивает, когда категории приходят -->
+        <!-- Заглушка повторяет строение плитки, а не просто занимает место:
+             значок, две строки названия, строка описания. Прежде это был серый
+             прямоугольник в 168 пикселей, тогда как плитка занимает 204 — при
+             подстановке страница дёргалась -->
         @if (categories().length === 0) {
           <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
             @for (i of [1, 2, 3, 4, 5, 6, 7, 8, 9, 11, 12, 13]; track i) {
-              <div class="bg-gray-100 animate-pulse" style="height: 168px;"></div>
+              <div class="bg-white shadow-md p-6 flex flex-col items-center">
+                <div class="w-10 h-10 bg-gray-200 rounded animate-pulse mb-3"></div>
+                <div class="w-3/4 h-4 bg-gray-200 rounded animate-pulse mb-2"></div>
+                <div class="w-1/2 h-4 bg-gray-200 rounded animate-pulse mb-2"></div>
+                <div class="w-5/6 h-3 bg-gray-200 rounded animate-pulse"></div>
+              </div>
             }
           </div>
         }
