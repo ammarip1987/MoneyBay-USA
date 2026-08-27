@@ -56,6 +56,10 @@ interface PricingTier {
             <ul class="space-y-2 mb-8 text-sm">
               <li class="flex items-start">
                 <i class="fas fa-check text-mb-green mr-2 mt-1"></i>
+                <span>Shown in Hot offers on the home page</span>
+              </li>
+              <li class="flex items-start">
+                <i class="fas fa-check text-mb-green mr-2 mt-1"></i>
                 <span>Top of category for {{ tier.hours }}h</span>
               </li>
               <li class="flex items-start">
