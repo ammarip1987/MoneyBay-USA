@@ -14,6 +14,9 @@ import { environment } from '../../../environments/environment';
   imports: [CommonModule, FormsModule, RouterLink],
   template: `
     <div class="relative w-full" #wrapper>
+      <!-- Значок слева от строки: там его ищут глазами, а справа он спорил бы
+           с кнопкой Search -->
+      <i class="fas fa-search absolute left-3 top-1/2 -translate-y-1/2 text-mb-blue pointer-events-none"></i>
       <input
         #input
         type="text"
@@ -23,7 +26,7 @@ import { environment } from '../../../environments/environment';
         (keydown)="onKey($event)"
         [placeholder]="placeholder"
         autocomplete="off"
-        class="w-full px-3 py-2 rounded-lg border-0 focus:ring-2 focus:ring-mb-blue text-gray-800 text-sm">
+        class="w-full pl-10 pr-3 py-2 rounded-lg border-0 focus:ring-2 focus:ring-mb-blue text-gray-800 text-sm">
 
       @if (open() && (loading() || suggestions().length > 0 || (query.length >= 2 && !loading()))) {
         <div class="absolute top-full left-0 right-0 mt-1 bg-white rounded-lg shadow-xl border border-gray-200 z-50 max-h-96 overflow-y-auto">
