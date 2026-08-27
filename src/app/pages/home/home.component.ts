@@ -155,7 +155,7 @@ interface Subcategory {
 
     <!-- Listings -->
     @if (!selectedCategory()) {
-      <h2 class="text-2xl font-bold text-gray-900 mb-6">Recent Listings</h2>
+      <h2 class="text-2xl font-bold text-gray-900 mb-6 text-center">Recent Listings</h2>
     }
 
     <!-- Якорь перехода по страницам: ниже заголовка, перед геоблоком и
@@ -301,7 +301,7 @@ interface Subcategory {
     <!-- Скелет только при первой загрузке, когда показывать ещё нечего. Смена
          страницы или отбора обходится приглушением прежних карточек и кружком
          поверх них — он рисуется в блоке выше -->
-    @if (loading() && !pagingNow()) {
+    @if (loading() && !pagingNow() && listings().length === 0) {
       <app-skeleton-loader variant="listing-grid" [count]="10"></app-skeleton-loader>
       }
 
