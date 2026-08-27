@@ -54,7 +54,7 @@ interface Subcategory {
         <!-- Место под плитки занято с первого кадра: без этого лента
              подпрыгивает, когда категории приходят -->
         @if (categories().length === 0) {
-          <div class="flex-1 grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-6 opacity-0">
+          <div class="flex-1 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 opacity-0">
             @for (i of [1, 2, 3, 4, 5, 6, 7, 8, 9, 11, 12, 13]; track i) {
               <div class="p-2 flex flex-col items-center">
                 <div class="w-8 h-8 mb-1"></div>
@@ -68,7 +68,7 @@ interface Subcategory {
              экрана: меньше значок, одна строка под название, описание в одну
              строку. Прежде ряды не влезали и третий уходил за край -->
           <!-- Сетка той же ширины и с тем же промежутком, что у объявлений -->
-        <div class="flex-1 grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-6">
+        <div class="flex-1 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
           @for (cat of categories(); track cat.id) {
             <!-- При наведении ничего не меняется: указатель мыши и так
                  показывает, что плитка нажимается -->
