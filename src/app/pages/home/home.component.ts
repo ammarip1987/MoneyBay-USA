@@ -209,6 +209,20 @@ interface Subcategory {
           @for (listing of listings(); track listing.id) {
             <app-listing-card [listing]="listing"></app-listing-card>
           }
+          <!-- Пока идёт подгрузка — скелеты на месте будущих карточек: ряд не
+               обрывается пустотой, и видно, куда встанут новые -->
+          @if (loadingMore()) {
+            @for (i of [1,2,3,4,5,6,7,8,9,11,12,13,14,15,16,17,18,19,20,21]; track i) {
+              <div class="bg-white shadow-md overflow-hidden">
+                <div class="h-48 sm:h-64 bg-gray-200 animate-pulse"></div>
+                <div class="p-4">
+                  <div class="h-4 bg-gray-200 rounded animate-pulse mb-3 w-3/4"></div>
+                  <div class="h-3 bg-gray-200 rounded animate-pulse mb-2 w-1/2"></div>
+                  <div class="h-3 bg-gray-200 rounded animate-pulse w-1/3"></div>
+                </div>
+              </div>
+            }
+          }
         </div>
 
         @if (pagingNow()) {
