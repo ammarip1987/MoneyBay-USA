@@ -310,7 +310,7 @@ interface Subcategory {
       <!-- Внутри категории — подгрузка кнопкой с полосой хода: человек листает
            один раздел подряд, и номера страниц ему ни к чему. На главной
            номера остаются: там переходят к нужной странице сразу -->
-      @if ((selectedCategory() || searchQuery) && listings().length > 0) {
+      @if ((selectedCategory() || searchQuery) && listings().length > 0 && (hasMore() || listings().length > 20)) {
         <div class="py-8 flex flex-col items-center gap-2 max-w-xs mx-auto w-full">
           @if (matchCount()) {
             <p class="text-sm text-gray-600">
