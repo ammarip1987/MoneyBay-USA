@@ -28,7 +28,7 @@ import java.util.stream.Collectors;
 public class ListingController {
 
     /** Объявлений на странице: сетка выводит по пять в ряд, выходит 12 рядов. */
-    private static final int PAGE_SIZE = 60;
+    private static final int DEFAULT_PAGE_SIZE = 60;
 
     @Value("${app.upload.dir:./uploads}")
     private String uploadDir;
@@ -106,7 +106,13 @@ public class ListingController {
         @RequestParam(name = "price_min", required = false) Double priceMin,
         @RequestParam(name = "price_max", required = false) Double priceMax,
         @RequestParam(name = "has_image", defaultValue = "false") boolean hasImage,
-        @RequestParam(name = "posted_within", required = false) Integer postedWithinDays) {
+        @RequestParam(name = "posted_within", required = false) Integer postedWithinDays,
+        // Размер страницы задаётся запросом: на главной идут номера страниц по 60,
+        // внутри категории — подгрузка кнопкой по 20
+        @RequestParam(name = "page_size", required = false) Integer requestedSize) {
+
+        final int PAGE_SIZE = requestedSize != null && requestedSize > 0 && requestedSize <= 60
+            ? requestedSize : DEFAULT_PAGE_SIZE;
 
         // Только выбранная сортировка — под неё есть индексы. Продвинутые
         // выносятся вперёд отдельным запросом ниже: добавь их сюда, и порядок

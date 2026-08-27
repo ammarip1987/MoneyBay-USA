@@ -601,6 +601,9 @@ export class HomeComponent implements OnInit, OnDestroy {
     // кэше. Возврат на главную отдаётся синхронно, и подъём флага вставил бы
     // скелет на один тик — он и виден как мельк.
     const params: any = { page: this.currentPage() };
+    // Внутри категории подгрузка идёт по 20 — там кнопка Show more, и шаг
+    // должен быть заметным глазу. На главной остаются страницы по 60
+    if (this.selectedCategory()) params.page_size = 20;
     if (this.searchQuery) params.q = this.searchQuery;
     if (this.selectedCategory()) params.category = this.selectedCategory();
     if (this.cityFilter) params.city = this.cityFilter;
