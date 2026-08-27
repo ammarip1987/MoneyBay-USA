@@ -162,7 +162,7 @@ interface Subcategory {
       <h2 class="text-2xl font-bold text-gray-900 mb-6 text-center">Hot offers</h2>
     }
       <!-- Та же карусель, что внизу: до неё не надо прокручивать всю ленту -->
-      @if (totalPages() > 1) {
+      @if (!searchQuery && totalPages() > 1) {
         <nav class="pb-6 flex justify-center items-center gap-1 flex-wrap" aria-label="Pagination">
           <button (click)="goToPage(currentPage() - 1)"
                   [disabled]="currentPage() <= 1"
@@ -270,7 +270,7 @@ interface Subcategory {
         }
       </div>
 
-      @if (!selectedCategory() && totalPages() > 1) {
+      @if (!searchQuery && !selectedCategory() && totalPages() > 1) {
         <nav class="py-8 flex justify-center items-center gap-1 flex-wrap" aria-label="Pagination">
           <button (click)="goToPage(currentPage() - 1)"
                   [disabled]="currentPage() <= 1"
@@ -302,7 +302,7 @@ interface Subcategory {
             <i class="fas fa-chevron-right"></i>
           </button>
         </nav>
-        @if (totalLabel()) {
+        @if (!searchQuery && totalLabel()) {
           <p class="text-center text-sm text-gray-500 -mt-4 pb-8">{{ totalLabel() }}</p>
         }
       }
@@ -310,7 +310,7 @@ interface Subcategory {
       <!-- Внутри категории — подгрузка кнопкой с полосой хода: человек листает
            один раздел подряд, и номера страниц ему ни к чему. На главной
            номера остаются: там переходят к нужной странице сразу -->
-      @if (selectedCategory() && listings().length > 0) {
+      @if ((selectedCategory() || searchQuery) && listings().length > 0) {
         <div class="py-8 flex flex-col items-center gap-2 max-w-xs mx-auto w-full">
           @if (matchCount()) {
             <p class="text-sm text-gray-600">
@@ -652,7 +652,7 @@ export class HomeComponent implements OnInit, OnDestroy {
     const params: any = { page: this.currentPage() };
     // Внутри категории подгрузка идёт по 20 — там кнопка Show more, и шаг
     // должен быть заметным глазу. На главной остаются страницы по 60
-    if (this.selectedCategory()) params.page_size = 20;
+    if (this.selectedCategory() || this.searchQuery) params.page_size = 20;
     if (this.searchQuery) params.q = this.searchQuery;
     if (this.selectedCategory()) params.category = this.selectedCategory();
     if (this.cityFilter) params.city = this.cityFilter;
