@@ -276,7 +276,7 @@ interface Subcategory {
            один раздел подряд, и номера страниц ему ни к чему. На главной
            номера остаются: там переходят к нужной странице сразу -->
       @if (selectedCategory() && listings().length > 0) {
-        <div class="py-8 flex flex-col items-center gap-2 max-w-md mx-auto w-full">
+        <div class="py-8 flex flex-col items-center gap-2 max-w-xs mx-auto w-full">
           @if (matchCount()) {
             <p class="text-sm text-gray-600">
               You've viewed <strong>{{ listings().length | number }}</strong>
