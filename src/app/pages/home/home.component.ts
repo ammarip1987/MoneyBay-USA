@@ -50,11 +50,11 @@ interface Subcategory {
       <!-- Оставшиеся две трети первого экрана. Ниже этой высоты не сжимается,
            но и не ограничивается ею: на телефоне двенадцать плиток в столбец
            всё равно выше экрана, и обрезать их нельзя -->
-      <div class="min-h-[calc(65vh-2rem)] flex flex-col justify-start mb-16">
+      <div class="min-h-[calc(65vh-2rem)] flex flex-col mb-16">
         <!-- Место под плитки занято с первого кадра: без этого лента
              подпрыгивает, когда категории приходят -->
         @if (categories().length === 0) {
-          <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-2 opacity-0">
+          <div class="flex-1 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-2 opacity-0">
             @for (i of [1, 2, 3, 4, 5, 6, 7, 8, 9, 11, 12, 13]; track i) {
               <div class="p-2 flex flex-col items-center">
                 <div class="w-8 h-8 mb-1"></div>
@@ -67,13 +67,15 @@ interface Subcategory {
         <!-- Плитки сжаты так, чтобы три ряда умещались в отведённые две трети
              экрана: меньше значок, одна строка под название, описание в одну
              строку. Прежде ряды не влезали и третий уходил за край -->
-        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-2">
+        <!-- Сетка растянута на всю отведённую высоту: ряды делят её поровну,
+             а не жмутся к верху, оставляя пустоту внизу -->
+        <div class="flex-1 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-2">
           @for (cat of categories(); track cat.id) {
             <!-- При наведении ничего не меняется: указатель мыши и так
                  показывает, что плитка нажимается -->
             <a [routerLink]="['/']"
                [queryParams]="{category: cat.slug}"
-               class="p-2 text-center flex flex-col items-center focus:outline-none">
+               class="p-2 text-center flex flex-col items-center justify-center focus:outline-none">
               <div class="text-3xl mb-1 text-mb-blue" [innerHTML]="cat.icon"></div>
               <h3 class="font-bold text-mb-dark text-sm line-clamp-1">{{ cat.name }}</h3>
               <p class="text-xs text-gray-600 line-clamp-1">{{ cat.description }}</p>
