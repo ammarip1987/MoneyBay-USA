@@ -288,11 +288,11 @@ interface Subcategory {
             </div>
           }
 
-          @if (hasMore()) {
+          @if (hasMore() && !loadingMore()) {
             <button (click)="loadMore()"
                     [disabled]="loadingMore()"
                     class="mt-1 text-mb-blue hover:text-blue-700 text-sm disabled:opacity-50">
-              {{ loadingMore() ? 'Loading...' : 'Show more' }}
+              Show more
             </button>
           }
         </div>
@@ -655,6 +655,9 @@ export class HomeComponent implements OnInit, OnDestroy {
         // Подгрузка добавляет к показанным, обычная загрузка заменяет
         this.listings.update(prev => append ? [...prev, ...incoming] : incoming);
         this.loading.set(false);
+        // Сбрасывался только в ветви ошибки: после удачного ответа признак
+        // оставался поднятым, кнопка запиралась и скелеты висели навсегда
+        this.loadingMore.set(false);
         this.pagingNow.set(false);
         this.hasMore.set(data.has_next === true);
         this.totalPages.set(data.total_pages || 1);
