@@ -68,14 +68,20 @@ import { ListingFilters, SORT_OPTIONS } from '../../models/listing-filters.model
         <!-- Число приходит отдельным запросом и дописывается сюда: подсчёт по
              1.2 млн записей идёт до пяти секунд, и держать из-за него карточки
              нельзя -->
-        @if (matchCount) {
-          <span class="text-sm text-gray-700">
-            Selected <strong>{{ matchCount.count | number }}</strong> products
+        <!-- Надпись одна и та же, пока идёт подсчёт: меняются только числа,
+             когда придут. Прежде здесь стояло «Filtered by:», сменявшееся на
+             «Selected …» через несколько секунд, и полоса мигала при каждой
+             правке отбора -->
+        <span class="text-sm text-gray-700">
+          Selected
+          @if (matchCount) {
+            <strong>{{ matchCount.count | number }}</strong> products
             from {{ matchCount.total | number }}:
-          </span>
-        } @else {
-          <span class="text-sm text-gray-600">Filtered by:</span>
-        }
+          } @else {
+            <span class="inline-block w-10 h-3 bg-gray-200 rounded animate-pulse align-middle"></span>
+            products:
+          }
+        </span>
 
         @if (selectedState) {
           <button (click)="clearCity()"
