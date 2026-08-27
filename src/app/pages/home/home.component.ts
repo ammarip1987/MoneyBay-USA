@@ -33,7 +33,7 @@ interface Subcategory {
     <!-- Строка одна на оба случая; на главной за ней светлая подложка.
          Отступы у неё малые: с прежними py-8 sm:py-12 строка стояла ниже, чем
          в разделе, и раскладка прыгала при переходе -->
-    <div class="relative overflow-hidden rounded-2xl mb-6 -mt-2 -mx-4 sm:mx-0"
+    <div class="relative overflow-hidden rounded-2xl mb-6 mt-6 -mx-4 sm:mx-0"
          [class.py-3]="!selectedCategory()">
       @if (!selectedCategory()) {
         <div class="absolute inset-0 -z-10 bg-gradient-to-br from-blue-50 via-white to-cyan-50"></div>
@@ -186,13 +186,6 @@ interface Subcategory {
       </div>
     }
 
-    @if (!selectedCategory() && !cityFilter && !geo.nearestCity() && geo.status() === 'idle') {
-      <div class="mb-6 text-center">
-        <button (click)="requestGeo()" class="text-sm text-mb-blue hover:underline">
-          <i class="fas fa-location-arrow mr-1"></i> Find listings near me
-        </button>
-      </div>
-    }
 
     @if (selectedCategory()) {
       <app-filter-chips-bar
