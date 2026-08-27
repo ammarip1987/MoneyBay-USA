@@ -626,7 +626,9 @@ export class HomeComponent implements OnInit, OnDestroy {
       });
     }
 
-    if (!this.api.hasCachedListings(params)) {
+    // При подгрузке кнопкой список не чистится и заглушки не поднимаются:
+    // прежние карточки остаются на месте, новые добавляются под ними
+    if (!append && !this.api.hasCachedListings(params)) {
       this.loading.set(true);
       // Объявления прежней страницы не должны висеть под заголовком новой:
       // на их месте показываются заглушки, пока идёт запрос
@@ -635,7 +637,9 @@ export class HomeComponent implements OnInit, OnDestroy {
 
     this.api.getListings(params).subscribe({
       next: (data) => {
-        this.listings.set(data.listings || []);
+        const incoming = data.listings || [];
+        // Подгрузка добавляет к показанным, обычная загрузка заменяет
+        this.listings.update(prev => append ? [...prev, ...incoming] : incoming);
         this.loading.set(false);
         this.pagingNow.set(false);
         this.hasMore.set(data.has_next === true);
