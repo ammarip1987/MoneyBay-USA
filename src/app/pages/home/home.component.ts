@@ -32,9 +32,11 @@ interface Subcategory {
     <div class="min-page">
     <!-- Hero Section (only on main page) -->
     @if (!selectedCategory()) {
-      <div class="relative overflow-hidden rounded-2xl mb-8 -mx-4 sm:mx-0">
+      <!-- Отступы те же, что в разделе: строка поиска стоит на одном уровне,
+           где бы человек ни находился -->
+      <div class="relative overflow-hidden rounded-2xl mb-6 -mt-2 -mx-4 sm:mx-0">
         <div class="absolute inset-0 -z-10 bg-gradient-to-br from-blue-50 via-white to-cyan-50"></div>
-        <div class="relative px-4 py-8 sm:py-12 text-center">
+        <div class="relative px-4 py-4 text-center">
           <div class="max-w-3xl mx-auto bg-white rounded-xl shadow-lg p-2 flex flex-col sm:flex-row gap-2 border border-gray-100">
             <div class="flex-1">
               <app-search-autocomplete
