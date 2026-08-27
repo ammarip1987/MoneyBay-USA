@@ -30,41 +30,19 @@ interface Subcategory {
   imports: [CommonModule, FormsModule, RouterLink, ListingCardComponent, SearchAutocompleteComponent, SkeletonLoaderComponent, FilterChipsBarComponent, FilterDrawerComponent],
   template: `
     <div class="min-page">
-    <!-- Hero Section (only on main page) -->
-    @if (!selectedCategory()) {
-      <!-- Отступы те же, что в разделе: строка поиска стоит на одном уровне,
-           где бы человек ни находился -->
-      <div class="relative overflow-hidden rounded-2xl mb-6 -mt-2 -mx-4 sm:mx-0">
-        <div class="absolute inset-0 -z-10 bg-gradient-to-br from-blue-50 via-white to-cyan-50"></div>
-        <div class="relative px-4 py-4 text-center">
-          <div class="max-w-3xl mx-auto bg-white rounded-xl shadow-lg p-2 flex flex-col sm:flex-row gap-2 border border-gray-100">
-            <div class="flex-1">
-              <app-search-autocomplete
-                placeholder="Search listings..."
-                [initialQuery]="searchQuery"
-                (search)="onAutocompleteSearch($event)"></app-search-autocomplete>
-            </div>
-            <button (click)="search()" class="px-6 py-2 bg-mb-blue hover:bg-blue-700 text-white font-bold rounded-lg transition-all text-sm">
-              Search
-            </button>
-          </div>
-        </div>
+    <!-- Строка поиска одна на оба случая: вид и расположение не зависят от
+         того, открыт раздел или нет — переход внутрь не сдвигает раскладку -->
+    <div class="max-w-3xl mx-auto bg-white rounded-xl shadow-lg p-2 flex flex-col sm:flex-row gap-2 border border-gray-100 mb-6 -mt-2">
+      <div class="flex-1">
+        <app-search-autocomplete
+          placeholder="Search listings..."
+          [initialQuery]="searchQuery"
+          (search)="onAutocompleteSearch($event)"></app-search-autocomplete>
       </div>
-    } @else {
-      <!-- Тот же вид, что на главной: строка не меняет расположения при переходе
-           в раздел. Город ушёл в полосу фильтров, к цене и прочему -->
-      <div class="max-w-3xl mx-auto bg-white rounded-xl shadow-lg p-2 flex flex-col sm:flex-row gap-2 border border-gray-100 mb-6 -mt-2">
-        <div class="flex-1">
-          <app-search-autocomplete
-            placeholder="Search listings..."
-            [initialQuery]="searchQuery"
-            (search)="onAutocompleteSearch($event)"></app-search-autocomplete>
-        </div>
-        <button (click)="search()" class="px-6 py-2 bg-mb-blue hover:bg-blue-700 text-white font-bold rounded-lg transition">
-          Search
-        </button>
-      </div>
-    }
+      <button (click)="search()" class="px-6 py-2 bg-mb-blue hover:bg-blue-700 text-white font-bold rounded-lg transition-all text-sm">
+        Search
+      </button>
+    </div>
 
     <!-- Categories grid (only on main page) -->
     @if (!selectedCategory()) {
