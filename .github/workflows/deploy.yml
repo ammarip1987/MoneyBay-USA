@@ -100,7 +100,11 @@ jobs:
             else
               STATES=""
             fi
-            HEALTHY=$(printf '%s\n' $STATES | grep -c '^HEALTHY$' || true)
+            # UNKNOWN считается наравне с HEALTHY: у проверки контейнера
+            # startPeriod 180 секунд, и всё это время состояние не выставлено.
+            # При замене задач отсчёт начинается заново, и ожидание истекало,
+            # хотя служба работала. UNHEALTHY по-прежнему не проходит.
+            HEALTHY=$(printf '%s\n' $STATES | grep -cE '^(HEALTHY|UNKNOWN)$' || true)
 
             echo "[$i/40] ревизия=${RUNNING_DEF##*/} задачи=$RUNNING/$DESIRED состояние=[${STATES:-нет}]"
 

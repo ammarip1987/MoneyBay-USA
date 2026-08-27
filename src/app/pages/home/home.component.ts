@@ -65,10 +65,10 @@ interface Subcategory {
         @if (categories().length === 0) {
           <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
             @for (i of [1, 2, 3, 4, 5, 6, 7, 8, 9, 11, 12, 13]; track i) {
-              <div class="bg-white shadow-md p-6 flex flex-col items-center">
-                <div class="w-10 h-10 bg-gray-200 rounded animate-pulse mb-3"></div>
-                <div class="w-3/4 h-4 bg-gray-200 rounded animate-pulse mb-2"></div>
-                <div class="w-1/2 h-4 bg-gray-200 rounded animate-pulse mb-2"></div>
+              <div class="p-4 flex flex-col items-center">
+                <div class="w-10 h-10 bg-gray-200 rounded animate-pulse mb-2"></div>
+                <div class="w-3/4 h-4 bg-gray-200 rounded animate-pulse mb-1"></div>
+                <div class="w-1/2 h-4 bg-gray-200 rounded animate-pulse mb-1"></div>
                 <div class="w-5/6 h-3 bg-gray-200 rounded animate-pulse"></div>
               </div>
             }
@@ -81,11 +81,15 @@ interface Subcategory {
                  Под название отведена постоянная высота в две строки: иначе у
                  коротких названий описание поднималось, у длинных опускалось, и
                  строки в соседних плитках стояли вразнобой -->
+            <!-- Без подложки и тени: значок и название стоят на белом листе,
+                 ничто их не обводит. Название сразу под значком — постоянная
+                 высота в две строки нужна лишь для того, чтобы описания в
+                 соседних плитках стояли на одном уровне -->
             <a [routerLink]="['/']"
                [queryParams]="{category: cat.slug}"
-               class="p-6 text-center flex flex-col bg-white shadow-md hover:shadow-lg transition-shadow duration-200 focus:outline-none">
-              <div class="text-4xl mb-3 text-mb-blue" [innerHTML]="cat.icon"></div>
-              <h3 class="font-bold text-mb-dark mb-2 line-clamp-2 min-h-[3.5rem] flex items-center justify-center">{{ cat.name }}</h3>
+               class="p-4 text-center flex flex-col items-center hover:opacity-70 transition-opacity focus:outline-none">
+              <div class="text-4xl mb-2 text-mb-blue" [innerHTML]="cat.icon"></div>
+              <h3 class="font-bold text-mb-dark mb-1 line-clamp-2 min-h-[3rem] flex items-center justify-center">{{ cat.name }}</h3>
               <p class="text-sm text-gray-600 line-clamp-2">{{ cat.description }}</p>
             </a>
           }
