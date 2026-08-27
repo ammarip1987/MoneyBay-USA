@@ -153,6 +153,10 @@ interface Subcategory {
       </div>
     }
 
+      <!-- Якорь перехода по страницам стоит над заголовком: прокрутка приводит
+           к «Hot offers», а не к первому ряду карточек под ним -->
+      <div #listingsAnchor></div>
+
     <!-- Listings -->
     @if (!selectedCategory()) {
       <h2 class="text-2xl font-bold text-gray-900 mb-6 text-center">Hot offers</h2>
@@ -192,9 +196,6 @@ interface Subcategory {
         </nav>
       }
 
-    <!-- Якорь перехода по страницам: ниже заголовка, перед геоблоком и
-         фильтрами. Плитки разделов и поиск остаются выше и не листаются заново. -->
-    <div #listingsAnchor></div>
 
     @if (!selectedCategory() && !cityFilter && geo.nearestCity()) {
       <div class="mb-6 bg-blue-50 border border-blue-200 rounded-lg p-4 flex items-center justify-between gap-3 flex-wrap">
