@@ -68,7 +68,9 @@ interface Subcategory {
 
     <!-- Categories grid (only on main page) -->
     @if (!selectedCategory()) {
-      <div class="mb-12">
+      <!-- Отступ тот же, что у плиток подкатегорий: раскладка не съезжает при
+           переходе внутрь раздела -->
+      <div class="mb-8">
         <!-- Место под плитки занято с первого кадра: без этого лента
              подпрыгивает, когда категории приходят -->
         @if (categories().length === 0) {
