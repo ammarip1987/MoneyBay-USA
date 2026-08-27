@@ -57,9 +57,8 @@ interface Subcategory {
           <div class="flex-1 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8 opacity-0">
             @for (i of [1, 2, 3, 4, 5, 6, 7, 8, 9, 11, 12, 13]; track i) {
               <div class="p-2 flex flex-col items-center">
-                <div class="w-8 h-8 mb-1"></div>
+                <div class="w-12 h-12 mb-3"></div>
                 <div class="h-5"></div>
-                <div class="h-4"></div>
               </div>
             }
           </div>
@@ -76,8 +75,7 @@ interface Subcategory {
                [queryParams]="{category: cat.slug}"
                class="w-full max-w-[200px] mx-auto p-3 text-center flex flex-col items-center justify-center focus:outline-none">
               <div class="text-5xl mb-3 text-mb-blue" [innerHTML]="cat.icon"></div>
-              <h3 class="font-bold text-mb-dark text-sm mb-1 line-clamp-1">{{ cat.name }}</h3>
-              <p class="text-xs text-gray-600 line-clamp-2">{{ cat.description }}</p>
+              <h3 class="font-bold text-mb-dark text-sm line-clamp-2">{{ cat.name }}</h3>
             </a>
           }
         </div>
