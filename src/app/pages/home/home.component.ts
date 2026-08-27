@@ -34,18 +34,13 @@ interface Subcategory {
          Отступы у неё малые: с прежними py-8 sm:py-12 строка стояла ниже, чем
          в разделе, и раскладка прыгала при переходе -->
     <div class="mb-6 mt-10">
-      <!-- Кнопка слева от строки: нажимают её реже, чем набирают, и справа она
-           перехватывала взгляд раньше самого поля -->
-      <div class="max-w-3xl mx-auto bg-white rounded-xl shadow-lg p-2 flex flex-col sm:flex-row gap-2 border border-gray-100">
-        <button (click)="search()" class="px-6 py-2 bg-mb-blue hover:bg-blue-700 text-white font-bold rounded-lg transition-all text-sm">
-          Search
-        </button>
-        <div class="flex-1">
-          <app-search-autocomplete
-            placeholder="Search listings..."
-            [initialQuery]="searchQuery"
-            (search)="onAutocompleteSearch($event)"></app-search-autocomplete>
-        </div>
+      <!-- Без кнопки: поиск запускается по Enter, а подсказки появляются на
+           лету. Кнопка нажималась редко и занимала место -->
+      <div class="max-w-3xl mx-auto bg-white rounded-xl shadow-lg p-2 border border-gray-100">
+        <app-search-autocomplete
+          placeholder="Search listings..."
+          [initialQuery]="searchQuery"
+          (search)="onAutocompleteSearch($event)"></app-search-autocomplete>
       </div>
     </div>
 
