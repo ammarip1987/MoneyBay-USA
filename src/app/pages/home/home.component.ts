@@ -74,7 +74,7 @@ interface Subcategory {
                  показывает, что плитка нажимается -->
             <a [routerLink]="['/']"
                [queryParams]="{category: cat.slug}"
-               class="p-3 text-center flex flex-col items-center justify-center focus:outline-none">
+               class="w-full max-w-[200px] mx-auto p-3 text-center flex flex-col items-center justify-center focus:outline-none">
               <div class="text-3xl mb-2 text-mb-blue" [innerHTML]="cat.icon"></div>
               <h3 class="font-bold text-mb-dark text-sm mb-1 line-clamp-1">{{ cat.name }}</h3>
               <p class="text-xs text-gray-600 line-clamp-2">{{ cat.description }}</p>
