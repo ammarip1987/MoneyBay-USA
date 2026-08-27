@@ -80,12 +80,16 @@ interface Subcategory {
                  ничто их не обводит. Название сразу под значком — постоянная
                  высота в две строки нужна лишь для того, чтобы описания в
                  соседних плитках стояли на одном уровне -->
+            <!-- При наведении ничего не меняется: указатель мыши и так
+                 показывает, что плитка нажимается.
+                 Постоянная высота под название — чтобы описания в соседних
+                 плитках стояли на одном уровне при названиях разной длины -->
             <a [routerLink]="['/']"
                [queryParams]="{category: cat.slug}"
-               class="p-4 text-center flex flex-col items-center hover:opacity-70 transition-opacity focus:outline-none">
+               class="p-4 text-center flex flex-col items-center focus:outline-none">
               <div class="text-4xl mb-2 text-mb-blue" [innerHTML]="cat.icon"></div>
-              <h3 class="font-bold text-mb-dark mb-1 line-clamp-2 min-h-[3rem] flex items-center justify-center">{{ cat.name }}</h3>
-              <p class="text-sm text-gray-600 line-clamp-2">{{ cat.description }}</p>
+              <h3 class="font-bold text-mb-dark line-clamp-2 min-h-[3rem] flex items-center justify-center">{{ cat.name }}</h3>
+              <p class="text-sm text-gray-600 line-clamp-2 -mt-1">{{ cat.description }}</p>
             </a>
           }
         </div>
