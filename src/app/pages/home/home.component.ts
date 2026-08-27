@@ -155,7 +155,7 @@ interface Subcategory {
 
     <!-- Listings -->
     @if (!selectedCategory()) {
-      <h2 class="text-2xl font-bold text-gray-900 mb-6 text-center">Recent Listings</h2>
+      <h2 class="text-2xl font-bold text-gray-900 mb-6 text-center">Hot offers</h2>
     }
 
     <!-- Якорь перехода по страницам: ниже заголовка, перед геоблоком и
