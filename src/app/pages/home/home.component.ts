@@ -50,7 +50,7 @@ interface Subcategory {
       <!-- Оставшиеся две трети первого экрана. Ниже этой высоты не сжимается,
            но и не ограничивается ею: на телефоне двенадцать плиток в столбец
            всё равно выше экрана, и обрезать их нельзя -->
-      <div class="min-h-[calc(65vh-2rem)] flex flex-col mb-32">
+      <div class="min-h-[calc(65vh-2rem)] flex flex-col mb-12">
         <!-- Место под плитки занято с первого кадра: без этого лента
              подпрыгивает, когда категории приходят -->
         @if (categories().length === 0) {
@@ -156,6 +156,10 @@ interface Subcategory {
     }
 
     <!-- Listings -->
+    @if (!selectedCategory()) {
+      <h2 class="text-2xl font-bold text-gray-900 mb-6">Recent Listings</h2>
+    }
+
     <!-- Якорь перехода по страницам: ниже заголовка, перед геоблоком и
          фильтрами. Плитки разделов и поиск остаются выше и не листаются заново. -->
     <div #listingsAnchor></div>
