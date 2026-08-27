@@ -157,6 +157,40 @@ interface Subcategory {
     @if (!selectedCategory()) {
       <h2 class="text-2xl font-bold text-gray-900 mb-6 text-center">Hot offers</h2>
     }
+      <!-- Та же карусель, что внизу: до неё не надо прокручивать всю ленту -->
+      @if (totalPages() > 1) {
+        <nav class="pb-6 flex justify-center items-center gap-1 flex-wrap" aria-label="Pagination">
+          <button (click)="goToPage(currentPage() - 1)"
+                  [disabled]="currentPage() <= 1"
+                  class="px-3 py-2 rounded-lg text-sm font-medium transition disabled:opacity-40 disabled:cursor-not-allowed hover:bg-gray-100"
+                  aria-label="Previous page">
+            <i class="fas fa-chevron-left"></i>
+          </button>
+
+          @for (p of pageNumbers(); track $index) {
+            @if (p === 0) {
+              <span class="px-2 text-gray-400">…</span>
+            } @else {
+              <button (click)="goToPage(p)"
+                      class="min-w-[2.5rem] px-3 py-2 rounded-lg text-sm font-medium transition"
+                      [class.bg-mb-blue]="p === currentPage()"
+                      [class.text-white]="p === currentPage()"
+                      [class.text-gray-700]="p !== currentPage()"
+                      [class.hover:bg-gray-100]="p !== currentPage()"
+                      [attr.aria-current]="p === currentPage() ? 'page' : null">
+                {{ p }}
+              </button>
+            }
+          }
+
+          <button (click)="goToPage(currentPage() + 1)"
+                  [disabled]="currentPage() >= totalPages()"
+                  class="px-3 py-2 rounded-lg text-sm font-medium transition disabled:opacity-40 disabled:cursor-not-allowed hover:bg-gray-100"
+                  aria-label="Next page">
+            <i class="fas fa-chevron-right"></i>
+          </button>
+        </nav>
+      }
 
     <!-- Якорь перехода по страницам: ниже заголовка, перед геоблоком и
          фильтрами. Плитки разделов и поиск остаются выше и не листаются заново. -->
