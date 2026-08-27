@@ -30,13 +30,14 @@ interface Subcategory {
   imports: [CommonModule, FormsModule, RouterLink, ListingCardComponent, SearchAutocompleteComponent, SkeletonLoaderComponent, FilterChipsBarComponent, FilterDrawerComponent],
   template: `
     <div class="min-page">
-    <!-- Строка одна на оба случая; на главной за ней светлая подложка.
-         Отступы у неё малые: с прежними py-8 sm:py-12 строка стояла ниже, чем
-         в разделе, и раскладка прыгала при переходе -->
-    <div class="mb-6 mt-10">
+    <!-- На главной поиск занимает треть первого экрана, плитки — остальное.
+         В разделе высота обычная: там выше стоит заголовок категории -->
+    <div [class]="selectedCategory()
+           ? 'mb-6 mt-10'
+           : 'h-[calc(35vh-2rem)] flex items-center justify-center'">
       <!-- Без кнопки: поиск запускается по Enter, а подсказки появляются на
            лету. Кнопка нажималась редко и занимала место -->
-      <div class="max-w-3xl mx-auto bg-white rounded-xl shadow-lg p-2 border border-gray-100">
+      <div class="w-full max-w-3xl mx-auto bg-white rounded-xl shadow-lg p-2 border border-gray-100">
         <app-search-autocomplete
           placeholder="Search listings..."
           [initialQuery]="searchQuery"
@@ -46,14 +47,10 @@ interface Subcategory {
 
     <!-- Categories grid (only on main page) -->
     @if (!selectedCategory()) {
-      <!-- Плитки занимают первый экран целиком: объявления начинаются за ним,
-           и человек прокручивает к ним, а не встречает их вперемешку с
-           разделами. Заголовок над лентой убран — под плитками он читался
-           как их продолжение -->
-      <!-- Отступ снизу вместо растягивания на высоту экрана: при min-h плитки
-           расползались по центру на крупных мониторах, оставляя пустоту, а на
-           телефоне двенадцать плиток в столбец и так выше экрана -->
-      <div class="mb-24">
+      <!-- Оставшиеся две трети первого экрана. Ниже этой высоты не сжимается,
+           но и не ограничивается ею: на телефоне двенадцать плиток в столбец
+           всё равно выше экрана, и обрезать их нельзя -->
+      <div class="min-h-[calc(65vh-2rem)] flex flex-col justify-start mb-16">
         <!-- Место под плитки занято с первого кадра: без этого лента
              подпрыгивает, когда категории приходят -->
         <!-- Заглушка повторяет строение плитки, а не просто занимает место:
