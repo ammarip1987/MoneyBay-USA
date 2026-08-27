@@ -218,9 +218,26 @@ interface Subcategory {
     }
 
     @if (listings().length > 0) {
-      <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 xl:grid-cols-5 gap-6 mt-4">
-        @for (listing of listings(); track listing.id) {
-          <app-listing-card [listing]="listing"></app-listing-card>
+      <!-- Прежние карточки остаются на месте, пока идёт запрос: приглушаются и
+           перестают отзываться, а поверх появляется кружок. Убирать их и
+           показывать пустоту значило бы дёргать страницу при каждой правке
+           отбора -->
+      <div class="relative">
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 xl:grid-cols-5 gap-6 mt-4 transition-opacity duration-200"
+             [class.opacity-40]="pagingNow()"
+             [class.pointer-events-none]="pagingNow()">
+          @for (listing of listings(); track listing.id) {
+            <app-listing-card [listing]="listing"></app-listing-card>
+          }
+        </div>
+
+        @if (pagingNow()) {
+          <div class="absolute inset-0 flex items-start justify-center pt-32">
+            <span class="sticky top-1/2 relative inline-flex items-center justify-center w-16 h-16">
+              <span class="absolute inset-0 border-4 border-mb-blue border-t-transparent rounded-full animate-spin"></span>
+              <span class="text-2xl font-bold text-mb-blue select-none">M</span>
+            </span>
+          </div>
         }
       </div>
 
@@ -261,22 +278,12 @@ interface Subcategory {
         }
       }
     }
-
-    <!-- Первая загрузка — скелет: он показывает будущую раскладку. Переход
-         между страницами — кружок: раскладка уже знакома, и восемь размытых
-         карточек вместо неё выглядят хуже. -->
-    @if (loading()) {
-      @if (pagingNow()) {
-        <div class="flex items-center justify-center" style="min-height: 520px;">
-          <span class="relative inline-flex items-center justify-center w-16 h-16">
-            <span class="absolute inset-0 border-4 border-mb-blue border-t-transparent rounded-full animate-spin"></span>
-            <span class="text-2xl font-bold text-mb-blue select-none">M</span>
-          </span>
-        </div>
-      } @else {
-        <app-skeleton-loader variant="listing-grid" [count]="10"></app-skeleton-loader>
+    <!-- Скелет только при первой загрузке, когда показывать ещё нечего. Смена
+         страницы или отбора обходится приглушением прежних карточек и кружком
+         поверх них — он рисуется в блоке выше -->
+    @if (loading() && !pagingNow()) {
+      <app-skeleton-loader variant="listing-grid" [count]="10"></app-skeleton-loader>
       }
-    }
 
     @if (!loading() && listings().length === 0) {
       <div class="text-center py-12"><p class="text-gray-500 text-lg">No listings found.</p></div>
@@ -450,11 +457,10 @@ export class HomeComponent implements OnInit, OnDestroy {
         if (this.listings().length > 0) this.pagingNow.set(true);
       }
 
-      // Отбор сменился — карточки уходят, и на их месте показывается ожидание:
-      // иначе под полосой фильтров остаётся пустое место, пока идёт запрос
+      // Отбор сменился — карточки приглушаются, а не убираются: loading здесь
+      // не поднимается, иначе они пропали бы и место опустело
       if (filterChanged && this.listings().length > 0) {
         this.pagingNow.set(true);
-        this.loading.set(true);
       }
       this.searchQuery = params['q'] || '';
       this.cityFilter = params['city'] || '';
