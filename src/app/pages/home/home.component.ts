@@ -30,18 +30,25 @@ interface Subcategory {
   imports: [CommonModule, FormsModule, RouterLink, ListingCardComponent, SearchAutocompleteComponent, SkeletonLoaderComponent, FilterChipsBarComponent, FilterDrawerComponent],
   template: `
     <div class="min-page">
-    <!-- Строка поиска одна на оба случая: вид и расположение не зависят от
-         того, открыт раздел или нет — переход внутрь не сдвигает раскладку -->
-    <div class="max-w-3xl mx-auto bg-white rounded-xl shadow-lg p-2 flex flex-col sm:flex-row gap-2 border border-gray-100 mb-8">
-      <div class="flex-1">
-        <app-search-autocomplete
-          placeholder="Search listings..."
-          [initialQuery]="searchQuery"
-          (search)="onAutocompleteSearch($event)"></app-search-autocomplete>
+    <!-- Строка одна на оба случая; на главной за ней светлая подложка.
+         Отступы у неё малые: с прежними py-8 sm:py-12 строка стояла ниже, чем
+         в разделе, и раскладка прыгала при переходе -->
+    <div class="relative overflow-hidden rounded-2xl mb-8 -mx-4 sm:mx-0"
+         [class.py-3]="!selectedCategory()">
+      @if (!selectedCategory()) {
+        <div class="absolute inset-0 -z-10 bg-gradient-to-br from-blue-50 via-white to-cyan-50"></div>
+      }
+      <div class="max-w-3xl mx-auto bg-white rounded-xl shadow-lg p-2 flex flex-col sm:flex-row gap-2 border border-gray-100 mx-4 sm:mx-auto">
+        <div class="flex-1">
+          <app-search-autocomplete
+            placeholder="Search listings..."
+            [initialQuery]="searchQuery"
+            (search)="onAutocompleteSearch($event)"></app-search-autocomplete>
+        </div>
+        <button (click)="search()" class="px-6 py-2 bg-mb-blue hover:bg-blue-700 text-white font-bold rounded-lg transition-all text-sm">
+          Search
+        </button>
       </div>
-      <button (click)="search()" class="px-6 py-2 bg-mb-blue hover:bg-blue-700 text-white font-bold rounded-lg transition-all text-sm">
-        Search
-      </button>
     </div>
 
     <!-- Categories grid (only on main page) -->
