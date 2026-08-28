@@ -679,9 +679,10 @@ export class HomeComponent implements OnInit, OnDestroy {
     // прежние карточки остаются на месте, новые добавляются под ними
     if (!append && !this.api.hasCachedListings(params)) {
       this.loading.set(true);
-      // Объявления прежней страницы не должны висеть под заголовком новой:
-      // на их месте показываются заглушки, пока идёт запрос
-      this.listings.set([]);
+      // При листании карточки остаются на месте, приглушённые, с кружком
+      // поверх — очистка оставляла пустоту вместо ожидания. Убираются они
+      // только когда показывать нечего: первый заход, смена раздела
+      if (!this.pagingNow()) this.listings.set([]);
     }
 
     this.api.getListings(params).subscribe({
