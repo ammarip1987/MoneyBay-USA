@@ -162,7 +162,7 @@ interface Subcategory {
       <h2 class="text-2xl font-bold text-gray-900 mb-6 text-center">Hot offers</h2>
     }
       <!-- Та же карусель, что внизу: до неё не надо прокручивать всю ленту -->
-      @if (!searchQuery && totalPages() > 1) {
+      @if (!searchQuery && !selectedCategory() && totalPages() > 1) {
         <nav class="pb-6 flex justify-center items-center gap-1 flex-wrap" aria-label="Pagination">
           <button (click)="goToPage(currentPage() - 1)"
                   [disabled]="currentPage() <= 1"
@@ -336,7 +336,7 @@ interface Subcategory {
     <!-- Скелет только при первой загрузке, когда показывать ещё нечего. Смена
          страницы или отбора обходится приглушением прежних карточек и кружком
          поверх них — он рисуется в блоке выше -->
-    @if (loading() && !pagingNow() && listings().length === 0) {
+    @if (loading() && listings().length === 0) {
       <app-skeleton-loader variant="listing-grid" [count]="10"></app-skeleton-loader>
       }
 
