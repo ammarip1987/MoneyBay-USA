@@ -42,6 +42,9 @@ import { ApiService } from '../../services/api.service';
       @if (listing.images && listing.images.length > 0) {
         <a [routerLink]="['/listing', listing.id]" [state]="{ listing: listing }" class="block overflow-hidden">
           <div class="relative bg-gray-100 h-64 cursor-pointer">
+              <!-- Пока снимок грузится, на подложке виден значок: пустое светлое
+                   поле читается как сбой, значок — как ожидание -->
+              <div class="absolute inset-0 flex items-center justify-center text-gray-300 text-3xl pointer-events-none">📷</div>
             <!-- Прогрессивная загрузка: место под снимок занято серой подложкой
                  с первого кадра, само изображение проявляется по готовности.
                  loading="lazy" откладывает загрузку тех, что вне экрана, — при
