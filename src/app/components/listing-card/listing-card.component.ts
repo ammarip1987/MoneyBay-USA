@@ -48,7 +48,7 @@ import { ApiService } from '../../services/api.service';
                  прокрутке они подтягиваются по мере приближения. -->
             <img [src]="getImageUrl(listing.images[currentImage()])"
                  [alt]="listing.title"
-                 class="w-full h-full object-cover transition-opacity duration-500"
+                 class="w-full h-full object-cover"
                  [class.opacity-0]="!imageLoaded()"
                  [class.opacity-100]="imageLoaded()"
                  (load)="imageLoaded.set(true)"

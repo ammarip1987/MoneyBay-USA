@@ -24,7 +24,7 @@ import { ListingCardComponent } from '../../components/listing-card/listing-card
                   <img [src]="getImageUrl(listing()!.images[currentImage()])"
                        [alt]="listing()!.title"
                        (click)="openLightbox(currentImage())"
-                       class="w-full h-full object-cover cursor-zoom-in transition-opacity duration-300 !rounded-none"
+                       class="w-full h-full object-cover cursor-zoom-in !rounded-none"
                        loading="eager"
                        fetchpriority="high"
                        decoding="async">
@@ -50,7 +50,7 @@ import { ListingCardComponent } from '../../components/listing-card/listing-card
                 <div class="flex overflow-hidden justify-start bg-white rounded-none flex-wrap">
                   @for (img of listing()!.images; track $index) {
                     <div class="group relative">
-                      <button (click)="setImage($index)" (mouseenter)="currentImage.set($index)" class="flex-shrink-0 w-14 h-14 overflow-hidden border-2 transition !rounded-none" [class.border-mb-blue]="currentImage() === $index" [class.border-gray-300]="currentImage() !== $index">
+                      <button (click)="setImage($index)" (mouseenter)="currentImage.set($index)" class="flex-shrink-0 w-14 h-14 overflow-hidden border-2 !rounded-none" [class.border-mb-blue]="currentImage() === $index" [class.border-gray-300]="currentImage() !== $index">
                         <img [src]="getImageUrl(img)" [alt]="'Thumbnail ' + ($index + 1)" class="w-full h-full object-cover !rounded-none">
                       </button>
                     </div>
