@@ -54,11 +54,11 @@ import { ApiService } from '../../services/api.service';
               <!-- Стрелки без подложки: тень делает их различимыми и на светлой,
                    и на тёмной фотографии -->
               <button (click)="prevImage($event)"
-                        class="absolute left-0 top-1/2 -translate-y-1/2 opacity-0 group-hover:opacity-60 w-6 h-20 flex items-center justify-center z-10 cursor-pointer" style="background-color: #ffffff; color: #666; border: 1px solid #ddd; border-left: none; border-top-right-radius: 2.5em; border-bottom-right-radius: 2.5em;">
+                        class="absolute left-px top-1/2 -translate-y-1/2 opacity-0 group-hover:opacity-60 w-6 h-20 flex items-center justify-center z-10 cursor-pointer" style="background-color: #ffffff; color: #666; border: 1px solid #ddd; border-left: none; border-top-right-radius: 2.5em; border-bottom-right-radius: 2.5em;">
                 <i class="fas fa-chevron-left text-xl"></i>
               </button>
               <button (click)="nextImage($event)"
-                        class="absolute right-0 top-1/2 -translate-y-1/2 opacity-0 group-hover:opacity-60 w-6 h-20 flex items-center justify-center z-10 cursor-pointer" style="background-color: #ffffff; color: #666; border: 1px solid #ddd; border-right: none; border-top-left-radius: 2.5em; border-bottom-left-radius: 2.5em;">
+                        class="absolute right-px top-1/2 -translate-y-1/2 opacity-0 group-hover:opacity-60 w-6 h-20 flex items-center justify-center z-10 cursor-pointer" style="background-color: #ffffff; color: #666; border: 1px solid #ddd; border-right: none; border-top-left-radius: 2.5em; border-bottom-left-radius: 2.5em;">
                 <i class="fas fa-chevron-right text-xl"></i>
               </button>
 
