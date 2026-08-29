@@ -209,27 +209,6 @@ public interface ListingRepository extends JpaRepository<Listing, Long> {
                        @Param("postedAfter") java.time.Instant postedAfter);
 
     /**
-     * Города штата с числом объявлений в каждом — для выпадающего списка
-     * в полосе отбора.
-     *
-     * Отбор идёт через substring по последним двум буквам, а не LIKE '%, CA':
-     * подстановка в начале не даёт опереться на указатель, и запрос шёл
-     * пять с половиной секунд вместо двух десятых.
-     *
-     * Список берётся из самих объявлений, а не из справочника us_cities:
-     * там по десятку крупнейших городов на штат, а объявления лежат в
-     * Delano и Cottage Lake — выбрать было бы нечего.
-     */
-    @Query(value = "SELECT l.location AS name, COUNT(*) AS cnt " +
-                   "FROM listings l " +
-                   "WHERE l.is_active = true AND l.is_deleted = false " +
-                   "AND substring(l.location, length(l.location) - 1, 2) = :state " +
-                   "GROUP BY l.location " +
-                   "ORDER BY COUNT(*) DESC, l.location",
-           nativeQuery = true)
-    List<Object[]> citiesOfState(@Param("state") String state);
-
-    /**
      * То же, но без отбора по снимкам.
      *
      * Два запроса вместо одного с условием «:hasImage = false OR …»: с

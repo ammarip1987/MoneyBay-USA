@@ -37,24 +37,6 @@ import { ListingFilters, SORT_OPTIONS } from '../../models/listing-filters.model
         <i class="fas fa-chevron-down text-xs text-gray-400 absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none"></i>
       </div>
 
-        <!-- Место: города того штата, что выбран выше. Без штата список был
-             бы на двадцать тысяч имён, и выбрать в нём нечего -->
-        @if (selectedState) {
-          <div class="relative">
-            <i class="fas fa-map-marker-alt text-mb-blue text-xs absolute left-4 top-1/2 -translate-y-1/2 pointer-events-none"></i>
-            <select [ngModel]="cityValue()"
-                    (ngModelChange)="onCityChange($event)"
-                    name="cityChip"
-                    class="appearance-none w-52 pl-9 pr-9 py-2 bg-white border border-gray-300 rounded-full text-sm font-medium hover:border-gray-300 focus:border-gray-300 focus:outline-none focus:ring-0 transition cursor-pointer truncate">
-              <option value="">All of {{ stateLabel() }}</option>
-              @for (c of cities; track c.name) {
-                <option [value]="c.name">{{ c.name }} ({{ c.count }})</option>
-              }
-            </select>
-            <i class="fas fa-chevron-down text-xs text-gray-400 absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none"></i>
-          </div>
-        }
-
       <!-- Без подсветки: применённое видно в полосе ниже. Прежде здесь
            переключался text-white, а bg-white из общего перечня перебивал
            bg-mb-blue — надпись пропадала на белом -->
@@ -107,16 +89,6 @@ import { ListingFilters, SORT_OPTIONS } from '../../models/listing-filters.model
             <i class="fas fa-times text-xs text-gray-500"></i>
           </button>
         }
-
-          <!-- Город отдельной кнопкой: снимается он один, штат остаётся -->
-          @if (cityValue()) {
-            <button (click)="onCityChange('')"
-                    class="inline-flex items-center gap-2 px-3 py-1 bg-gray-100 rounded text-sm hover:bg-gray-200 transition">
-              <i class="fas fa-map-marker-alt text-xs text-mb-blue"></i>
-              {{ cityValue() }}
-              <i class="fas fa-times text-xs text-gray-500"></i>
-            </button>
-          }
 
         @if (filters.price_min !== undefined || filters.price_max !== undefined) {
           <button (click)="clearPrice()"
@@ -171,8 +143,6 @@ export class FilterChipsBarComponent {
   /** Сколько подошло и сколько всего. Приходит позже ленты. */
   @Input() matchCount: { count: number; total: number } | null = null;
   @Output() stateChange = new EventEmitter<string>();
-  /** Города выбранного штата: приходят от страницы после выбора штата. */
-  @Input() cities: { name: string; count: number }[] = [];
 
   /** Выбранный штат: код из двух букв. */
   selectedState = '';
@@ -204,7 +174,7 @@ export class FilterChipsBarComponent {
    * полосу применённого.
    */
   appliedCount(): number {
-    return this.activeFilterCount() + (this.selectedState ? 1 : 0) + (this.cityValue() ? 1 : 0);
+    return this.activeFilterCount() + (this.selectedState ? 1 : 0);
   }
 
   activeFilterCount(): number {
@@ -238,27 +208,6 @@ export class FilterChipsBarComponent {
     }
     this.stateChange.emit(code);
     this.filtersChange.emit({ ...this.filters, city: code });
-  }
-
-  /**
-   * Что показать в поле города. В filters.city лежит либо код штата, либо
-   * город: код означает «весь штат», и поле должно быть пустым.
-   */
-  cityValue = (): string => {
-    const v = this.filters.city || '';
-    return v === this.selectedState ? '' : v;
-  };
-
-  /**
-   * Выбор города внутри штата. Пустое значение возвращает отбор к штату
-   * целиком: на сервере `CA` и `Delano, CA` разбираются одним и тем же
-   * resolveCity.
-   */
-  onCityChange(city: string): void {
-    this.filtersChange.emit({
-      ...this.filters,
-      city: city || this.selectedState
-    });
   }
 
   /** Снять отбор по месту. */

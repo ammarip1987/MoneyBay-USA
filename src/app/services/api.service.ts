@@ -220,18 +220,6 @@ export class ApiService {
       }).pipe(map(list => list.map(c => c.name))));
   }
 
-  /**
-   * Города штата, где есть объявления, с числом в каждом. В отличие от
-   * getCitiesOfState берёт список из самих объявлений, а не из справочника:
-   * там по десятку крупнейших на штат, а объявления лежат в Delano и
-   * Cottage Lake.
-   */
-  getListingCitiesOfState(code: string): Observable<{ name: string; count: number }[]> {
-    return this.cached(`listing-cities:${code}`, () =>
-      this.http.get<{ name: string; count: number }[]>(
-        `${this.baseUrl}/api/listings/cities-of-state`, { params: { state: code } }));
-  }
-
   getSubcategories(categorySlug: string): Observable<any[]> {
     return this.cached(`subcategories/${categorySlug}`, () =>
       this.http.get<any[]>(`${this.baseUrl}/api/subcategories/category/${categorySlug}`));

@@ -184,10 +184,8 @@ interface Subcategory {
       <app-filter-chips-bar
         [filters]="currentFilters()"
         [states]="states()"
-        [cities]="stateCities()"
         [matchCount]="matchCount()"
         (filtersChange)="onFiltersChange($event)"
-        (stateChange)="loadStateCities($event)"
         (openDrawer)="drawerOpen.set(true)">
       </app-filter-chips-bar>
 
@@ -344,8 +342,6 @@ export class HomeComponent implements OnInit, OnDestroy {
   cities = signal<City[]>([]);
   /** Штаты для отбора: 51 запись, включая округ Колумбия. */
   states = signal<UsState[]>([]);
-  /** Города выбранного штата: подаются в полосу отбора после выбора штата. */
-  stateCities = signal<{ name: string; count: number }[]>([]);
 
   /**
    * Сколько подходит под отбор и сколько всего. Приходит отдельным запросом
@@ -511,22 +507,6 @@ export class HomeComponent implements OnInit, OnDestroy {
   }
 
   private destroyed = false;
-
-  /**
-   * Города выбранного штата для полосы отбора. Список приходит из справочника
-   * городов США, а не из объявлений: город без объявлений тоже должен
-   * выбираться — иначе не понять, есть там что-то или нет.
-   */
-  loadStateCities(code: string): void {
-    if (!code) {
-      this.stateCities.set([]);
-      return;
-    }
-    this.api.getListingCitiesOfState(code).subscribe({
-      next: (list) => this.stateCities.set(list),
-      error: () => this.stateCities.set([])
-    });
-  }
 
   onFiltersChange(filters: ListingFilters): void {
     const queryParams: any = {};
