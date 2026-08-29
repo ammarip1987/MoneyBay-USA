@@ -172,7 +172,16 @@ public class OAuth2Service {
         if (existing.isPresent()) {
             // SocialAccount.user загружается лениво: вернуть прокси нельзя — транзакция
             // закрывается на выходе отсюда, и контроллер получит LazyInitializationException
-            return userRepository.findById(existing.get().getUser().getId()).orElse(null);
+            User linked = userRepository.findById(existing.get().getUser().getId()).orElse(null);
+
+            // Снимок ставится и при повторном входе, если его до сих пор нет.
+            // Прежде запись шла только при первом связывании: у кого связь уже
+            // была, а снимок не записался, он не появлялся никогда.
+            if (linked != null && profile.picture() != null && linked.getAvatarUrl() == null) {
+                linked.setAvatarUrl(profile.picture());
+                linked = userRepository.save(linked);
+            }
+            return linked;
         }
 
         // Тот же email, зашедший ранее паролем или другой соцсетью — привязка к тому же аккаунту
