@@ -82,7 +82,7 @@ import { ApiService } from '../../services/api.service';
         <div class="flex gap-3 px-4 pt-3">
           @for (img of listing.images; track $index) {
             <button (click)="setImage($index, $event)"
-                    class="carousel-dot w-1.5 h-1.5 rounded-full cursor-pointer"
+                    class="carousel-dot w-1 h-1 rounded-full cursor-pointer"
                     [style.background-color]="currentImage() === $index ? '#009900' : '#ccc'"
                     [attr.aria-label]="'Image ' + ($index + 1)">
             </button>
