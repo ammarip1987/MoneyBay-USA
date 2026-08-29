@@ -29,10 +29,10 @@ import { ListingCardComponent } from '../../components/listing-card/listing-card
                        fetchpriority="high"
                        decoding="async">
                   @if (listing()!.images.length > 1) {
-                    <button (click)="prevImage()" class="absolute left-0 top-1/2 -translate-y-1/2 opacity-0 group-hover:opacity-100 w-7 h-20 flex items-center justify-start z-10 border-none cursor-pointer" style="background-color: rgba(255, 255, 255, 0.8); color: rgb(41, 45, 51); border-top-right-radius: 8px; border-bottom-right-radius: 8px;">
+                    <button (click)="prevImage()" class="absolute left-px top-1/2 -translate-y-1/2 opacity-0 group-hover:opacity-100 w-7 h-20 flex items-center justify-start z-10 border-none cursor-pointer" style="background-color: rgba(255, 255, 255, 0.8); color: rgb(41, 45, 51); border-top-right-radius: 8px; border-bottom-right-radius: 8px;">
                       <svg width="20" height="28" viewBox="0 0 20 32" fill="none"><path d="M16 4L4 16L16 28" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
                     </button>
-                    <button (click)="nextImage()" class="absolute right-0 top-1/2 -translate-y-1/2 opacity-0 group-hover:opacity-100 w-7 h-20 flex items-center justify-end z-10 border-none cursor-pointer" style="background-color: rgba(255, 255, 255, 0.8); color: rgb(41, 45, 51); border-top-left-radius: 8px; border-bottom-left-radius: 8px;">
+                    <button (click)="nextImage()" class="absolute right-px top-1/2 -translate-y-1/2 opacity-0 group-hover:opacity-100 w-7 h-20 flex items-center justify-end z-10 border-none cursor-pointer" style="background-color: rgba(255, 255, 255, 0.8); color: rgb(41, 45, 51); border-top-left-radius: 8px; border-bottom-left-radius: 8px;">
                       <svg width="20" height="28" viewBox="0 0 20 32" fill="none"><path d="M4 4L16 16L4 28" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
                     </button>
                     <div class="absolute left-1/2 -translate-x-1/2 z-10 opacity-0 group-hover:opacity-100 transition w-full" style="top: 0;">
