@@ -152,15 +152,19 @@ public class AuthController {
     }
 
     private ResponseCookie buildRefreshCookie(String token, Duration maxAge) {
+        // Защищённость и SameSite=None идут вместе и требуют https. При местном
+        // запуске соединение обычное, и такая кука браузером отбрасывается —
+        // вход не держался бы. Признаком служит заданная область: на рабочем
+        // она есть, у себя пустая.
+        boolean remote = cookieDomain != null && !cookieDomain.isBlank();
+
         ResponseCookie.ResponseCookieBuilder cookie = ResponseCookie.from(REFRESH_COOKIE, token)
             .httpOnly(true)
-            .secure(true)
-            .sameSite("None")
+            .secure(remote)
+            .sameSite(remote ? "None" : "Lax")
             .path("/api/auth")
             .maxAge(maxAge);
-        // Область задаётся только когда она указана: пустая строка сделала бы
-        // куку недействительной, и при локальном запуске вход бы не держался
-        if (cookieDomain != null && !cookieDomain.isBlank()) {
+        if (remote) {
             cookie.domain(cookieDomain);
         }
         return cookie.build();
