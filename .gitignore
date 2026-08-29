@@ -63,3 +63,6 @@ stripe-*.json
 
 # Wrangler build cache
 .wrangler/
+
+# Настройки местной работы: у каждого свои, в отправку не идут
+src/environments/environment.localwork.ts

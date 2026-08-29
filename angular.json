@@ -45,6 +45,14 @@
             }
           },
           "configurations": {
+            "localwork": {
+              "fileReplacements": [
+                {
+                  "replace": "src/environments/environment.ts",
+                  "with": "src/environments/environment.localwork.ts"
+                }
+              ]
+            },
             "production": {
               "fileReplacements": [
                 {
@@ -93,6 +101,9 @@
           "configurations": {
             "production": {
               "buildTarget": "moneybay-angular:build:production"
+            },
+            "localwork": {
+              "buildTarget": "moneybay-angular:build:localwork"
             },
             "development": {
               "buildTarget": "moneybay-angular:build:development"
