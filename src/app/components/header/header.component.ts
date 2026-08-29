@@ -13,6 +13,22 @@ import { NotificationsService } from '../../services/notifications.service';
   standalone: true,
   imports: [CommonModule, RouterLink],
   template: `
+    <!-- Место под рекламную полосу. Закрывается крестиком, выбор держится в
+         браузере посетителя: закрыл — не показывается до очистки хранилища.
+         Прокручивается вместе со страницей, шапка остаётся закреплённой -->
+    @if (adVisible()) {
+      <div class="bg-gray-100 text-gray-700 border-b border-gray-200 relative">
+        <div class="max-w-7xl mx-auto px-4 py-2 text-center text-sm tracking-wide">
+          Advertising
+        </div>
+        <button (click)="closeAd()"
+                class="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-700"
+                aria-label="Close">
+          <i class="fas fa-times"></i>
+        </button>
+      </div>
+    }
+
     <header class="bg-mb-dark text-white sticky top-0 z-50 shadow-md">
       <nav class="max-w-7xl mx-auto px-4 py-4">
         <div class="flex justify-between items-center">
@@ -36,7 +52,23 @@ import { NotificationsService } from '../../services/notifications.service';
                   </span>
                 }
               </a>
-              <a routerLink="/profile" class="hover:text-mb-cyan transition">Profile</a>
+                <!-- Кружок вместо надписи Profile: со снимком из Google или
+                     Facebook, а без него — буква имени. Ширина одна и та же в
+                     обоих случаях, поэтому соседние ссылки не сдвигаются, пока
+                     снимок грузится -->
+                <a routerLink="/profile" class="flex items-center" aria-label="Profile">
+                  @if (auth.currentUser()?.avatarUrl && auth.currentUser()?.showAvatar !== false && !avatarFailed()) {
+                    <img [src]="auth.currentUser()!.avatarUrl"
+                         alt=""
+                         class="w-8 h-8 rounded-full object-cover border-2 border-transparent hover:border-mb-cyan transition"
+                         width="32" height="32" loading="lazy" decoding="async"
+                         (error)="avatarFailed.set(true)">
+                  } @else {
+                    <span class="w-8 h-8 rounded-full bg-mb-blue text-white flex items-center justify-center text-sm font-semibold border-2 border-transparent hover:border-mb-cyan transition">
+                      {{ initial() }}
+                    </span>
+                  }
+                </a>
               @if (auth.currentUser()?.is_admin) {
                 <a routerLink="/admin/chats" class="btn btn-primary text-sm">Admin</a>
               }
@@ -67,7 +99,16 @@ import { NotificationsService } from '../../services/notifications.service';
                   <span class="bg-red-500 text-white text-xs rounded-full px-2 py-0.5">{{ unreadCount() > 99 ? '99+' : unreadCount() }}</span>
                 }
               </a>
-              <a routerLink="/profile" (click)="closeMobileMenu()" class="hover:text-mb-cyan transition py-2">Profile</a>
+              <!-- В выдвижной панели надпись остаётся: список строк, кружок в
+                   нём читался бы как отдельная кнопка. Снимок идёт слева -->
+              <a routerLink="/profile" (click)="closeMobileMenu()" class="flex items-center gap-3 hover:text-mb-cyan transition py-2">
+                @if (auth.currentUser()?.avatarUrl && auth.currentUser()?.showAvatar !== false && !avatarFailed()) {
+                  <img [src]="auth.currentUser()!.avatarUrl" alt="" class="w-7 h-7 rounded-full object-cover" width="28" height="28" loading="lazy" decoding="async">
+                } @else {
+                  <span class="w-7 h-7 rounded-full bg-mb-blue text-white flex items-center justify-center text-xs font-semibold">{{ initial() }}</span>
+                }
+                Profile
+              </a>
               @if (auth.currentUser()?.is_admin) {
                 <a routerLink="/admin/chats" (click)="closeMobileMenu()" class="btn btn-primary text-sm self-start">Admin</a>
               }
@@ -87,6 +128,45 @@ export class HeaderComponent implements OnDestroy {
   cityCtx = inject(CityContextService);
   notifications = inject(NotificationsService);
   private api = inject(ApiService);
+
+  /**
+   * Рекламная полоса над шапкой. Закрытая не показывается вновь: выбор лежит
+   * в браузере посетителя, к нам не приходит.
+   *
+   * Чтение обёрнуто: в закрытом окне и при запрете хранилища обращение само
+   * бросает исключение, а не отдаёт пустоту.
+   */
+
+  /**
+   * Первая буква имени для кружка без снимка. Берётся из имени, а при его
+   * отсутствии — из почты: пустой кружок читается как сбой загрузки.
+   */
+  initial = (): string => {
+    const u = this.auth.currentUser();
+    const src = u?.username || u?.email || '';
+    return src.charAt(0).toUpperCase() || '?';
+  };
+
+  /** Снимок не открылся — рисуется буква вместо пустого места. */
+  avatarFailed = signal(false);
+  adVisible = signal(this.readAdState());
+
+  private readAdState(): boolean {
+    try {
+      return typeof localStorage === "undefined" || localStorage.getItem("ad-closed") !== "1";
+    } catch {
+      return true;
+    }
+  }
+
+  closeAd(): void {
+    this.adVisible.set(false);
+    try {
+      localStorage.setItem("ad-closed", "1");
+    } catch {
+      // хранилище недоступно — полоса вернётся при следующем заходе
+    }
+  }
   private router = inject(Router);
 
   unreadCount = signal(0);
