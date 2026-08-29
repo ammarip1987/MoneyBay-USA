@@ -229,6 +229,30 @@ public class ListingController {
         return ResponseEntity.ok(response);
     }
 
+    /**
+     * Города штата, в которых есть объявления, с числом каждого — для выбора
+     * места в полосе отбора.
+     *
+     * Отдаются все: во Флориде их под три сотни, и обрезать список значило бы
+     * скрыть часть мест, где объявления есть. Список берётся из объявлений,
+     * поэтому город без объявлений в нём не появится.
+     */
+    @GetMapping("/cities-of-state")
+    public ResponseEntity<List<Map<String, Object>>> citiesOfState(@RequestParam String state) {
+        if (state == null || state.isBlank()) {
+            return ResponseEntity.ok(List.of());
+        }
+        List<Object[]> rows = listingRepository.citiesOfState(state.trim().toUpperCase());
+        List<Map<String, Object>> out = new ArrayList<>(rows.size());
+        for (Object[] row : rows) {
+            Map<String, Object> item = new LinkedHashMap<>();
+            item.put("name", (String) row[0]);
+            item.put("count", ((Number) row[1]).longValue());
+            out.add(item);
+        }
+        return ResponseEntity.ok(out);
+    }
+
     @GetMapping("/facets")
     public ResponseEntity<Map<String, Object>> facets(
         @RequestParam(required = false) String city,
