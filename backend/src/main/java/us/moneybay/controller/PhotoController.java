@@ -22,7 +22,7 @@ public class PhotoController {
     @Autowired
     private R2PhotoService photoService;
 
-    @Autowired
+    @Autowired(required = false)
     private S3Client s3Client;
 
     @Value("${aws.r2.bucketName}")

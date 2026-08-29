@@ -17,7 +17,7 @@ import java.util.UUID;
 public class R2PhotoService {
     private static final Logger log = LoggerFactory.getLogger(R2PhotoService.class);
 
-    @Autowired
+    @Autowired(required = false)
     private S3Client s3Client;
 
     @Value("${aws.r2.bucketName}")

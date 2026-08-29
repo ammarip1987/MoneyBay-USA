@@ -1,6 +1,7 @@
 package us.moneybay.config;
 
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import software.amazon.awssdk.auth.credentials.AwsBasicCredentials;
@@ -23,13 +24,20 @@ public class R2Config {
     @Value("${aws.r2.endpoint:https://6cdba85b64841ba23d899ad6122f7eb9.r2.cloudflarestorage.com}")
     private String endpoint;
 
+    /**
+     * Клиент хранилища снимков. Заводится, только когда ключи заданы: при
+     * местном запуске их нет, и прежде настройка останавливала весь сервер —
+     * поднять его без выгрузки снимков было нельзя.
+     *
+     * Без ключей клиента не будет, и подача объявления со снимком откажет —
+     * остальное работает.
+     */
     @Bean
+    @ConditionalOnProperty(name = "aws.r2.accessKeyId", matchIfMissing = false)
     public S3Client s3Client() {
         if (accessKeyId == null || accessKeyId.isBlank() ||
             secretAccessKey == null || secretAccessKey.isBlank()) {
-            throw new IllegalArgumentException(
-                "R2 credentials not configured. Set AWS_R2_ACCESS_KEY_ID and AWS_R2_SECRET_ACCESS_KEY environment variables or aws.r2.accessKeyId/secretAccessKey in application.properties"
-            );
+            return null;
         }
 
         AwsBasicCredentials credentials = AwsBasicCredentials.create(accessKeyId, secretAccessKey);
