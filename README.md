@@ -1791,7 +1791,7 @@ ng serve
 
 ### Сервисы AWS
 
-Всё в регионе `us-east-2` (Огайо), учётная запись `172575865299`.
+Всё в регионе `us-east-2` (Огайо), учётная запись `<номер счёта>`.
 
 | Сервис | Что делает | Ресурс |
 |---|---|---|
@@ -1839,7 +1839,7 @@ bastion.
 |-----------|--------|--------|
 | **Frontend** | Cloudflare Workers | Воркер `moneybay-usa`, отрисовка SSR; выкладка по push в `main` |
 | **Backend** | AWS ECS Fargate | Сервис `moneybay-api`, cluster `default`, ARM64 |
-| **Database** | AWS RDS PostgreSQL 18.3 | `db-moneybay-usa.c18o4s6gatg6.us-east-2.rds.amazonaws.com`, db.t4g.micro |
+| **Database** | AWS RDS PostgreSQL 18.3 | `<адрес базы>`, db.t4g.micro |
 | **Load Balancer** | AWS ALB | `moneybay-alb-1342255176.us-east-2.elb.amazonaws.com` |
 | **Photo Storage** | Cloudflare R2 | Bucket: `moneybayts-photos`, отдача напрямую через CDN |
 | **Domain** | moneybay.us | Cloudflare DNS |
@@ -1859,7 +1859,7 @@ bastion.
 | ALB | `moneybay-alb` | us-east-2 |
 | Target Group | `moneybay-backend-tg` | us-east-2 |
 | EC2 Bastion | `i-0821136db2ceea87a` | us-east-2 |
-| AWS Account | `172575865299` | - |
+| AWS Account | `<номер счёта>` | - |
 
 ### Task Platform (ARM64 / Graviton)
 
@@ -1889,7 +1889,7 @@ AWS CodeBuild на нативной среде aarch64 — см.
 | Key | Value | Type |
 |-----|-------|------|
 | `SPRING_PROFILES_ACTIVE` | `production` | Environment variable |
-| `DATABASE_URL` | `jdbc:postgresql://db-moneybay-usa.c18o4s6gatg6.us-east-2.rds.amazonaws.com:5432/moneybay` | Environment variable |
+| `DATABASE_URL` | `jdbc:postgresql://<адрес базы>:5432/moneybay` | Environment variable |
 | `DB_USERNAME` | `moneybayusa` | Environment variable |
 | `GOOGLE_CLIENT_ID` | client id из Google Cloud Console | Environment variable |
 | `DB_PASSWORD` | `moneybay/db-password` | Secret (`valueFrom`) |
@@ -1971,7 +1971,7 @@ npm run build
 npx wrangler deploy
 
 # SSH к bastion (адрес меняется при перезапуске инстанса — уточнять по describe-instances)
-ssh -i "G:\Мой диск\работа\ключи aws moneybay\MoneyBay.us server.pem#1-8" admin@3.12.174.53
+ssh -i "G:\Мой диск\работа\ключи aws moneybay\MoneyBay.us server.pem#1-8" admin@<адрес промежуточной машины>
 ```
 
 Локальный AWS CLI настроен на root-ключи учётной записи. Замена на отдельного

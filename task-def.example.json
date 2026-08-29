@@ -3,7 +3,7 @@
     "containerDefinitions": [
         {
             "name": "Main",
-            "image": "172575865299.dkr.ecr.us-east-2.amazonaws.com/moneybay-usa:latest",
+            "image": "<AWS_ACCOUNT_ID>.dkr.ecr.us-east-2.amazonaws.com/moneybay-usa:latest",
             "cpu": 256,
             "memory": 512,
             "memoryReservation": 512,
@@ -20,7 +20,7 @@
             "environment": [
                 {
                     "name": "DATABASE_URL",
-                    "value": "jdbc:postgresql://db-moneybay-usa.c18o4s6gatg6.us-east-2.rds.amazonaws.com:5432/moneybay"
+                    "value": "jdbc:postgresql://<RDS_ENDPOINT>:5432/moneybay"
                 },
                 {
                     "name": "DB_USERNAME",
@@ -56,35 +56,35 @@
             "secrets": [
                 {
                     "name": "DB_PASSWORD",
-                    "valueFrom": "arn:aws:secretsmanager:us-east-2:172575865299:secret:moneybay/db-password-OGoHjR"
+                    "valueFrom": "arn:aws:secretsmanager:us-east-2:<AWS_ACCOUNT_ID>:secret:moneybay/db-password"
                 },
                 {
                     "name": "JWT_SECRET",
-                    "valueFrom": "arn:aws:secretsmanager:us-east-2:172575865299:secret:moneybay/jwt-secret-0gwTY8"
+                    "valueFrom": "arn:aws:secretsmanager:us-east-2:<AWS_ACCOUNT_ID>:secret:moneybay/jwt-secret"
                 },
                 {
                     "name": "GOOGLE_CLIENT_SECRET",
-                    "valueFrom": "arn:aws:secretsmanager:us-east-2:172575865299:secret:moneybay/oauth-PgrAzv:GOOGLE_CLIENT_SECRET::"
+                    "valueFrom": "arn:aws:secretsmanager:us-east-2:<AWS_ACCOUNT_ID>:secret:moneybay/oauth:GOOGLE_CLIENT_SECRET::"
                 },
                 {
                     "name": "FACEBOOK_APP_SECRET",
-                    "valueFrom": "arn:aws:secretsmanager:us-east-2:172575865299:secret:moneybay/oauth-PgrAzv:FACEBOOK_APP_SECRET::"
+                    "valueFrom": "arn:aws:secretsmanager:us-east-2:<AWS_ACCOUNT_ID>:secret:moneybay/oauth:FACEBOOK_APP_SECRET::"
                 },
                 {
                     "name": "R2_ACCESS_KEY_ID",
-                    "valueFrom": "arn:aws:secretsmanager:us-east-2:172575865299:secret:moneybay/oauth-PgrAzv:R2_ACCESS_KEY_ID::"
+                    "valueFrom": "arn:aws:secretsmanager:us-east-2:<AWS_ACCOUNT_ID>:secret:moneybay/oauth:R2_ACCESS_KEY_ID::"
                 },
                 {
                     "name": "R2_SECRET_ACCESS_KEY",
-                    "valueFrom": "arn:aws:secretsmanager:us-east-2:172575865299:secret:moneybay/oauth-PgrAzv:R2_SECRET_ACCESS_KEY::"
+                    "valueFrom": "arn:aws:secretsmanager:us-east-2:<AWS_ACCOUNT_ID>:secret:moneybay/oauth:R2_SECRET_ACCESS_KEY::"
                 },
                 {
                     "name": "MAIL_USERNAME",
-                    "valueFrom": "arn:aws:secretsmanager:us-east-2:172575865299:secret:moneybay/ses-smtp-8BVix0:MAIL_USERNAME::"
+                    "valueFrom": "arn:aws:secretsmanager:us-east-2:<AWS_ACCOUNT_ID>:secret:moneybay/ses-smtp:MAIL_USERNAME::"
                 },
                 {
                     "name": "MAIL_PASSWORD",
-                    "valueFrom": "arn:aws:secretsmanager:us-east-2:172575865299:secret:moneybay/ses-smtp-8BVix0:MAIL_PASSWORD::"
+                    "valueFrom": "arn:aws:secretsmanager:us-east-2:<AWS_ACCOUNT_ID>:secret:moneybay/ses-smtp:MAIL_PASSWORD::"
                 }
             ],
             "logConfiguration": {
@@ -104,8 +104,8 @@
             }
         }
     ],
-    "taskRoleArn": "arn:aws:iam::172575865299:role/ecsTaskExecutionRole",
-    "executionRoleArn": "arn:aws:iam::172575865299:role/ecsTaskExecutionRole",
+    "taskRoleArn": "arn:aws:iam::<AWS_ACCOUNT_ID>:role/ecsTaskExecutionRole",
+    "executionRoleArn": "arn:aws:iam::<AWS_ACCOUNT_ID>:role/ecsTaskExecutionRole",
     "networkMode": "awsvpc",
     "volumes": [],
     "requiresCompatibilities": ["FARGATE"],

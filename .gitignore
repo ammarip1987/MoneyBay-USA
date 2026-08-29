@@ -66,3 +66,7 @@ stripe-*.json
 
 # Настройки местной работы: у каждого свои, в отправку не идут
 src/environments/environment.localwork.ts
+
+# Задача ECS: в ней адрес базы, номер счёта и метки секретов. Образец —
+# task-def.example.json, значения подставляются при развёртывании
+task-def.json
