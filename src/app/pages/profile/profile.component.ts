@@ -17,19 +17,16 @@ import { environment } from '../../../environments/environment';
         <div class="flex flex-col md:flex-row items-start md:items-center gap-8">
           <!-- Avatar -->
           <div class="flex-shrink-0">
-            <!-- Смена фотографии прямо отсюда: при наведении поверх неё
-                 появляется подпись, ходить в Edit Profile не нужно -->
-            <a routerLink="/edit-profile"
-               class="group relative w-32 h-32 bg-gradient-to-br from-mb-blue to-mb-cyan rounded-2xl overflow-hidden flex items-center justify-center text-white text-5xl font-bold shadow-md block">
+            <!-- Снимок приходит только от Google, Facebook или Apple: своей
+                 загрузки нет. Чужое лицо под своим именем — обычный приём
+                 обмана, а от служб приходит то, что уже подтверждено -->
+            <div class="w-32 h-32 bg-gradient-to-br from-mb-blue to-mb-cyan rounded-2xl overflow-hidden flex items-center justify-center text-white text-5xl font-bold shadow-md">
               @if (user()?.avatarUrl) {
                 <img [src]="avatarUrl()" alt="" class="w-full h-full object-cover">
               } @else {
                 {{ (user()?.email || '?')[0].toUpperCase() }}
               }
-              <span class="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition flex items-center justify-center text-sm font-medium">
-                <i class="fas fa-camera mr-2"></i> Change
-              </span>
-            </a>
+            </div>
           </div>
 
           <!-- Profile Info -->
