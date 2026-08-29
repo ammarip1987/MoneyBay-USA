@@ -41,21 +41,10 @@ import { ApiService } from '../../services/api.service';
       <!-- Image carousel -->
       @if (listing.images && listing.images.length > 0) {
         <a [routerLink]="['/listing', listing.id]" [state]="{ listing: listing }" class="block overflow-hidden">
-          <div class="relative bg-gray-100 h-64 cursor-pointer">
-              <!-- Пока снимок грузится, на подложке виден значок: пустое светлое
-                   поле читается как сбой, значок — как ожидание -->
-              <div class="absolute inset-0 z-0 flex items-center justify-center text-gray-300 text-3xl pointer-events-none">📷</div>
-            <!-- Прогрессивная загрузка: место под снимок занято серой подложкой
-                 с первого кадра, само изображение проявляется по готовности.
-                 loading="lazy" откладывает загрузку тех, что вне экрана, — при
-                 прокрутке они подтягиваются по мере приближения. -->
+          <div class="relative h-64 cursor-pointer">
             <img [src]="getImageUrl(listing.images[currentImage()])"
                  [alt]="listing.title"
-                 class="w-full h-full object-cover relative z-10"
-                 [class.opacity-0]="!imageLoaded()"
-                 [class.opacity-100]="imageLoaded()"
-                 (load)="imageLoaded.set(true)"
-                 (error)="imageLoaded.set(true)"
+                 class="w-full h-full object-cover"
                  loading="lazy"
                  decoding="async"
                  width="600"
@@ -128,7 +117,6 @@ export class ListingCardComponent {
   currentImage = signal(0);
   isFavorited = signal(false);
   /** Загрузилось ли изображение: до этого видна серая подложка. */
-  imageLoaded = signal(false);
 
   ngOnInit(): void {
     this.isFavorited.set(this.listing.is_favorited || false);
@@ -161,7 +149,6 @@ export class ListingCardComponent {
     e.preventDefault();
     e.stopPropagation();
     const len = this.listing.images.length;
-    this.imageLoaded.set(false);
     this.currentImage.update(i => (i - 1 + len) % len);
   }
 
@@ -169,14 +156,12 @@ export class ListingCardComponent {
     e.preventDefault();
     e.stopPropagation();
     const len = this.listing.images.length;
-    this.imageLoaded.set(false);
     this.currentImage.update(i => (i + 1) % len);
   }
 
   setImage(index: number, e: Event): void {
     e.preventDefault();
     e.stopPropagation();
-    this.imageLoaded.set(false);
     this.currentImage.set(index);
   }
 
