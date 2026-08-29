@@ -44,14 +44,14 @@ import { ApiService } from '../../services/api.service';
           <div class="relative bg-gray-100 h-64 cursor-pointer">
               <!-- Пока снимок грузится, на подложке виден значок: пустое светлое
                    поле читается как сбой, значок — как ожидание -->
-              <div class="absolute inset-0 flex items-center justify-center text-gray-300 text-3xl pointer-events-none">📷</div>
+              <div class="absolute inset-0 z-0 flex items-center justify-center text-gray-300 text-3xl pointer-events-none">📷</div>
             <!-- Прогрессивная загрузка: место под снимок занято серой подложкой
                  с первого кадра, само изображение проявляется по готовности.
                  loading="lazy" откладывает загрузку тех, что вне экрана, — при
                  прокрутке они подтягиваются по мере приближения. -->
             <img [src]="getImageUrl(listing.images[currentImage()])"
                  [alt]="listing.title"
-                 class="w-full h-full object-cover"
+                 class="w-full h-full object-cover relative z-10"
                  [class.opacity-0]="!imageLoaded()"
                  [class.opacity-100]="imageLoaded()"
                  (load)="imageLoaded.set(true)"
