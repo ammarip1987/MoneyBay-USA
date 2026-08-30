@@ -25,7 +25,11 @@ export const authInterceptor: HttpInterceptorFn = (req, next) => {
       // Обновление само отвечает 401, когда кука негодна — повторять его
       // значило бы уйти в круг
       const isRefresh = req.url.includes('/api/auth/refresh');
-      if (err.status !== 401 || isRefresh || !auth.isAuthenticated()) {
+      // Истёкший токен Spring Security отдаёт как 403, а не 401: под одним лишь
+      // 401 обновление не запускалось, и вошедший получал отказ на всё подряд —
+      // на подачу объявления, на счётчик сообщений
+      const authFailed = err.status === 401 || err.status === 403;
+      if (!authFailed || isRefresh || !auth.isAuthenticated()) {
         return throwError(() => err);
       }
 
