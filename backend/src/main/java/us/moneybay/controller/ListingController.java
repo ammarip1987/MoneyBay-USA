@@ -452,7 +452,12 @@ public class ListingController {
 
         applyKeywordModeration(listing);
         applyReview(listing);
-        return ResponseEntity.ok(ListingDto.from(listingRepository.save(listing)));
+        // Раздел ставится сюда же из уже загруженного: save возвращает объект с
+        // ленивой связью, и обращение к разделу вне сделки давало
+        // LazyInitializationException — подача объявления отказывала
+        Listing saved = listingRepository.save(listing);
+        saved.setCategory(listing.getCategory());
+        return ResponseEntity.ok(ListingDto.from(saved));
     }
 
     @PutMapping(value = "/{id}", consumes = {"multipart/form-data"})
@@ -497,7 +502,11 @@ public class ListingController {
 
         applyKeywordModeration(listing);
         applyReview(listing);
-        return ResponseEntity.ok(ListingDto.from(listingRepository.save(listing)));
+        // То же, что при создании: связь с базой закрыта, раздел берётся из
+        // уже загруженного
+        Listing saved = listingRepository.save(listing);
+        saved.setCategory(listing.getCategory());
+        return ResponseEntity.ok(ListingDto.from(saved));
     }
 
     // severity 2 -> hide, severity 3 -> ban (CLAUDE.md, Trust & Safety)
