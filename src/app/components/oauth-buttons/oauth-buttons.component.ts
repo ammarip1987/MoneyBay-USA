@@ -13,8 +13,7 @@ import { OAuthService, OAuthProvider } from '../../services/oauth.service';
   imports: [CommonModule],
   template: `
     @if (providers().length > 0) {
-      <div class="mt-6 pt-6 border-t border-gray-200">
-        <p class="text-xs text-gray-500 text-center mb-4">Or continue with</p>
+      <div class="mb-6">
         <div class="space-y-3">
           @for (p of providers(); track p.provider) {
             <button type="button" (click)="oauth.start(p)" [disabled]="disabled"

@@ -28,6 +28,16 @@ import { OAuthButtonsComponent } from '../../components/oauth-buttons/oauth-butt
               <span>{{ error() }}</span>
             </div>
           }
+          <!-- Вход службами выше формы: он в один шаг и не требует помнить
+               пароль. Форма ниже — для тех, у кого учётная запись заведена
+               почтой -->
+          <app-oauth-buttons [disabled]="loading()" />
+          <!-- Черта отделяет вход службами от входа почтой -->
+          <div class="relative my-6">
+            <div class="absolute inset-0 flex items-center"><div class="w-full border-t border-gray-200"></div></div>
+            <div class="relative flex justify-center"><span class="bg-white px-3 text-xs text-gray-500">Or sign in with email</span></div>
+          </div>
+
 
           <form (ngSubmit)="onSubmit()" class="space-y-4">
             <div>
@@ -54,8 +64,6 @@ import { OAuthButtonsComponent } from '../../components/oauth-buttons/oauth-butt
               {{ loading() ? 'Logging in...' : 'Log in' }}
             </button>
           </form>
-
-          <app-oauth-buttons [disabled]="loading()" />
 
           <div class="text-center text-sm text-gray-600 mt-6 pt-6 border-t border-gray-100">
             New here? <a routerLink="/register" class="text-mb-blue hover:underline font-medium">Create an account</a>
