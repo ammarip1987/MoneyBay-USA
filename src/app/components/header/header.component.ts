@@ -51,7 +51,7 @@ import { NotificationsService } from '../../services/notifications.service';
                 <i class="fas fa-list"></i>
               </a>
               <a routerLink="/favorites" class="hover:text-mb-cyan transition" aria-label="Favorites" title="Favorites">
-                <i class="fas fa-star text-yellow-400"></i>
+                <i class="far fa-star text-yellow-400"></i>
               </a>
               <a routerLink="/messages" class="hover:text-mb-cyan transition relative">
                 Messages
@@ -103,7 +103,7 @@ import { NotificationsService } from '../../services/notifications.service';
               <a routerLink="/new-listing" (click)="closeMobileMenu()" class="hover:text-mb-cyan transition py-2">Post Ad</a>
               <a routerLink="/my-listings" (click)="closeMobileMenu()" class="hover:text-mb-cyan transition py-2">My Ads</a>
               <a routerLink="/favorites" (click)="closeMobileMenu()" class="flex items-center gap-3 hover:text-mb-cyan transition py-2">
-                <i class="fas fa-star text-yellow-400"></i>
+                <i class="far fa-star text-yellow-400"></i>
                 Favorites
               </a>
               <a routerLink="/messages" (click)="closeMobileMenu()" class="hover:text-mb-cyan transition py-2 flex items-center gap-2">
