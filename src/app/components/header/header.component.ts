@@ -45,11 +45,6 @@ import { NotificationsService } from '../../services/notifications.service';
               <!-- Подача объявления — то, ради чего продавец приходит: рамка отделяет
                    её от прочих ссылок. Плюс убран, надпись говорит сама -->
               <a routerLink="/new-listing" class="px-4 py-2 border border-white/40 rounded hover:bg-white/10 hover:border-white transition">Post Ad</a>
-              <!-- Свои объявления значком: рядом со звездой избранного, обе ведут
-                   в разделы кабинета и подписи не требуют -->
-              <a routerLink="/my-listings" class="hover:text-mb-cyan transition" aria-label="My Ads" title="My Ads">
-                <i class="fas fa-list"></i>
-              </a>
               <a routerLink="/favorites" class="hover:text-mb-cyan transition" aria-label="Favorites" title="Favorites">
                 <i class="far fa-star text-yellow-400"></i>
               </a>
