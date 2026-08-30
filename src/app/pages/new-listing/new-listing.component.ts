@@ -20,12 +20,18 @@ import { CityAutocompleteComponent } from '../../components/city-autocomplete/ci
       <form (ngSubmit)="onSubmit()" class="bg-white rounded-2xl shadow-lg p-8 space-y-6">
         <div class="form-group">
           <label class="form-label">Title *</label>
-          <input type="text" [(ngModel)]="title" name="title" class="form-input" required maxlength="200" minlength="10" placeholder="What are you selling?">
-          <!-- Проверка идёт здесь, а не после отправки: недочёт виден сразу, и
-               объявление не заводится в базе отклонённым -->
-          @if (title.length > 0 && title.trim().length < 10) {
-            <p class="text-sm text-red-600 mt-1">At least 10 characters ({{ title.trim().length }}/10)</p>
-          }
+            <!-- Требование показано с самого начала серым: человек знает его до
+                 того, как напишет, а не узнаёт после отказа. Красным поле
+                 становится лишь при попытке отправить недоделанное -->
+            <input type="text" [(ngModel)]="title" name="title"
+                   [class.border-red-400]="submitAttempted && title.trim().length < 10"
+                   [class.bg-red-50]="submitAttempted && title.trim().length < 10"
+                   class="form-input" required maxlength="200" placeholder="What are you selling?">
+            <p class="text-sm mt-1"
+               [class.text-gray-400]="!submitAttempted || title.trim().length >= 10"
+               [class.text-red-600]="submitAttempted && title.trim().length < 10">
+              At least 10 characters ({{ title.trim().length }}/10)
+            </p>
         </div>
 
         <div class="form-group">
@@ -40,11 +46,16 @@ import { CityAutocompleteComponent } from '../../components/city-autocomplete/ci
 
         <div class="form-group">
           <label class="form-label">Description *</label>
-          <textarea [(ngModel)]="description" name="description" class="form-input" rows="6" required
-                    placeholder="Describe condition, features, why you're selling..."></textarea>
-          @if (description.length > 0 && description.trim().length < 40) {
-            <p class="text-sm text-red-600 mt-1">At least 40 characters ({{ description.trim().length }}/40)</p>
-          }
+            <textarea [(ngModel)]="description" name="description" rows="6" required
+                      [class.border-red-400]="submitAttempted && description.trim().length < 40"
+                      [class.bg-red-50]="submitAttempted && description.trim().length < 40"
+                      class="form-input"
+                      placeholder="Describe condition, features, why you're selling..."></textarea>
+            <p class="text-sm mt-1"
+               [class.text-gray-400]="!submitAttempted || description.trim().length >= 40"
+               [class.text-red-600]="submitAttempted && description.trim().length < 40">
+              At least 40 characters ({{ description.trim().length }}/40)
+            </p>
         </div>
 
         <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -55,7 +66,7 @@ import { CityAutocompleteComponent } from '../../components/city-autocomplete/ci
                  которой человек ещё не совершал -->
             <div class="relative">
               <input type="number" [(ngModel)]="price" name="price"
-                     (blur)="priceTouched = true"
+                     
                      [class.border-red-400]="priceEmpty()"
                      [class.bg-red-50]="priceEmpty()"
                      class="form-input" min="1" step="0.01" required>
@@ -93,7 +104,7 @@ import { CityAutocompleteComponent } from '../../components/city-autocomplete/ci
         </div>
 
         <div class="flex gap-3 pt-4 border-t border-gray-100">
-          <button type="submit" class="btn btn-primary flex-1" [disabled]="loading() || !formValid()">
+          <button type="submit" class="btn btn-primary flex-1" [disabled]="loading()">
             {{ loading() ? 'Posting...' : 'Post Ad' }}
           </button>
           <button type="button" (click)="cancel()" class="btn btn-secondary">Cancel</button>
@@ -158,11 +169,11 @@ export class NewListingComponent implements OnInit {
    *
    * Проверка здесь не отменяет серверную — та защищает от обхода страницы.
    */
-  /** Поле цены тронуто и оставлено пустым — подсвечивается. */
-  priceTouched = false;
+  /** Нажимали ли Post Ad: до этого недочёты показаны серым, после — красным. */
+  submitAttempted = false;
 
   priceEmpty(): boolean {
-    return this.priceTouched && (this.price === null || this.price === undefined || (this.price as any) === '');
+    return this.submitAttempted && (this.price === null || this.price === undefined || (this.price as any) === '');
   }
 
   formValid(): boolean {
@@ -175,7 +186,11 @@ export class NewListingComponent implements OnInit {
   }
 
   async onSubmit(): Promise<void> {
-    if (!this.title || !this.categoryId || !this.description || !this.state || !this.cityName.trim()) {
+    // Отметка ставится до проверки: она включает красную подсветку полей, и
+    // человек видит, где именно недобор, а не только строку с отказом
+    this.submitAttempted = true;
+
+    if (!this.formValid()) {
       this.notification.error('Please fill all required fields');
       return;
     }
