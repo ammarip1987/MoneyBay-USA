@@ -23,6 +23,7 @@ import java.nio.file.*;
 import java.util.*;
 import java.util.stream.Collectors;
 
+@lombok.extern.slf4j.Slf4j
 @RestController
 @RequestMapping("/api/listings")
 public class ListingController {
@@ -457,6 +458,15 @@ public class ListingController {
         // LazyInitializationException — подача объявления отказывала
         Listing saved = listingRepository.save(listing);
         saved.setCategory(listing.getCategory());
+
+        // Событие подачи: по нему видно, кто и что выложил. Двоичного содержимого
+        // снимков в записи нет — только их число: журнал не место для картинок
+        log.info("event=listing_created listing_id={} user_id={} category={} has_images={} status={}",
+            saved.getId(), user.getId(),
+            saved.getCategory() != null ? saved.getCategory().getSlug() : "none",
+            saved.getImages() != null && !saved.getImages().isEmpty(),
+            saved.getStatus());
+
         return ResponseEntity.ok(ListingDto.from(saved));
     }
 
@@ -524,6 +534,12 @@ public class ListingController {
 
         if (listingReviewService.shouldReject(reasons)) {
             listing.setStatus(Listing.ListingStatus.REJECTED);
+            // Отклонение проверкой: подозрительная подача, но не запрет — WARN
+            log.warn("event=listing_rejected user_id={} reasons={} title_len={} desc_len={}",
+                listing.getUser() != null ? listing.getUser().getId() : null,
+                String.join(",", reasons),
+                listing.getTitle() == null ? 0 : listing.getTitle().length(),
+                listing.getDescription() == null ? 0 : listing.getDescription().length());
             listing.setActive(false);
         } else if (listing.getStatus() == Listing.ListingStatus.REJECTED) {
             // Недочёты исправлены — объявление снова показывается
@@ -537,6 +553,11 @@ public class ListingController {
             listing.getTitle() == null ? "" : listing.getTitle(),
             listing.getDescription() == null ? "" : listing.getDescription());
         if (!result.matched) return;
+        // Запрещённое слово: важнее прочих недочётов — по этой записи находят
+        // тех, кто пробует площадку на прочность
+        log.warn("event=listing_keyword_hit user_id={} severity={} category={}",
+            listing.getUser() != null ? listing.getUser().getId() : null,
+            result.severity, result.category);
         if (result.severity >= 3) {
             listing.setStatus(Listing.ListingStatus.BANNED);
             listing.setActive(false);

@@ -65,7 +65,7 @@ public class RateLimitFilter extends OncePerRequestFilter {
             response.setHeader("X-RateLimit-Remaining", String.valueOf(bucket.getAvailableTokens()));
             chain.doFilter(request, response);
         } else {
-            log.warn("[RateLimitFilter] Rejected request from IP {} path {} method {}", clientIp, path, method);
+            log.warn("event=rate_limit_exceeded ip={} path={} method={}", clientIp, path, method);
             response.setStatus(429);
             response.setHeader("Retry-After", "60");
             response.setContentType("application/json");

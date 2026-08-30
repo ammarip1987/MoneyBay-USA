@@ -14,6 +14,7 @@ import java.time.temporal.ChronoUnit;
 import java.util.Map;
 import java.util.Optional;
 
+@lombok.extern.slf4j.Slf4j
 @RestController
 @RequestMapping("/api/boost")
 public class BoostController {
@@ -66,6 +67,9 @@ public class BoostController {
             l.setPromotedUntil(Instant.now().plus(hours, ChronoUnit.HOURS));
             l.setFeatured(true);
             listingRepository.save(l);
+            // Продвижение без оплаты: ключа Stripe нет, срок ставится сразу.
+            // Сумма в записи не нужна — платежа не было
+            log.info("event=boost_activated listing_id={} hours={} mode=dev", listingId, hours);
             return ResponseEntity.ok(Map.of(
                 "checkout_url", frontendUrl + "/listing/" + listingId + "?boosted=true",
                 "dev_mode", true,

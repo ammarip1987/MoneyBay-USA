@@ -75,10 +75,10 @@ public class R2PhotoService {
             ));
 
             String url = buildPublicUrl(fileName);
-            log.info("File uploaded to R2: {} -> {}", fileName, url);
+            log.info("event=image_uploaded file={} url={}", fileName, url);
             return url;
         } catch (Exception e) {
-            log.error("Failed to upload file to R2: {}", fileName, e);
+            log.error("event=image_upload_failed file={} reason={}", fileName, e.getMessage(), e);
             throw new IOException("Failed to upload file to R2: " + e.getMessage(), e);
         }
     }
