@@ -18,7 +18,6 @@ import { CommonModule } from '@angular/common';
            (click)="fileInput.click()">
         <div class="text-4xl mb-2">📷</div>
         <p class="font-medium text-mb-dark">Drop images here or click to select</p>
-        <p class="text-xs text-gray-500 mt-1">JPG, PNG, WebP up to 5MB each, max 10 photos</p>
       </div>
 
       @if (previews().length > 0) {

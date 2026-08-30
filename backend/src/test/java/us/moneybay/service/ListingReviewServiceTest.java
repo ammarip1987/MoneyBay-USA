@@ -60,16 +60,15 @@ class ListingReviewServiceTest {
 
         assertTrue(service.review(l).contains("MISSING_PRICE"));
     }
-
     @Test
     @DisplayName("один недочёт — совет, не отказ")
     void oneShortcomingIsAdviceNotRejection() {
         Listing l = good();
-        l.setImages(List.of());
+        l.setDescription("used");
 
         List<String> reasons = service.review(l);
 
-        assertEquals(List.of("MISSING_PHOTOS"), reasons);
+        assertEquals(List.of("SHORT_DESCRIPTION"), reasons);
         assertFalse(service.shouldReject(reasons), "одна мелочь не должна топить объявление");
     }
 
@@ -77,12 +76,14 @@ class ListingReviewServiceTest {
     @DisplayName("два недочёта отклоняют")
     void twoShortcomingsReject() {
         Listing l = good();
-        l.setImages(List.of());
+        l.setTitle("short");
         l.setDescription("used");
 
         List<String> reasons = service.review(l);
 
         assertEquals(2, reasons.size(), "ожидалось два замечания, пришло: " + reasons);
+        assertTrue(service.shouldReject(reasons));
+    }
         assertTrue(service.shouldReject(reasons));
     }
 

@@ -42,7 +42,9 @@ import { NotificationsService } from '../../services/notifications.service';
 
           <div class="hidden md:flex items-center gap-4 flex-wrap justify-end">
             @if (authReady() ? auth.isAuthenticated() : auth.authHint()) {
-              <a routerLink="/new-listing" class="hover:text-mb-cyan transition">+ Post Ad</a>
+              <!-- Подача объявления — то, ради чего продавец приходит: рамка отделяет
+                   её от прочих ссылок. Плюс убран, надпись говорит сама -->
+              <a routerLink="/new-listing" class="px-4 py-2 border border-white/40 rounded hover:bg-white/10 hover:border-white transition">Post Ad</a>
               <a routerLink="/my-listings" class="hover:text-mb-cyan transition">My Ads</a>
               <a routerLink="/messages" class="hover:text-mb-cyan transition relative">
                 Messages
@@ -91,7 +93,7 @@ import { NotificationsService } from '../../services/notifications.service';
         @if (mobileOpen()) {
           <div class="md:hidden mt-4 pb-2 border-t border-gray-700 pt-4 flex flex-col gap-3">
             @if (authReady() ? auth.isAuthenticated() : auth.authHint()) {
-              <a routerLink="/new-listing" (click)="closeMobileMenu()" class="hover:text-mb-cyan transition py-2">+ Post Ad</a>
+              <a routerLink="/new-listing" (click)="closeMobileMenu()" class="hover:text-mb-cyan transition py-2">Post Ad</a>
               <a routerLink="/my-listings" (click)="closeMobileMenu()" class="hover:text-mb-cyan transition py-2">My Ads</a>
               <a routerLink="/messages" (click)="closeMobileMenu()" class="hover:text-mb-cyan transition py-2 flex items-center gap-2">
                 Messages
