@@ -105,7 +105,7 @@ import { CityAutocompleteComponent } from '../../components/city-autocomplete/ci
 
         <div class="flex gap-3 pt-4 border-t border-gray-100">
           <button type="submit" class="btn btn-primary flex-1" [disabled]="loading()">
-            {{ loading() ? 'Posting...' : 'Post Ad' }}
+            {{ loading() ? 'Posting...' : 'Post' }}
           </button>
           <button type="button" (click)="cancel()" class="btn btn-secondary">Cancel</button>
         </div>
@@ -240,7 +240,13 @@ export class NewListingComponent implements OnInit {
       },
       error: (err) => {
         this.loading.set(false);
-        this.notification.error(err?.error?.message || 'Failed to create listing');
+        // Обрыв связи и отказ сервера различаются: при 0, 502, 503 и 522 до
+        // сервера не дошло, и повтор через минуту обычно проходит
+        const unreachable = err?.status === 0 || err?.status >= 502;
+        this.notification.error(
+          unreachable
+            ? 'Server unreachable, try again in a minute'
+            : (err?.error?.message || 'Failed to create listing'));
       }
     });
   }
