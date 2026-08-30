@@ -50,10 +50,22 @@ import { CityAutocompleteComponent } from '../../components/city-autocomplete/ci
         <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div class="form-group">
             <label class="form-label">Price ($) *</label>
-            <input type="number" [(ngModel)]="price" name="price" class="form-input" min="1" step="0.01" required>
-              @if (price !== null && price !== undefined && price < 1) {
-                <p class="text-sm text-red-600 mt-1">Price must be at least $1</p>
+            <!-- Пустое поле подсвечивается, как только его тронули и ушли:
+                 подсветка сразу при открытии страницы читалась бы как ошибка,
+                 которой человек ещё не совершал -->
+            <div class="relative">
+              <input type="number" [(ngModel)]="price" name="price"
+                     (blur)="priceTouched = true"
+                     [class.border-red-400]="priceEmpty()"
+                     [class.bg-red-50]="priceEmpty()"
+                     class="form-input" min="1" step="0.01" required>
+              @if (priceEmpty()) {
+                <i class="fas fa-triangle-exclamation absolute right-3 top-1/2 -translate-y-1/2 text-red-500 pointer-events-none"></i>
               }
+            </div>
+            @if (priceEmpty()) {
+              <p class="text-sm text-red-600 mt-1">Necessary field</p>
+            }
           </div>
 
           <div class="form-group">
@@ -146,6 +158,13 @@ export class NewListingComponent implements OnInit {
    *
    * Проверка здесь не отменяет серверную — та защищает от обхода страницы.
    */
+  /** Поле цены тронуто и оставлено пустым — подсвечивается. */
+  priceTouched = false;
+
+  priceEmpty(): boolean {
+    return this.priceTouched && (this.price === null || this.price === undefined || (this.price as any) === '');
+  }
+
   formValid(): boolean {
     return this.title.trim().length >= 10
         && this.description.trim().length >= 40
