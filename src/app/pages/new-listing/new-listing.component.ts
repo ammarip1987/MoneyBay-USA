@@ -20,7 +20,12 @@ import { CityAutocompleteComponent } from '../../components/city-autocomplete/ci
       <form (ngSubmit)="onSubmit()" class="bg-white rounded-2xl shadow-lg p-8 space-y-6">
         <div class="form-group">
           <label class="form-label">Title *</label>
-          <input type="text" [(ngModel)]="title" name="title" class="form-input" required maxlength="200" placeholder="What are you selling?">
+          <input type="text" [(ngModel)]="title" name="title" class="form-input" required maxlength="200" minlength="10" placeholder="What are you selling?">
+          <!-- Проверка идёт здесь, а не после отправки: недочёт виден сразу, и
+               объявление не заводится в базе отклонённым -->
+          @if (title.length > 0 && title.trim().length < 10) {
+            <p class="text-sm text-red-600 mt-1">At least 10 characters ({{ title.trim().length }}/10)</p>
+          }
         </div>
 
         <div class="form-group">
@@ -37,12 +42,18 @@ import { CityAutocompleteComponent } from '../../components/city-autocomplete/ci
           <label class="form-label">Description *</label>
           <textarea [(ngModel)]="description" name="description" class="form-input" rows="6" required
                     placeholder="Describe condition, features, why you're selling..."></textarea>
+          @if (description.length > 0 && description.trim().length < 40) {
+            <p class="text-sm text-red-600 mt-1">At least 40 characters ({{ description.trim().length }}/40)</p>
+          }
         </div>
 
         <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div class="form-group">
             <label class="form-label">Price ($) *</label>
-            <input type="number" [(ngModel)]="price" name="price" class="form-input" min="0" step="0.01" required>
+            <input type="number" [(ngModel)]="price" name="price" class="form-input" min="1" step="0.01" required>
+              @if (price !== null && price !== undefined && price < 1) {
+                <p class="text-sm text-red-600 mt-1">Price must be at least $1</p>
+              }
           </div>
 
           <div class="form-group">
@@ -70,7 +81,7 @@ import { CityAutocompleteComponent } from '../../components/city-autocomplete/ci
         </div>
 
         <div class="flex gap-3 pt-4 border-t border-gray-100">
-          <button type="submit" class="btn btn-primary flex-1" [disabled]="loading()">
+          <button type="submit" class="btn btn-primary flex-1" [disabled]="loading() || !formValid()">
             {{ loading() ? 'Posting...' : 'Post Ad' }}
           </button>
           <button type="button" (click)="cancel()" class="btn btn-secondary">Cancel</button>
@@ -127,6 +138,21 @@ export class NewListingComponent implements OnInit {
 
   onFilesChange(files: File[]): void {
     this.files = files;
+  }
+
+  /**
+   * Годится ли к отправке. Те же требования, что на сервере: заголовок от
+   * десяти знаков, описание от сорока, цена от доллара. Снимок необязателен.
+   *
+   * Проверка здесь не отменяет серверную — та защищает от обхода страницы.
+   */
+  formValid(): boolean {
+    return this.title.trim().length >= 10
+        && this.description.trim().length >= 40
+        && this.price != null && this.price >= 1
+        && !!this.categoryId
+        && !!this.state
+        && this.cityName.trim().length > 0;
   }
 
   async onSubmit(): Promise<void> {

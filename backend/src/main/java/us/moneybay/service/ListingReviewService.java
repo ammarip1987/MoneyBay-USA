@@ -24,14 +24,11 @@ public class ListingReviewService {
 
     private static final int MIN_DESCRIPTION = 40;
     private static final int MIN_TITLE = 10;
-    private static final int MIN_PHOTOS = 1;
+    private static final double MIN_PRICE = 1.0;
 
     public List<String> review(Listing listing) {
         List<String> reasons = new ArrayList<>();
 
-        if (listing.getImages() == null || listing.getImages().size() < MIN_PHOTOS) {
-            reasons.add("MISSING_PHOTOS");
-        }
 
         String title = listing.getTitle() == null ? "" : listing.getTitle().trim();
         if (title.length() < MIN_TITLE) {
@@ -47,7 +44,9 @@ public class ListingReviewService {
             reasons.add("SHORT_DESCRIPTION");
         }
 
-        if (listing.getPrice() == null || listing.getPrice() <= 0) {
+        // Цена от доллара: ниже — способ попасть наверх выдачи дешёвым товаром,
+        // которого нет
+        if (listing.getPrice() == null || listing.getPrice() < MIN_PRICE) {
             reasons.add("MISSING_PRICE");
         }
 
