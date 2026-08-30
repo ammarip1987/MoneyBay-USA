@@ -84,8 +84,6 @@ class ListingReviewServiceTest {
         assertEquals(2, reasons.size(), "ожидалось два замечания, пришло: " + reasons);
         assertTrue(service.shouldReject(reasons));
     }
-        assertTrue(service.shouldReject(reasons));
-    }
 
     @Test
     @DisplayName("телефон в тексте отклоняет: переписка уходит со площадки")
