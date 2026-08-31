@@ -46,7 +46,7 @@ import { NotificationsService } from '../../services/notifications.service';
                    её от прочих ссылок. Плюс убран, надпись говорит сама -->
               <a routerLink="/new-listing" class="px-4 py-2 border border-white/40 rounded hover:bg-white/10 hover:border-white transition">Post Ad</a>
               <a routerLink="/favorites" class="hover:text-mb-cyan transition" aria-label="Favorites" title="Favorites">
-                <span class="text-2xl inline-block leading-none select-none" style="color: #FFD700; font-family: system-ui, sans-serif;">★</span>
+                <span class="text-2xl inline-block select-none" style="color: #FFD700; font-family: system-ui, sans-serif; line-height: 32px; height: 32px;">★</span>
               </a>
               <a routerLink="/messages" class="hover:text-mb-cyan transition relative">
                 Messages
@@ -98,7 +98,7 @@ import { NotificationsService } from '../../services/notifications.service';
               <a routerLink="/new-listing" (click)="closeMobileMenu()" class="hover:text-mb-cyan transition py-2">Post Ad</a>
               <a routerLink="/my-listings" (click)="closeMobileMenu()" class="hover:text-mb-cyan transition py-2">My Ads</a>
               <a routerLink="/favorites" (click)="closeMobileMenu()" class="flex items-center gap-3 hover:text-mb-cyan transition py-2">
-                <span class="text-2xl inline-block leading-none select-none" style="color: #FFD700; font-family: system-ui, sans-serif;">★</span>
+                <span class="text-2xl inline-block select-none" style="color: #FFD700; font-family: system-ui, sans-serif; line-height: 32px; height: 32px;">★</span>
                 Favorites
               </a>
               <a routerLink="/messages" (click)="closeMobileMenu()" class="hover:text-mb-cyan transition py-2 flex items-center gap-2">
