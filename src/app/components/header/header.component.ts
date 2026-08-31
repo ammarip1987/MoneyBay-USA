@@ -19,9 +19,9 @@ import { NotificationsService } from '../../services/notifications.service';
          крестик не доходило — полоса не закрывалась.
          Место под баннер: он кладётся в public/ads и подставляется ниже -->
     @if (adVisible()) {
-      <div class="ad-strip bg-gray-100 text-gray-700 border-b border-gray-200 relative z-[60]">
-        <a href="/ads/" class="block max-w-7xl mx-auto px-4 py-2 text-center text-sm tracking-wide">
-          Advertising
+      <div class="promo-strip bg-gray-100 text-gray-700 border-b border-gray-200 relative z-[60]">
+        <a href="/promo/" class="block max-w-7xl mx-auto px-4 py-2 text-center text-sm tracking-wide">
+          Sponsored
         </a>
         <button (click)="closeAd()"
                 class="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-700 p-2 cursor-pointer"
@@ -170,7 +170,7 @@ export class HeaderComponent implements OnDestroy {
 
   private readAdState(): boolean {
     try {
-      return localStorage.getItem('ad-closed') !== '1';
+      return localStorage.getItem('promo-closed') !== '1';
     } catch {
       return true;
     }
@@ -179,7 +179,7 @@ export class HeaderComponent implements OnDestroy {
   closeAd(): void {
     this.adVisible.set(false);
     try {
-      localStorage.setItem("ad-closed", "1");
+      localStorage.setItem("promo-closed", "1");
     } catch {
       // хранилище недоступно — полоса вернётся при следующем заходе
     }
