@@ -29,7 +29,7 @@ import { NotificationsService } from '../../services/notifications.service';
       </div>
     }
 
-    <header class="bg-mb-dark text-white sticky top-0 z-50 shadow-md">
+    <header class="text-white sticky top-0 z-50 shadow-md" style="background-color: #D3B200;">
       <nav class="max-w-7xl mx-auto px-4 py-4">
         <div class="flex justify-between items-center">
           <a routerLink="/" class="text-2xl font-bold flex items-center gap-2" (click)="closeMobileMenu()">
