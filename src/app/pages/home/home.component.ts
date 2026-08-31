@@ -14,6 +14,8 @@ import { FilterChipsBarComponent } from '../../components/filter-chips-bar/filte
 import { FilterDrawerComponent } from '../../components/filter-drawer/filter-drawer.component';
 import { ListingFilters } from '../../models/listing-filters.model';
 import { environment } from '../../../environments/environment';
+import { DomSanitizer, SafeHtml } from '@angular/platform-browser';
+import { categoryIconSvg } from '../../shared/category-icons';
 
 interface Subcategory {
   id: number;
@@ -77,7 +79,7 @@ interface Subcategory {
               <!-- Место под значок заданной высоты: он приходит с данными, и без
                    отведённого места плитка схлопывалась, а потом раздвигалась —
                    это и было мелькание при обновлении -->
-              <div class="text-5xl mb-3 text-mb-blue h-14 flex items-center justify-center" [innerHTML]="cat.icon"></div>
+              <div class="text-5xl mb-3 text-mb-blue h-14 flex items-center justify-center" [innerHTML]="iconOf(cat.icon)"></div>
               <h3 class="font-bold text-mb-dark text-sm line-clamp-2">{{ cat.name }}</h3>
             </a>
           }
@@ -92,7 +94,7 @@ interface Subcategory {
            [style.background-color]="currentCategory()!.color">
         <div class="flex justify-between items-center flex-wrap gap-4">
           <h2 class="text-3xl font-bold text-mb-dark flex items-center gap-3">
-            <span class="text-mb-blue" [innerHTML]="currentCategory()!.icon"></span>
+            <span class="text-mb-blue" [innerHTML]="iconOf(currentCategory()!.icon)"></span>
             {{ currentCategory()!.name }}
             @if (currentSub()) {
               <span class="text-gray-600 text-2xl">/ {{ currentSub()!.name }}</span>
@@ -124,7 +126,7 @@ interface Subcategory {
                class="card-hover p-4"
                [style.background-color]="sub.color + '33'"
                [style.border]="'2px solid ' + sub.color">
-              <div class="text-3xl mb-2 text-mb-blue h-9 flex items-center justify-center" [innerHTML]="sub.icon"></div>
+              <div class="text-3xl mb-2 text-mb-blue h-9 flex items-center justify-center" [innerHTML]="iconOf(sub.icon)"></div>
               <h3 class="font-bold text-mb-dark">{{ sub.name }}</h3>
               @if (sub.description) {
                 <p class="text-sm text-gray-600">{{ sub.description }}</p>
@@ -145,7 +147,7 @@ interface Subcategory {
                class="card-hover p-4"
                [style.background-color]="ss.color + '33'"
                [style.border]="'2px solid ' + ss.color">
-              <div class="text-3xl mb-2 text-mb-blue h-9 flex items-center justify-center" [innerHTML]="ss.icon"></div>
+              <div class="text-3xl mb-2 text-mb-blue h-9 flex items-center justify-center" [innerHTML]="iconOf(ss.icon)"></div>
               <h3 class="font-bold text-mb-dark">{{ ss.name }}</h3>
               @if (ss.description) {
                 <p class="text-sm text-gray-600">{{ ss.description }}</p>
@@ -319,6 +321,7 @@ export class HomeComponent implements OnInit, OnDestroy {
   @ViewChild('listingsAnchor') listingsAnchor?: ElementRef<HTMLElement>;
 
   private api = inject(ApiService);
+  private sanitizer = inject(DomSanitizer);
   private route = inject(ActivatedRoute);
   private router = inject(Router);
   private seo = inject(SeoService);
@@ -693,6 +696,20 @@ export class HomeComponent implements OnInit, OnDestroy {
    * Переход на страницу через адрес: номер попадает в queryParams, поэтому
    * ссылку можно сохранить, а возврат назад возвращает на прежнюю страницу.
    */
+  /**
+   * Значок категории встроенным очертанием.
+   *
+   * В базе лежит строка вида `<i class="fas fa-car"></i>` — её рисовал шрифт,
+   * и пока файл шрифта не скачан, плитки стояли пустыми. Очертание рисуется
+   * вместе с текстом, ждать нечего.
+   *
+   * Пометка о доверии нужна: очистка Angular вырезает разметку SVG. Строки
+   * приходят из своего набора в коде, чужого содержимого в них нет.
+   */
+  iconOf(html: string | null | undefined): SafeHtml {
+    return this.sanitizer.bypassSecurityTrustHtml(categoryIconSvg(html));
+  }
+
   /**
    * Догрузить следующую страницу к показанным.
    *
