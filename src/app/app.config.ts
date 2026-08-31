@@ -1,7 +1,7 @@
 import { ApplicationConfig, isDevMode, provideBrowserGlobalErrorListeners, provideAppInitializer, inject } from '@angular/core';
 import { provideRouter, withInMemoryScrolling } from '@angular/router';
 import { provideHttpClient, withInterceptors, withFetch } from '@angular/common/http';
-import { provideClientHydration, withEventReplay } from '@angular/platform-browser';
+import { provideClientHydration, withEventReplay, withHttpTransferCacheOptions } from '@angular/platform-browser';
 import { provideServiceWorker } from '@angular/service-worker';
 
 import { routes } from './app.routes';
@@ -20,7 +20,14 @@ export const appConfig: ApplicationConfig = {
       anchorScrolling: 'enabled'
     })),
     provideHttpClient(withFetch(), withInterceptors([authInterceptor, cityContextInterceptor, errorInterceptor])),
-    provideClientHydration(withEventReplay()),
+    // Ответы, полученные на сервере, передаются в браузер вместе со страницей.
+    // Без этого браузер запрашивал категории заново, и пока запрос шёл,
+    // готовые плитки со значками стирались и ставились обратно — это и было
+    // мигание при обновлении страницы
+    provideClientHydration(
+      withEventReplay(),
+      withHttpTransferCacheOptions({ includePostRequests: false })
+    ),
     provideServiceWorker('ngsw-worker.js', {
       enabled: !isDevMode(),
       // No automatic registration on page load: the SW registers only when
