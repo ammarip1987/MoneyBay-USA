@@ -17,12 +17,12 @@ import { NotificationsService } from '../../services/notifications.service';
          браузере посетителя: закрыл — не показывается до очистки хранилища.
          Прокручивается вместе со страницей, шапка остаётся закреплённой -->
     @if (adVisible()) {
-      <div class="bg-gray-100 text-gray-700 border-b border-gray-200 relative">
+      <div class="bg-gray-100 text-gray-700 border-b border-gray-200 relative z-[60]">
         <div class="max-w-7xl mx-auto px-4 py-2 text-center text-sm tracking-wide">
           Advertising
         </div>
         <button (click)="closeAd()"
-                class="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-700"
+                class="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-700 p-2 cursor-pointer"
                 aria-label="Close">
           <i class="fas fa-times"></i>
         </button>
@@ -45,8 +45,8 @@ import { NotificationsService } from '../../services/notifications.service';
               <!-- Подача объявления — то, ради чего продавец приходит: рамка отделяет
                    её от прочих ссылок. Плюс убран, надпись говорит сама -->
               <a routerLink="/new-listing" class="px-4 py-2 border border-white/40 rounded hover:bg-white/10 hover:border-white transition">Post Ad</a>
-              <a routerLink="/favorites" class="hover:text-mb-cyan transition" aria-label="Favorites" title="Favorites">
-                <span class="text-2xl inline-block select-none" style="color: #FFD700; font-family: system-ui, sans-serif; line-height: 32px; height: 32px;">★</span>
+              <a routerLink="/favorites" class="hover:text-mb-cyan transition flex items-center justify-center" aria-label="Favorites" title="Favorites">
+                <span class="text-2xl select-none leading-none" style="color: #FFD700; font-family: system-ui, sans-serif;">★</span>
               </a>
               <a routerLink="/messages" class="hover:text-mb-cyan transition relative">
                 Messages
