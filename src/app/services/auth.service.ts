@@ -1,7 +1,7 @@
 import { Injectable, Injector, inject, signal, PLATFORM_ID, REQUEST } from '@angular/core';
 import { isPlatformBrowser } from '@angular/common';
 import { HttpClient, HttpContext } from '@angular/common/http';
-import { Observable, tap, finalize, shareReplay } from 'rxjs';
+import { Observable, tap, finalize, shareReplay, catchError, throwError } from 'rxjs';
 import { environment } from '../../environments/environment';
 import { User } from '../models/listing.model';
 import { SKIP_SESSION_EXPIRED } from '../interceptors/http-context.tokens';
@@ -85,6 +85,13 @@ export class AuthService {
       })
       .pipe(
         tap(res => this.setSession(res)),
+        // Обновляющая кука негодна — вход закончен. Прежде человек оставался с
+        // виду вошедшим, а каждый запрос отказывал: шапка показывала кабинет,
+        // подача объявления не проходила
+        catchError(err => {
+          if (err?.status === 401 || err?.status === 403) this.clearSession();
+          return throwError(() => err);
+        }),
         finalize(() => { this.refreshing = null; }),
         shareReplay(1)
       );
