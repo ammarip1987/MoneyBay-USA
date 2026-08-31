@@ -231,6 +231,7 @@ export class HeaderComponent implements OnDestroy {
   loadUnread(): void {
     this.api.getUnreadCount().subscribe({
       next: (res) => {
+        this.unreadFailures = 0;
         const prevCount = this.lastSeenCount;
         this.unreadCount.set(res.count);
         if (res.count > prevCount && this.notifications.enabled() && prevCount > 0) {
@@ -242,9 +243,22 @@ export class HeaderComponent implements OnDestroy {
         }
         this.lastSeenCount = res.count;
       },
-      error: () => this.unreadCount.set(0)
+      error: () => {
+        this.unreadCount.set(0);
+        // Опрос прекращается после нескольких отказов подряд: при истёкшем
+        // входе он бился по кругу — отказ вызывал обновление токена, то
+        // тоже отказывало, и так десятками запросов в минуту
+        this.unreadFailures++;
+        if (this.unreadFailures >= 3 && this.pollTimer) {
+          clearInterval(this.pollTimer);
+          this.pollTimer = null;
+        }
+      }
     });
   }
+
+  /** Сколько раз подряд не удалось получить счётчик. */
+  private unreadFailures = 0;
 
   toggleMobileMenu(): void {
     this.mobileOpen.update(v => !v);
