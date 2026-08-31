@@ -1,4 +1,4 @@
-import { Injectable, inject, signal } from '@angular/core';
+import { Injectable, inject, signal, TransferState, makeStateKey } from '@angular/core';
 import { HttpClient, HttpParams } from '@angular/common/http';
 import { Observable, of } from 'rxjs';
 import { tap, map } from 'rxjs/operators';
@@ -34,10 +34,15 @@ export interface SimilarListings {
   similar_price: Listing[];
   from_seller: Listing[];
 }
+/** Категории, переданные с сервера: без них сигнал в браузере стартовал
+ * пустым, готовые плитки стирались и рисовались заново — это и мигало */
+const CATEGORIES_KEY = makeStateKey<Category[]>('categories');
+
 
 @Injectable({ providedIn: 'root' })
 export class ApiService {
   private http = inject(HttpClient);
+  private state = inject(TransferState);
   private readonly baseUrl = environment.apiUrl;
 
   /**
@@ -193,15 +198,21 @@ export class ApiService {
    * стартовало пустым и плитки перерисовывались. Сервис переживает переходы,
    * значит список уже на месте к первому кадру.
    */
-  readonly categories = signal<Category[]>([]);
+  readonly categories = signal<Category[]>(this.state.get(CATEGORIES_KEY, []));
 
   getCategories(): Observable<Category[]> {
     // Запись в сигнал внутри запроса, а не после cached: фоновое обновление
     // подписывается на запрос напрямую и внешний tap не выполнило бы
     return this.cached('categories', () =>
       this.http.get<Category[]>(`${this.baseUrl}/api/categories`)
-        .pipe(tap(list => this.categories.set(list)))
-    ).pipe(tap(list => this.categories.set(list)));
+        .pipe(tap(list => this.keepCategories(list)))
+    ).pipe(tap(list => this.keepCategories(list)));
+  }
+
+  /** Кладёт список и в сигнал, и в передачу с сервера в браузер. */
+  private keepCategories(list: Category[]): void {
+    this.categories.set(list);
+    this.state.set(CATEGORIES_KEY, list);
   }
 
   getCities(): Observable<City[]> {
