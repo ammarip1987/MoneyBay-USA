@@ -44,14 +44,14 @@ import { OAuthButtonsComponent } from '../../components/oauth-buttons/oauth-butt
               <label class="form-label">
                 <i class="fas fa-envelope text-mb-blue mr-2"></i>Email
               </label>
-              <input type="email" [(ngModel)]="email" name="email" class="form-input" required placeholder="you@example.com">
+              <input type="email" autocomplete="email" [(ngModel)]="email" name="email" class="form-input" required placeholder="you@example.com">
             </div>
 
             <div>
               <label class="form-label">
                 <i class="fas fa-lock text-mb-blue mr-2"></i>Password
               </label>
-              <input type="password" [(ngModel)]="password" name="password" class="form-input" required placeholder="••••••••">
+              <input type="password" autocomplete="current-password" [(ngModel)]="password" name="password" class="form-input" required placeholder="••••••••">
             </div>
 
             <div class="flex justify-end">

@@ -62,7 +62,10 @@ public class SecurityConfig {
                     "/api/subcategories/**", "/api/uploads/**", "/api/photos/**",
                     "/api/us-cities", "/api/states",
                     "/api/users/*/public",
-                    "/api/auth/oauth2/config",
+                    // Начало входа через службу идёт до того, как вход состоялся:
+                    // под общим правилом оно требовало входа и отдавало 403, а
+                    // браузер читал это как отказ по источнику
+                    "/api/auth/oauth2/**",
                     "/sitemap.xml", "/robots.txt",
                     "/health", "/actuator/health", "/actuator/info")
                     .permitAll()

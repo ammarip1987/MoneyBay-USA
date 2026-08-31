@@ -37,12 +37,12 @@ import { OAuthButtonsComponent } from '../../components/oauth-buttons/oauth-butt
 
             <div>
               <label class="form-label"><i class="fas fa-envelope text-mb-blue mr-2"></i>Email</label>
-              <input type="email" [(ngModel)]="email" name="email" class="form-input" required placeholder="you@example.com">
+              <input type="email" autocomplete="email" [(ngModel)]="email" name="email" class="form-input" required placeholder="you@example.com">
             </div>
 
             <div>
               <label class="form-label"><i class="fas fa-lock text-mb-blue mr-2"></i>Password</label>
-              <input type="password" [(ngModel)]="password" name="password" class="form-input" required minlength="6" placeholder="At least 6 characters">
+              <input type="password" autocomplete="new-password" [(ngModel)]="password" name="password" class="form-input" required minlength="6" placeholder="At least 6 characters">
             </div>
 
             <div>
