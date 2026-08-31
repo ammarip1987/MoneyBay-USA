@@ -56,18 +56,10 @@ interface Subcategory {
         <!-- Место под плитки занято с первого кадра: без этого лента
              подпрыгивает, когда категории приходят -->
         @if (categories().length === 0) {
-          <!-- Пока категории идут с сервера, на их местах стоят серые круги той
-               же величины: пустое поле читается как сбой, а заглушка — как
-               ожидание. Размеры те же, что у готовых плиток, ничего не сдвинется -->
-          <div class="flex-1 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8">
-            @for (i of [1, 2, 3, 4, 5, 6, 7, 8, 9, 11, 12, 13]; track i) {
-              <div class="w-full max-w-[200px] mx-auto p-3 flex flex-col items-center justify-center">
-                <div class="h-14 mb-3 flex items-center justify-center">
-                  <div class="w-12 h-12 rounded-full bg-gray-200 animate-pulse"></div>
-                </div>
-                <div class="h-5 w-24 rounded bg-gray-200 animate-pulse"></div>
-              </div>
-            }
+          <!-- Та же заглушка, что на объявлениях: круг под значок, полоска под
+               название. Пока категории идут с сервера, места заняты -->
+          <div class="flex-1">
+            <app-skeleton-loader variant="category-grid" [count]="12"></app-skeleton-loader>
           </div>
         } @else {
         <!-- Плитки сжаты так, чтобы три ряда умещались в отведённые две трети

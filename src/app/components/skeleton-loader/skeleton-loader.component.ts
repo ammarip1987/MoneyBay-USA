@@ -18,6 +18,21 @@ import { CommonModule } from '@angular/common';
         </div>
       }
 
+      @case ('category-grid') {
+        <!-- Плитки категорий: круг под значок, полоска под название. Размеры
+             те же, что у готовых плиток, — подмена ничего не сдвигает -->
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8">
+          @for (i of repeat(count); track i) {
+            <div class="w-full max-w-[200px] mx-auto p-3 flex flex-col items-center justify-center">
+              <div class="h-14 mb-3 flex items-center justify-center">
+                <div class="w-12 h-12 rounded-full bg-gray-200 animate-pulse"></div>
+              </div>
+              <div class="h-5 w-24 rounded bg-gray-200 animate-pulse"></div>
+            </div>
+          }
+        </div>
+      }
+
       @case ('listing-grid') {
         <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 xl:grid-cols-5 gap-6">
           @for (i of repeat(count); track i) {
@@ -99,7 +114,7 @@ import { CommonModule } from '@angular/common';
   `
 })
 export class SkeletonLoaderComponent {
-  @Input() variant: 'listing-card' | 'listing-grid' | 'listing-detail' | 'text-lines' | 'avatar-card' | 'profile' | 'line' = 'line';
+  @Input() variant: 'listing-card' | 'listing-grid' | 'category-grid' | 'listing-detail' | 'text-lines' | 'avatar-card' | 'profile' | 'line' = 'line';
   @Input() count = 8;
   @Input() width = 100;
 
