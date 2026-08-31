@@ -19,7 +19,7 @@ import { NotificationsService } from '../../services/notifications.service';
          крестик не доходило — полоса не закрывалась.
          Место под баннер: он кладётся в public/ads и подставляется ниже -->
     @if (adVisible()) {
-      <div class="bg-gray-100 text-gray-700 border-b border-gray-200 relative z-[60]">
+      <div class="ad-strip bg-gray-100 text-gray-700 border-b border-gray-200 relative z-[60]">
         <a href="/ads/" class="block max-w-7xl mx-auto px-4 py-2 text-center text-sm tracking-wide">
           Advertising
         </a>

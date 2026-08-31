@@ -15,6 +15,12 @@
   <link rel="apple-touch-icon" href="icons/icons8-m-50.png">
   <link rel="manifest" href="manifest.webmanifest">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+  <!-- Пометка о закрытой рекламной полосе ставится до первой отрисовки:
+       иначе полоса мелькала — показывалась и тут же пряталась, дёргая шапку.
+       Прятать её через разметку Angular нельзя: серверная и браузерная версии
+       разошлись бы, и связь с крестиком рвалась — это уже было -->
+  <script>try{if(localStorage.getItem('ad-closed')==='1'){document.documentElement.className+=' ad-closed'}}catch(e){}</script>
+  <style>.ad-closed .ad-strip{display:none}</style>
 </head>
 <body>
   <app-root></app-root>
