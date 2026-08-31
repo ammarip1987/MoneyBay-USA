@@ -12,8 +12,11 @@ import { OAuthService, OAuthProvider } from '../../services/oauth.service';
   standalone: true,
   imports: [CommonModule],
   template: `
-    @if (providers().length > 0) {
-      <div class="mb-6">
+    <!-- Место под кнопки отведено с самого начала: список служб приходит с
+         сервера, и без заданной высоты форма прыгала вниз, когда он доходил.
+         Две службы по 50 в высоту плюс промежуток — 112 -->
+    <div class="mb-6" style="min-height: 112px;">
+      @if (providers().length > 0) {
         <div class="space-y-3">
           @for (p of providers(); track p.provider) {
             <button type="button" (click)="oauth.start(p)" [disabled]="disabled"
@@ -23,8 +26,8 @@ import { OAuthService, OAuthProvider } from '../../services/oauth.service';
             </button>
           }
         </div>
-      </div>
-    }
+      }
+    </div>
   `
 })
 export class OAuthButtonsComponent {
