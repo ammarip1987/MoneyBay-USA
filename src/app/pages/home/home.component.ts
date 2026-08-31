@@ -74,7 +74,10 @@ interface Subcategory {
             <a [routerLink]="['/']"
                [queryParams]="{category: cat.slug}"
                class="w-full max-w-[200px] mx-auto p-3 text-center flex flex-col items-center justify-center focus:outline-none">
-              <div class="text-5xl mb-3 text-mb-blue" [innerHTML]="cat.icon"></div>
+              <!-- Место под значок заданной высоты: он приходит с данными, и без
+                   отведённого места плитка схлопывалась, а потом раздвигалась —
+                   это и было мелькание при обновлении -->
+              <div class="text-5xl mb-3 text-mb-blue h-14 flex items-center justify-center" [innerHTML]="cat.icon"></div>
               <h3 class="font-bold text-mb-dark text-sm line-clamp-2">{{ cat.name }}</h3>
             </a>
           }
@@ -121,7 +124,7 @@ interface Subcategory {
                class="card-hover p-4"
                [style.background-color]="sub.color + '33'"
                [style.border]="'2px solid ' + sub.color">
-              <div class="text-3xl mb-2 text-mb-blue" [innerHTML]="sub.icon"></div>
+              <div class="text-3xl mb-2 text-mb-blue h-9 flex items-center justify-center" [innerHTML]="sub.icon"></div>
               <h3 class="font-bold text-mb-dark">{{ sub.name }}</h3>
               @if (sub.description) {
                 <p class="text-sm text-gray-600">{{ sub.description }}</p>
@@ -142,7 +145,7 @@ interface Subcategory {
                class="card-hover p-4"
                [style.background-color]="ss.color + '33'"
                [style.border]="'2px solid ' + ss.color">
-              <div class="text-3xl mb-2 text-mb-blue" [innerHTML]="ss.icon"></div>
+              <div class="text-3xl mb-2 text-mb-blue h-9 flex items-center justify-center" [innerHTML]="ss.icon"></div>
               <h3 class="font-bold text-mb-dark">{{ ss.name }}</h3>
               @if (ss.description) {
                 <p class="text-sm text-gray-600">{{ ss.description }}</p>
