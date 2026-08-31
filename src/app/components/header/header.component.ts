@@ -13,14 +13,16 @@ import { NotificationsService } from '../../services/notifications.service';
   standalone: true,
   imports: [CommonModule, RouterLink],
   template: `
-    <!-- Место под рекламную полосу. Закрывается крестиком, выбор держится в
-         браузере посетителя: закрыл — не показывается до очистки хранилища.
-         Прокручивается вместе со страницей, шапка остаётся закреплённой -->
+   <div>
+    <!-- Полоса и шапка обёрнуты в один корень: при двух корнях восстановление
+         страницы, пришедшей с сервера, привязывало только первый, и нажатие на
+         крестик не доходило — полоса не закрывалась.
+         Место под баннер: он кладётся в public/ads и подставляется ниже -->
     @if (adVisible()) {
       <div class="bg-gray-100 text-gray-700 border-b border-gray-200 relative z-[60]">
-        <div class="max-w-7xl mx-auto px-4 py-2 text-center text-sm tracking-wide">
+        <a href="/ads/" class="block max-w-7xl mx-auto px-4 py-2 text-center text-sm tracking-wide">
           Advertising
-        </div>
+        </a>
         <button (click)="closeAd()"
                 class="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-700 p-2 cursor-pointer"
                 aria-label="Close">
@@ -129,6 +131,7 @@ import { NotificationsService } from '../../services/notifications.service';
         }
       </nav>
     </header>
+   </div>
   `
 })
 export class HeaderComponent implements OnDestroy {
