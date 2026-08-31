@@ -8,10 +8,20 @@
       "resources": {
         "files": [
           "/favicon.ico",
-          "/index.html",
           "/manifest.webmanifest",
           "/*.css",
           "/*.js"
+        ]
+      }
+    },
+    {
+      "comment": "index.html берётся с сервера, а не из запаса: в нём имена файлов сборки, и старый запас показывал прежнюю версию сайта после каждой правки. Само содержимое сборки по-прежнему в запасе — она с отпечатком в имени и не меняется",
+      "name": "index",
+      "installMode": "lazy",
+      "updateMode": "prefetch",
+      "resources": {
+        "files": [
+          "/index.html"
         ]
       }
     },
