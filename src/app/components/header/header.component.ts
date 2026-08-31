@@ -21,7 +21,7 @@ import { NotificationsService } from '../../services/notifications.service';
     @if (adVisible()) {
       <div class="promo-strip bg-gray-100 text-gray-700 border-b border-gray-200 relative z-[60]">
         <a href="/promo/" class="block max-w-7xl mx-auto px-4 py-2 text-center text-sm tracking-wide">
-          Sponsored
+          Advertising
         </a>
         <button (click)="closeAd()"
                 class="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-700 p-2 cursor-pointer"
