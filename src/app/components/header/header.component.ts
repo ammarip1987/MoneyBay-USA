@@ -157,11 +157,16 @@ export class HeaderComponent implements OnDestroy {
 
   /** Снимок не открылся — рисуется буква вместо пустого места. */
   avatarFailed = signal(false);
-  adVisible = signal(this.readAdState());
+  /**
+   * Рекламная полоса. На сервере всегда показана: хранилища браузера там нет,
+   * а чтение его при создании ломало связь разметки с сигналом — полоса
+   * переставала закрываться. Настоящее состояние читается после отрисовки.
+   */
+  adVisible = signal(true);
 
   private readAdState(): boolean {
     try {
-      return typeof localStorage === "undefined" || localStorage.getItem("ad-closed") !== "1";
+      return localStorage.getItem('ad-closed') !== '1';
     } catch {
       return true;
     }
@@ -196,6 +201,9 @@ export class HeaderComponent implements OnDestroy {
       this.isBrowser = true;
       this.authReady.set(true);
       this.syncPolling();
+      // Полоса скрывается, если посетитель закрывал её прежде. Читается здесь,
+      // а не при создании: на сервере хранилища нет
+      if (!this.readAdState()) this.adVisible.set(false);
     });
     // Реагирует на login/logout в течение сессии, не только на первый рендер
     effect(() => {
