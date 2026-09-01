@@ -13,46 +13,6 @@ const app = express();
 const angularApp = new AngularNodeAppEngine();
 
 /**
- * Обращения к API идут через тот же домен, а не на api.moneybay.us.
- *
- * Cookie с обновляющим токеном ставилась с чужого имени, и браузеры —
- * и Chrome, и Опера — отбрасывали её как стороннюю: вход не переживал
- * обновления страницы. С единым именем она своя и сохраняется.
- *
- * Заголовки передаются как есть, включая Set-Cookie в ответе.
- */
-const API_ORIGIN = 'https://api.moneybay.us';
-
-app.use('/api', async (req, res) => {
-  const target = API_ORIGIN + req.originalUrl;
-  const headers = new Headers();
-  for (const [k, v] of Object.entries(req.headers)) {
-    if (typeof v === 'string' && !['host', 'connection'].includes(k)) headers.set(k, v);
-  }
-
-  const init: RequestInit = { method: req.method, headers, redirect: 'manual' };
-  if (!['GET', 'HEAD'].includes(req.method)) {
-    const raw = await new Promise<Buffer>((resolve) => {
-      const parts: Buffer[] = [];
-      req.on('data', (c) => parts.push(c));
-      req.on('end', () => resolve(Buffer.concat(parts)));
-    });
-    init.body = new Uint8Array(raw);
-  }
-
-  try {
-    const upstream = await fetch(target, init);
-    res.status(upstream.status);
-    upstream.headers.forEach((value, key) => {
-      if (key.toLowerCase() !== 'content-encoding') res.setHeader(key, value);
-    });
-    res.send(Buffer.from(await upstream.arrayBuffer()));
-  } catch {
-    res.status(502).json({ message: 'Upstream unavailable' });
-  }
-});
-
-/**
  * Serve static files from /browser
  */
 app.use(
