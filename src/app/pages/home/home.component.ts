@@ -32,11 +32,13 @@ interface Subcategory {
   imports: [CommonModule, FormsModule, RouterLink, ListingCardComponent, SearchAutocompleteComponent, SkeletonLoaderComponent, FilterChipsBarComponent, FilterDrawerComponent],
   template: `
     <div class="min-page">
-    <!-- На главной поиск занимает треть первого экрана, плитки — остальное.
-         В разделе высота обычная: там выше стоит заголовок категории -->
+    <!-- Тёмная подложка за поиском на всю ширину окна: отрицательные отступы
+         выводят её за пределы main, ограниченного по ширине. Поиск на ней
+         читается как отдельная часть страницы, а не висит в пустоте.
+         В разделе подложки нет: там выше стоит заголовок категории -->
     <div [class]="selectedCategory()
            ? 'mb-6 mt-10'
-           : 'h-[calc(35vh-2rem)] flex items-center justify-center'">
+           : '-mt-8 -mx-4 mb-12 px-4 py-16 bg-mb-dark flex items-center justify-center'">
       <!-- Без кнопки: поиск запускается по Enter, а подсказки появляются на
            лету. Кнопка нажималась редко и занимала место -->
       <div class="w-full max-w-3xl mx-auto bg-white rounded-xl shadow-lg p-2 border border-gray-100">
