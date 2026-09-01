@@ -26,7 +26,7 @@ import { environment } from '../../../environments/environment';
         (keydown)="onKey($event)"
         [placeholder]="placeholder"
         autocomplete="off"
-        class="w-full pl-11 pr-3 py-2 rounded-lg border-0 focus:ring-2 focus:ring-mb-blue text-gray-800 text-sm">
+        class="w-full pl-11 pr-3 py-2 rounded-lg border-0 focus:outline-none focus:ring-0 text-gray-800 text-sm">
 
       @if (open() && (loading() || suggestions().length > 0 || (query.length >= 2 && !loading()))) {
         <div class="absolute top-full left-0 right-0 mt-1 bg-white rounded-lg shadow-xl border border-gray-200 z-50 max-h-96 overflow-y-auto">
