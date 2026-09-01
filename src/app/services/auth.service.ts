@@ -21,6 +21,16 @@ export class AuthService {
   private readonly hintKey = 'mb_auth_hint';
 
   /**
+   * Токен доступа хранится в браузере, а не только в памяти: без этого
+   * обновление страницы выбрасывало вошедшего. Подъём по cookie не работает —
+   * она приходит с api.moneybay.us, и браузеры отбрасывают её как стороннюю.
+   *
+   * Изъян известен: чужой скрипт на странице токен прочтёт. Смягчается тем,
+   * что живёт он пятнадцать минут.
+   */
+  private readonly tokenKey = 'mb_auth_token';
+
+  /**
    * Токен доступа держится только здесь, в памяти вкладки.
    *
    * В localStorage его больше нет: оттуда его прочёл бы любой скрипт,
@@ -138,7 +148,10 @@ export class AuthService {
   /** Забыть вход в этой вкладке, ничего не спрашивая у сервера. */
   private clearSession(): void {
     this.accessToken = null;
-    if (this.isBrowser()) localStorage.removeItem(this.userKey);
+    if (this.isBrowser()) {
+      localStorage.removeItem(this.tokenKey);
+      localStorage.removeItem(this.userKey);
+    }
     this.setAuthHint(false);
     this.currentUser.set(null);
     this.isAuthenticated.set(false);
@@ -150,7 +163,15 @@ export class AuthService {
   }
 
   getToken(): string | null {
-    return this.accessToken;
+    if (this.accessToken) return this.accessToken;
+    // После перезагрузки страницы память пуста — токен берётся из хранилища
+    if (!this.isBrowser()) return null;
+    try {
+      this.accessToken = localStorage.getItem(this.tokenKey);
+      return this.accessToken;
+    } catch {
+      return null;
+    }
   }
 
   /**
@@ -218,11 +239,11 @@ export class AuthService {
       : `${this.hintKey}=; path=/; SameSite=Lax; max-age=0`;
   }
   setSession(res: LoginResponse): void {
-    // Токен — только в память. В localStorage кладётся сам пользователь: имя и
-    // город правами не распоряжаются, а без них шапка после перезагрузки
-    // пустовала бы до ответа сервера
+    // Токен кладётся и в хранилище: после перезагрузки память пуста, а поднять
+    // вход по cookie нельзя — браузеры отбрасывают её как стороннюю
     this.accessToken = res.token;
     if (this.isBrowser()) {
+      localStorage.setItem(this.tokenKey, res.token);
       localStorage.setItem(this.userKey, JSON.stringify(res.user));
     }
     this.setAuthHint(true);
