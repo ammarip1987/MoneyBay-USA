@@ -1,6 +1,9 @@
 package us.moneybay.controller;
 
 import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.ResponseCookie;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import us.moneybay.config.OAuth2Properties;
@@ -10,6 +13,7 @@ import us.moneybay.model.User;
 import us.moneybay.security.JwtUtil;
 import us.moneybay.service.OAuth2Service;
 
+import java.time.Duration;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -19,6 +23,11 @@ import java.util.Map;
 @RequestMapping("/api/auth/oauth2")
 @RequiredArgsConstructor
 public class OAuth2Controller {
+    @Value("${app.cookie.domain:}")
+    private String cookieDomain;
+
+    @Value("${app.jwt.refresh-expiration:2592000000}")
+    private long refreshExpiration;
 
     private final OAuth2Service oauth2Service;
     private final OAuth2Properties props;
@@ -79,7 +88,36 @@ public class OAuth2Controller {
         }
 
         String jwt = jwtUtil.generateToken(user.getId(), user.getEmail());
-        return ResponseEntity.ok(new AuthDto.AuthResponse(jwt, UserDto.from(user)));
+
+        // Обновляющая cookie, та же, что при входе почтой. Прежде вход через
+        // службу отдавал только токен доступа: он живёт минуты, обновить его
+        // было нечем, и после перезагрузки страницы человек оказывался снаружи
+        ResponseCookie refresh = buildRefreshCookie(
+            jwtUtil.generateRefreshToken(user.getId(), user.getEmail()));
+
+        return ResponseEntity.ok()
+            .header(HttpHeaders.SET_COOKIE, refresh.toString())
+            .body(new AuthDto.AuthResponse(jwt, UserDto.from(user)));
+    }
+
+    /**
+     * Cookie с обновляющим токеном. Повторяет настройку из AuthController:
+     * защищённость и SameSite=None нужны, когда сайт и API на разных именах,
+     * а при местном запуске соединение обычное и такая cookie отбрасывается.
+     */
+    private ResponseCookie buildRefreshCookie(String token) {
+        boolean remote = cookieDomain != null && !cookieDomain.isBlank();
+
+        ResponseCookie.ResponseCookieBuilder cookie = ResponseCookie.from("mb_refresh", token)
+            .httpOnly(true)
+            .secure(remote)
+            .sameSite(remote ? "None" : "Lax")
+            .path("/api/auth")
+            .maxAge(Duration.ofMillis(refreshExpiration));
+        if (remote) {
+            cookie.domain(cookieDomain);
+        }
+        return cookie.build();
     }
 
     private static String trimToNull(String s) {
