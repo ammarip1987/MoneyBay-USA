@@ -254,15 +254,16 @@ Moneybay/
 │   │   │   └── ...
 │   │   │
 │   │   ├── config/                   # Конфигурация
-│   │   │   ├── SecurityConfig.java   # Spring Security + JWT
-│   │   │   ├── WebConfig.java        # CORS, WebSocket
-│   │   │   ├── CacheConfig.java      # Redis кэширование
-│   │   │   └── FileStorageConfig.java # Cloudflare R2
+│   │   │   ├── SecurityConfig.java   # Spring Security + JWT, CORS
+│   │   │   ├── WebSocketConfig.java  # STOMP для переписки
+│   │   │   ├── R2Config.java         # Хранилище снимков Cloudflare R2
+│   │   │   ├── RateLimitFilter.java  # Ограничение частоты обращений
+│   │   │   ├── CityContextFilter.java # Город из поддомена
+│   │   │   └── GlobalExceptionHandler.java
 │   │   │
-│   │   ├── security/                 # JWT и аутентификация
-│   │   │   ├── JwtTokenProvider.java
-│   │   │   ├── JwtAuthFilter.java
-│   │   │   └── CityContextFilter.java # City subdomain routing
+│   │   ├── security/                 # Токены и проверка доступа
+│   │   │   ├── JwtUtil.java          # Создание и проверка токенов
+│   │   │   └── JwtAuthFilter.java    # Проверка на каждом запросе
 │   │   │
 │   │   └── MoneyBayApplication.java  # Main класс
 │   │
@@ -510,12 +511,28 @@ Subcategory hierarchy (3 levels):
 
 ## Authentication
 
-1. Frontend → `POST /api/auth/login` with email/password
-2. Backend validates, returns JWT + UserDto
-3. Frontend stores token in `localStorage`
-4. `authInterceptor` adds `Authorization: Bearer <token>` to all requests
-5. Backend `JwtAuthFilter` extracts user, sets SecurityContext
-6. `authGuard` protects routes that require auth
+1. Сайт → `POST /api/auth/login` с почтой и паролем
+2. Сервер отвечает токеном доступа, обновляющим токеном и данными человека,
+   плюс ставит куку `mb_refresh`
+3. Оба токена ложатся в `localStorage`, кука живёт своей жизнью
+4. `authInterceptor` подставляет `Authorization: Bearer <токен>` к запросам
+5. `JwtAuthFilter` на сервере узнаёт человека по токену
+6. `authGuard` закрывает разделы, куда нужен вход
+
+**Сроки.** Токен доступа живёт четверть часа, обновляющий — год и выдаётся
+заново при каждом обновлении: заходя хотя бы раз в год, человек не выпадает.
+
+**Три пути продления,** чтобы вход не обрывался, если один откажет:
+
+| Путь | Откуда берётся |
+|---|---|
+| Кука `mb_refresh` | ставит сервер: `Domain=.moneybay.us`, `Secure`, `HttpOnly`, `SameSite=Lax` |
+| Заголовок `X-Refresh-Token` | из `localStorage`, когда куку стёрли чисткой данных сайта |
+| Токен доступа | из `localStorage`, держит шапку до ответа сервера |
+
+`SameSite=Lax`, а не `None`: `None` помечает куку сторонней, и браузеры её
+блокируют — Опера в том числе. Область `.moneybay.us` роднит сайт с поддоменом
+`api`, так что при `Lax` она своя.
 
 ## Search
 
@@ -2015,6 +2032,73 @@ aws ec2 authorize-security-group-ingress --region us-east-2 \
 - **AI Labyrinth** — обходчики моделей уводятся на страницы-приманки вместо
   настоящих.
 
-Кэш страниц при этом не работает: их отдаёт обработчик Workers, а правила кэша
-касаются ответов от источника. Испробованы `Cache-Control` в `server.ts`,
-`_headers`, `run_worker_first` и правило в панели — ни один путь не годится.
+### Кэш страниц не работает
+
+Страницы отдаёт обработчик Cloudflare, и до кода дело не доходит. Испробовано
+пять путей, ни один не годится:
+
+| Путь | Отчего |
+|---|---|
+| `Cache-Control` в `server.ts` | Angular собирает свой обработчик, этот код в него не попадает |
+| `_headers` | применяется только к готовым файлам |
+| Правило кэша в панели | касается ответов от источника, а обработчик Cloudflare считает своим |
+| Обёртка `worker/index.mjs` с Cache API | развёрнута, но её `fetch` не вызывается |
+| `run_worker_first` | не помог, откачен |
+
+Обёртка оставлена в репозитории: `worker/worker.ts` — исходник, `worker/index.mjs` —
+собранный файл, на него указывает `main` в `wrangler.jsonc`. Собран он у себя и
+запушен готовым, потому что сборка в облаке вызывает только `ng build`; после
+правки исходника пересобрать командой `npm run build:worker`.
+
+К кэшу вернуться при переезде на новый домен, где можно выбрать устройство с
+отдачей страниц сервером, а не обработчиком.
+
+При нынешних 3.4 миллиона обращений в месяц против оплаченных десяти запас
+тройной, так что дело не срочное.
+
+### Наблюдение и оповещения
+
+Записи сервера идут в CloudWatch, группа `moneybay-backend`, драйвер `awslogs`
+задан в определении задачи ECS. Хранятся 30 дней — прежде срок не был задан и
+записи копились без предела.
+
+Тревоги шлют письмо через тему SNS `moneybay-alerts`:
+
+| Тревога | Условие |
+|---|---|
+| `moneybay-backend-errors` | пять `ERROR` за пять минут |
+| `moneybay-5xx` | десять отказов сервера за пять минут |
+| `moneybay-db-cpu` | база свыше 80% десять минут подряд |
+| `moneybay-db-connections` | соединений свыше 60 при пределе около 85 |
+| `moneybay-tasks-down` | работает меньше двух задач |
+
+Подписка на тему требует подтверждения по письму. Если письма перестали
+приходить — проверить, не отключена ли она:
+
+```bash
+aws sns list-subscriptions-by-topic --region us-east-2 \
+  --topic-arn arn:aws:sns:us-east-2:172575865299:moneybay-alerts
+```
+
+`Deleted` вместо адреса подписки означает отписку; вернуть её ссылкой
+`Resubscribe` из письма AWS либо завести заново через `aws sns subscribe`.
+
+Агрегатора вроде Sentry нет. При нынешних единичных ошибках в сутки CloudWatch
+достаточно; Sentry имеет смысл, когда пойдут посетители — он показывает
+обстановку вокруг ошибки, а не одну строку записи.
+
+### Что осталось незакрытым
+
+**Отправка почты.** `EmailService` отвечает ошибкой, подтверждение адреса не
+уходит. Отложено до переезда на новый домен, где почта настраивается заново.
+
+**Оценки людей.** `UserRatingService` и сущность `UserRating` написаны, база
+готова, а контроллера нет — поставить оценку неоткуда. По замыслу это главное,
+чем площадка отличается от Craigslist.
+
+**Подкатегории.** Заведены у четырёх разделов из двенадцати: Beauty & Cosmetics
+12, Food & Grocery 18, Real Estate 6, Vehicles 6. Панель «All Listings» это
+переносит — у прочих показывает ссылку на сам раздел.
+
+**Объявления.** Около шестидесяти, почти все испытательные. Пока их нет,
+посетителям приходить не за чем, и никакие настройки этого не заменят.
