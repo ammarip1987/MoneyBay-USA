@@ -92,12 +92,14 @@ public class OAuth2Controller {
         // Обновляющая cookie, та же, что при входе почтой. Прежде вход через
         // службу отдавал только токен доступа: он живёт минуты, обновить его
         // было нечем, и после перезагрузки страницы человек оказывался снаружи
-        ResponseCookie refresh = buildRefreshCookie(
-            jwtUtil.generateRefreshToken(user.getId(), user.getEmail()));
+        String refreshToken = jwtUtil.generateRefreshToken(user.getId(), user.getEmail());
+        ResponseCookie refresh = buildRefreshCookie(refreshToken);
 
+        // Токен идёт и в теле: куку стирает чистка данных сайта, а копия в
+        // хранилище её переживает и продлевает вход заголовком
         return ResponseEntity.ok()
             .header(HttpHeaders.SET_COOKIE, refresh.toString())
-            .body(new AuthDto.AuthResponse(jwt, UserDto.from(user)));
+            .body(new AuthDto.AuthResponse(jwt, UserDto.from(user), refreshToken));
     }
 
     /**

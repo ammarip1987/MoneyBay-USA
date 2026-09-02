@@ -101,7 +101,12 @@ public class AuthController {
         }
 
         String token = jwtUtil.generateToken(user.getId(), user.getEmail());
-        return ResponseEntity.ok(new AuthDto.AuthResponse(token, UserDto.from(user)));
+        // Обновляющий токен выдаётся и здесь: без него только что создавший
+        // запись выпадал через четверть часа, продлевать было нечем
+        String refresh = jwtUtil.generateRefreshToken(user.getId(), user.getEmail());
+        return ResponseEntity.ok()
+            .header(HttpHeaders.SET_COOKIE, refreshCookie(refresh).toString())
+            .body(new AuthDto.AuthResponse(token, UserDto.from(user), refresh));
     }
 
     @PostMapping("/login")
