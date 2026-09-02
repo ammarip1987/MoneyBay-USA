@@ -143,8 +143,9 @@ public class AuthController {
      * доступа живёт в памяти вкладки и пропадает при перезагрузке, а продлить
      * вход можно только этой кукой, до которой чужой скрипт не дотянется.
      *
-     * sameSite=None нужен потому, что сайт и API на разных именах
-     * (moneybay.us и api.moneybay.us) — при Strict браузер куку бы не отправил.
+     * sameSite=Lax, не None: None помечает куку сторонней, и браузеры её
+     * блокируют. Область .moneybay.us роднит сайт с поддоменом api, так что
+     * при Lax она своя и уходит с запросами к нему.
      * Защиту от подделки запросов держит проверка вида токена: обновляющий к
      * защищённым адресам не подходит, а обновление отдаёт токен только тому,
      * кто уже вошёл.
@@ -158,17 +159,19 @@ public class AuthController {
         return buildRefreshCookie("", Duration.ZERO);
     }
 
-    private ResponseCookie buildRefreshCookie(String token, Duration maxAge) {
-        // Защищённость и SameSite=None идут вместе и требуют https. При местном
-        // запуске соединение обычное, и такая кука браузером отбрасывается —
-        // вход не держался бы. Признаком служит заданная область: на рабочем
+        // Защищённость требует https. При местном запуске соединение обычное, и
+        // такая кука браузером отбрасывается — вход не держался бы. Признаком
+        // служит заданная область: на рабочем она есть, у себя пустая.
         // она есть, у себя пустая.
         boolean remote = cookieDomain != null && !cookieDomain.isBlank();
 
         ResponseCookie.ResponseCookieBuilder cookie = ResponseCookie.from(REFRESH_COOKIE, token)
             .httpOnly(true)
             .secure(remote)
-            .sameSite(remote ? "None" : "Lax")
+            // Lax, не None: None делает куку сторонней, и браузеры её блокируют.
+            // Область .moneybay.us роднит сайт с поддоменом api, так что при Lax
+            // она своя и уходит с запросами к нему
+            .sameSite("Lax")
             .path("/api/auth")
             .maxAge(maxAge);
         if (remote) {

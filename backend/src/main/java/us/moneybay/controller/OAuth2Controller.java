@@ -104,8 +104,8 @@ public class OAuth2Controller {
 
     /**
      * Cookie с обновляющим токеном. Повторяет настройку из AuthController:
-     * защищённость и SameSite=None нужны, когда сайт и API на разных именах,
-     * а при местном запуске соединение обычное и такая cookie отбрасывается.
+     * защищённость нужна на https, а при местном запуске соединение обычное и
+     * такая cookie отбрасывается.
      */
     private ResponseCookie buildRefreshCookie(String token) {
         boolean remote = cookieDomain != null && !cookieDomain.isBlank();
@@ -113,7 +113,7 @@ public class OAuth2Controller {
         ResponseCookie.ResponseCookieBuilder cookie = ResponseCookie.from("mb_refresh", token)
             .httpOnly(true)
             .secure(remote)
-            .sameSite(remote ? "None" : "Lax")
+            .sameSite("Lax")
             .path("/api/auth")
             .maxAge(Duration.ofMillis(refreshExpiration));
         if (remote) {
