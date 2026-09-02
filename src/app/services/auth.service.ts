@@ -69,13 +69,29 @@ export class AuthService {
    * насовсем, хотя кука цела.
    */
   private restoreSession(): void {
+    // Токен из хранилища поднимает вход сразу, до всякого запроса
+    const stored = this.getToken();
+    if (stored) {
+      const user = this.loadUser();
+      if (user) {
+        this.currentUser.set(user);
+        this.isAuthenticated.set(true);
+      }
+    }
+
     this.refreshToken().subscribe({
       error: (err) => {
-        if (err?.status === 401 || err?.status === 403) {
+        // Отказ по куке вход не гасит, когда токен лежит в хранилище: куку
+        // браузеры отбрасывают как стороннюю, и обновление по ней всегда
+        // отвечает отказом. Гасит только просроченный токен — это покажет
+        // validateSession своим запросом к профилю.
+        if ((err?.status === 401 || err?.status === 403) && !stored) {
           this.clearSession();
         }
       }
     });
+
+    if (stored) this.validateSession();
   }
 
   /**
