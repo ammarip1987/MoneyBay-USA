@@ -12,45 +12,6 @@ const browserDistFolder = join(import.meta.dirname, '../browser');
 const app = express();
 const angularApp = new AngularNodeAppEngine();
 
-/**
- * Обращения к API идут через тот же домен, а не на api.moneybay.us.
- *
- * Cookie с обновляющим токеном ставилась с чужого имени, и браузеры —
- * и Chrome, и Опера — отбрасывали её как стороннюю: вход не переживал
- * обновления страницы. С единым именем она своя и сохраняется.
- *
- * Заголовки передаются как есть, включая Set-Cookie в ответе.
- */
-const API_ORIGIN = 'https://api.moneybay.us';
-
-app.use('/api', async (req, res) => {
-  const target = API_ORIGIN + req.originalUrl;
-  const headers = new Headers();
-  for (const [k, v] of Object.entries(req.headers)) {
-    if (typeof v === 'string' && !['host', 'connection'].includes(k)) headers.set(k, v);
-  }
-
-  const init: RequestInit = { method: req.method, headers, redirect: 'manual' };
-  if (!['GET', 'HEAD'].includes(req.method)) {
-    const raw = await new Promise<Buffer>((resolve) => {
-      const parts: Buffer[] = [];
-      req.on('data', (c) => parts.push(c));
-      req.on('end', () => resolve(Buffer.concat(parts)));
-    });
-    init.body = new Uint8Array(raw);
-  }
-
-  try {
-    const upstream = await fetch(target, init);
-    res.status(upstream.status);
-    upstream.headers.forEach((value, key) => {
-      if (key.toLowerCase() !== 'content-encoding') res.setHeader(key, value);
-    });
-    res.send(Buffer.from(await upstream.arrayBuffer()));
-  } catch {
-    res.status(502).json({ message: 'Upstream unavailable' });
-  }
-});
 
 /**
  * Serve static files from /browser
@@ -67,6 +28,19 @@ app.use(
  * Handle all other requests by rendering the Angular application.
  */
 app.use((req, res, next) => {
+  // Страницы кэшируются на стороне Cloudflare: из 112 тысяч суточных обращений
+  // в кэш попадало 539, всё остальное шло в отрисовку. Гостю отдаётся копия
+  // из кэша, вошедшему — своя: их разделяет наличие заголовка авторизации.
+  //
+  // stale-while-revalidate позволяет отдать чуть устаревшую копию сразу и
+  // обновить её в фоне, так что новое объявление появляется без ожидания.
+  const isGuest = !req.headers.authorization && !req.headers.cookie?.includes('mb_');
+  if (req.method === 'GET' && isGuest) {
+    res.setHeader('Cache-Control', 'public, max-age=0, s-maxage=60, stale-while-revalidate=600');
+  } else {
+    res.setHeader('Cache-Control', 'private, no-store');
+  }
+
   angularApp
     .handle(req)
     .then((response) =>
