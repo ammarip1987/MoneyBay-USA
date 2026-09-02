@@ -42,6 +42,22 @@ import { NotificationsService } from '../../services/notifications.service';
             }
           </a>
 
+          <!-- Все разделы одной кнопкой: на главной они плитками, а из раздела к
+               ним приходилось возвращаться назад. Панель раскрывается поверх
+               страницы: слева разделы, справа содержимое выбранного -->
+          <button type="button"
+                  (click)="toggleCatalog()"
+                  class="hidden md:flex items-center gap-2 ml-6 px-4 py-2 rounded-full border border-mb-cyan text-mb-cyan hover:bg-mb-cyan hover:text-mb-dark transition font-medium shrink-0">
+            <svg class="w-4 h-4" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
+              <path d="M3 3h6v6H3V3zm8 0h6v6h-6V3zM3 11h6v6H3v-6zm8 0h6v6h-6v-6z"/>
+            </svg>
+            <span>All Listings</span>
+            <svg class="w-3 h-3 transition-transform" [class.rotate-180]="catalogOpen()"
+                 viewBox="0 0 12 8" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+              <path d="M1 1l5 5 5-5"/>
+            </svg>
+          </button>
+
           <div class="hidden md:flex items-center gap-4 flex-wrap justify-end">
             @if (authReady() ? auth.isAuthenticated() : auth.authHint()) {
               <!-- Подача объявления — то, ради чего продавец приходит: рамка отделяет
@@ -130,6 +146,66 @@ import { NotificationsService } from '../../services/notifications.service';
           </div>
         }
       </nav>
+
+      <!-- Панель разделов. Держится внутри header, чтобы наследовать sticky и
+           уходить вместе с шапкой; ширина не ограничена max-w-7xl, иначе
+           столбцы подкатегорий не помещались бы -->
+      @if (catalogOpen()) {
+        <div class="hidden md:block bg-white text-gray-800 border-t border-gray-200 shadow-xl">
+          <div class="max-w-7xl mx-auto flex">
+            <!-- Разделы. Выбранный подсвечен, наведение сразу меняет правую
+                 часть: нажатие оставлено переходу в раздел -->
+            <ul class="w-64 shrink-0 border-r border-gray-100 py-3 max-h-[70vh] overflow-y-auto">
+              @for (cat of catalogCategories(); track cat.id) {
+                <li>
+                  <a [routerLink]="['/']" [queryParams]="{ category: cat.slug }"
+                     (mouseenter)="hoverCategory(cat)"
+                     (click)="closeCatalog()"
+                     class="flex items-center gap-3 px-4 py-2 text-sm hover:bg-gray-50 transition"
+                     [class.bg-gray-50]="activeCatalogCategory()?.id === cat.id"
+                     [class.font-semibold]="activeCatalogCategory()?.id === cat.id">
+                    <span class="w-5 text-center text-mb-dark" [innerHTML]="cat.icon"></span>
+                    <span class="flex-1">{{ cat.name }}</span>
+                    @if (cat.subcategoryCount) {
+                      <span class="text-gray-400">&rsaquo;</span>
+                    }
+                  </a>
+                </li>
+              }
+            </ul>
+
+            <!-- Содержимое выбранного раздела -->
+            <div class="flex-1 p-6 max-h-[70vh] overflow-y-auto">
+              @if (activeCatalogCategory(); as cat) {
+                <a [routerLink]="['/']" [queryParams]="{ category: cat.slug }"
+                   (click)="closeCatalog()"
+                   class="text-lg font-semibold text-mb-dark hover:underline">{{ cat.name }}</a>
+
+                @if (catalogSubs().length) {
+                  <!-- Столбцами: перечень в одну колонку заставлял бы прокручивать
+                       панель, хотя места по ширине достаточно -->
+                  <div class="mt-4 columns-2 lg:columns-3 gap-8">
+                    @for (sub of catalogSubs(); track sub.id) {
+                      <a [routerLink]="['/']"
+                         [queryParams]="{ category: cat.slug, subcategory: sub.slug }"
+                         (click)="closeCatalog()"
+                         class="block py-1 text-sm text-gray-700 hover:text-mb-dark hover:underline break-inside-avoid">{{ sub.name }}</a>
+                    }
+                  </div>
+                } @else if (catalogSubsLoading()) {
+                  <p class="mt-4 text-sm text-gray-400">Loading…</p>
+                } @else {
+                  <!-- Подкатегории заведены не у всех разделов: вместо пустоты
+                       предлагается перейти в сам раздел -->
+                  <a [routerLink]="['/']" [queryParams]="{ category: cat.slug }"
+                     (click)="closeCatalog()"
+                     class="mt-4 inline-block text-sm text-mb-dark hover:underline">Browse all in {{ cat.name }} &rarr;</a>
+                }
+              }
+            </div>
+          </div>
+        </div>
+      }
     </header>
    </div>
   `
@@ -188,6 +264,19 @@ export class HeaderComponent implements OnDestroy {
 
   unreadCount = signal(0);
   mobileOpen = signal(false);
+
+  /** Раскрыта ли панель разделов. */
+  catalogOpen = signal(false);
+  catalogCategories = signal<any[]>([]);
+  activeCatalogCategory = signal<any | null>(null);
+  catalogSubs = signal<any[]>([]);
+  catalogSubsLoading = signal(false);
+
+  /**
+   * Подкатегории по разделам, уже загруженные. Наведение на раздел повторно
+   * запроса не шлёт: без этого движение мыши по перечню давало бы залп.
+   */
+  private subsCache = new Map<string, any[]>();
   private pollTimer: any = null;
   private lastSeenCount = 0;
 
@@ -275,6 +364,67 @@ export class HeaderComponent implements OnDestroy {
 
   closeMobileMenu(): void {
     this.mobileOpen.set(false);
+  }
+
+  /**
+   * Раскрыть или закрыть панель разделов.
+   *
+   * Разделы запрашиваются при первом раскрытии, а не при загрузке страницы:
+   * панель открывают не все, и лишний запрос замедлял бы первый экран.
+   */
+  toggleCatalog(): void {
+    const opening = !this.catalogOpen();
+    this.catalogOpen.set(opening);
+    if (!opening) return;
+
+    if (this.catalogCategories().length) return;
+    this.api.getCategories().subscribe({
+      next: (cats) => {
+        this.catalogCategories.set(cats || []);
+        const first = (cats || [])[0];
+        if (first) this.hoverCategory(first);
+      },
+      error: () => this.catalogCategories.set([])
+    });
+  }
+
+  closeCatalog(): void {
+    this.catalogOpen.set(false);
+  }
+
+  /** Показать содержимое раздела, на который навели. */
+  hoverCategory(cat: any): void {
+    if (this.activeCatalogCategory()?.id === cat.id) return;
+    this.activeCatalogCategory.set(cat);
+
+    const cached = this.subsCache.get(cat.slug);
+    if (cached) {
+      this.catalogSubs.set(cached);
+      this.catalogSubsLoading.set(false);
+      return;
+    }
+
+    this.catalogSubs.set([]);
+    this.catalogSubsLoading.set(true);
+    this.api.getSubcategories(cat.slug).subscribe({
+      next: (subs) => {
+        const list = subs || [];
+        this.subsCache.set(cat.slug, list);
+        // Пока запрос шёл, могли навести на другой раздел — тогда ответ уже
+        // не нужен, иначе в панели оказались бы чужие подкатегории
+        if (this.activeCatalogCategory()?.slug === cat.slug) {
+          this.catalogSubs.set(list);
+          this.catalogSubsLoading.set(false);
+        }
+      },
+      error: () => {
+        this.subsCache.set(cat.slug, []);
+        if (this.activeCatalogCategory()?.slug === cat.slug) {
+          this.catalogSubs.set([]);
+          this.catalogSubsLoading.set(false);
+        }
+      }
+    });
   }
 
   logout(): void {
