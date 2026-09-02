@@ -1,7 +1,8 @@
 {
   "name": "moneybay-usa",
   "compatibility_date": "2026-08-03",
-  "main": "./dist/moneybay-angular/server/server.mjs",
+  // Точка входа — обёртка с кэшем, она уже вызывает обработчик Angular
+  "main": "./worker/index.mjs",
   "assets": {
     // Файл ищется первым; до серверной отрисовки доходят только адреса,
     // для которых статики нет
