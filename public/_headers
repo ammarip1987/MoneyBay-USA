@@ -11,10 +11,13 @@
 /media/*
   Cache-Control: public, max-age=31536000, immutable
 
-# Разметка кэшу не подлежит: в ней имена файлов, и старая указывала бы на
-# несуществующие
+# Разметку у себя Cloudflare держит минуту, браузеру же кэш запрещён: в ней
+# имена файлов сборки, и старая копия в браузере указывала бы на исчезнувшие.
+#
+# Без этого из 112 тысяч суточных обращений в кэш попадало 539 — всё остальное
+# уходило в отрисовку.
 /
-  Cache-Control: public, max-age=0, must-revalidate
+  Cache-Control: public, max-age=0, must-revalidate, s-maxage=60, stale-while-revalidate=600
 
 /index.html
-  Cache-Control: public, max-age=0, must-revalidate
+  Cache-Control: public, max-age=0, must-revalidate, s-maxage=60, stale-while-revalidate=600
