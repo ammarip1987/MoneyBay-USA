@@ -5,7 +5,7 @@
     "ng": "ng",
     "start": "ng serve --proxy-config proxy.conf.json",
     "build": "ng build",
-    "build:worker": "esbuild src/worker.ts --bundle --format=esm --platform=neutral --external:xhr2 --external:sockjs-client --external:node:* --external:../dist/moneybay-angular/server/server.mjs --outfile=worker/index.mjs",
+    "build:worker": "esbuild worker/worker.ts --bundle --format=esm --platform=neutral --external:xhr2 --external:sockjs-client --external:node:* --external:../dist/moneybay-angular/server/server.mjs --outfile=worker/index.mjs",
     "watch": "ng build --watch --configuration development",
     "test": "ng test"
   },

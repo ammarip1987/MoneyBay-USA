@@ -9,6 +9,9 @@
  * Здесь кэш ведётся изнутри, через хранилище самого обработчика: отрисованная
  * страница кладётся туда и на следующий раз отдаётся без повторной отрисовки.
  */
+// Собранный обработчик Angular. Ссылка помечена внешней при сборке обёртки:
+// в этот миг файла ещё нет, он появляется от ng build
+// @ts-ignore
 import angularHandler from '../dist/moneybay-angular/server/server.mjs';
 
 /** Сколько держать страницу. Минуты хватает: новое объявление ждёт недолго. */
@@ -38,7 +41,7 @@ function isCacheable(request: Request): boolean {
 }
 
 export default {
-  async fetch(request: Request, env: unknown, ctx: ExecutionContext): Promise<Response> {
+  async fetch(request: Request, env: unknown, ctx: { waitUntil(p: Promise<unknown>): void }): Promise<Response> {
     if (!isCacheable(request)) {
       return (angularHandler as any).fetch(request, env, ctx);
     }

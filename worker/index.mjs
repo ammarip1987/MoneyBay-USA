@@ -1,4 +1,4 @@
-// src/worker.ts
+// worker/worker.ts
 import angularHandler from "../dist/moneybay-angular/server/server.mjs";
 var TTL_SECONDS = 60;
 function isCacheable(request) {
