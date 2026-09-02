@@ -61,14 +61,6 @@ public interface ListingRepository extends JpaRepository<Listing, Long> {
            "AND l.isActive = true AND l.isDeleted = false")
     long countActiveByUser(@Param("userId") Long userId);
 
-    @Query("SELECT l FROM Listing l WHERE l.isActive = true AND l.isDeleted = false " +
-           "AND (COALESCE(:q, '') = '' OR LOWER(l.title) LIKE LOWER(CONCAT('%', :q, '%')) OR LOWER(l.description) LIKE LOWER(CONCAT('%', :q, '%'))) " +
-           "AND (COALESCE(:city, '') = '' OR l.location = :city) " +
-           "AND (COALESCE(:categorySlug, '') = '' OR l.category.slug = :categorySlug)")
-    Page<Listing> search(@Param("q") String q,
-                         @Param("city") String city,
-                         @Param("categorySlug") String categorySlug,
-                         Pageable pageable);
 
     /**
      * Та же выборка, но списком: Page вынуждает считать все строки, а count по

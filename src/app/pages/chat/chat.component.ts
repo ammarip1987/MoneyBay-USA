@@ -35,7 +35,17 @@ import { Message } from '../../models/listing.model';
                    [class.bg-gray-100]="msg.sender_id !== currentUserId()"
                    [class.text-gray-800]="msg.sender_id !== currentUserId()"
                    class="rounded-2xl px-4 py-2 max-w-md">
-                <p>{{ msg.content }}</p>
+                <!-- Снимок приходит строкой "Photo: <адрес>" и до сих пор так и
+                     показывался. Отрисовывается картинкой, а не ссылкой:
+                     собеседнику видно, что прислали, без перехода -->
+                @if (photoUrl(msg.content); as url) {
+                  <a [href]="url" target="_blank" rel="noopener">
+                    <img [src]="url" alt="Photo"
+                         class="chat-photo" loading="lazy" decoding="async">
+                  </a>
+                } @else {
+                  <p>{{ msg.content }}</p>
+                }
                 <p class="text-xs mt-1 opacity-70">{{ msg.created_at | date:'shortTime' }}</p>
               </div>
             </div>
@@ -62,7 +72,17 @@ import { Message } from '../../models/listing.model';
         </form>
       </div>
     </div>
-  `
+  `,
+  styles: [`
+    .chat-photo {
+      max-width: 250px;
+      max-height: 250px;
+      border-radius: 8px;
+      display: block;
+      object-fit: cover;
+      cursor: zoom-in;
+    }
+  `]
 })
 export class ChatComponent implements OnInit, OnDestroy, AfterViewChecked {
   @ViewChild('messageContainer') private messageContainer!: ElementRef;
@@ -152,6 +172,19 @@ export class ChatComponent implements OnInit, OnDestroy, AfterViewChecked {
         error: () => this.sending.set(false)
       });
     }
+  }
+
+  /**
+   * Адрес снимка из сообщения, если он там есть.
+   *
+   * Снимки уходят строкой "Photo: <адрес>", отдельного вида сообщений нет.
+   * Признаётся только photos.moneybay.us: чужой адрес в теге img утянул бы
+   * к постороннему хозяину сведения о том, кто и когда открыл переписку.
+   */
+  photoUrl(content: string): string | null {
+    if (!content) return null;
+    const m = content.match(/^Photo:\s*(https:\/\/photos\.moneybay\.us\/\S+)$/);
+    return m ? m[1] : null;
   }
 
   onPhotoSelected(event: Event): void {
