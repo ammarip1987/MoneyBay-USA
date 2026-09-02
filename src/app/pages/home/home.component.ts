@@ -37,7 +37,7 @@ interface Subcategory {
          читается как отдельная часть страницы, а не висит в пустоте.
          В разделе подложки нет: там выше стоит заголовок категории -->
     <div [class]="selectedCategory()
-           ? 'mb-6 mt-10'
+           ? '-mt-8 mb-6 px-4 py-16 flex items-center justify-center'
            : '-mt-8 mb-12 px-4 py-16 bg-mb-dark flex items-center justify-center w-screen relative left-1/2 -translate-x-1/2'">
       <!-- Без кнопки: поиск запускается по Enter, а подсказки появляются на
            лету. Кнопка нажималась редко и занимала место -->
