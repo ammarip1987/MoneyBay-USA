@@ -159,10 +159,10 @@ public class AuthController {
         return buildRefreshCookie("", Duration.ZERO);
     }
 
+    private ResponseCookie buildRefreshCookie(String token, Duration maxAge) {
         // Защищённость требует https. При местном запуске соединение обычное, и
         // такая кука браузером отбрасывается — вход не держался бы. Признаком
         // служит заданная область: на рабочем она есть, у себя пустая.
-        // она есть, у себя пустая.
         boolean remote = cookieDomain != null && !cookieDomain.isBlank();
 
         ResponseCookie.ResponseCookieBuilder cookie = ResponseCookie.from(REFRESH_COOKIE, token)
