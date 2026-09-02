@@ -45,9 +45,23 @@ public class AuthDto {
         private String token;
         private UserDto user;
 
+        /**
+         * Обновляющий токен идёт и в теле ответа, не только в куке: кука
+         * приходит с api.moneybay.us, а сайт стоит на moneybay.us, и браузеры
+         * отбрасывают её как стороннюю. Без этого поля вход обрывался через
+         * четверть часа, когда истекал токен доступа.
+         */
+        private String refreshToken;
+
         public AuthResponse(String token, UserDto user) {
             this.token = token;
             this.user = user;
+        }
+
+        public AuthResponse(String token, UserDto user, String refreshToken) {
+            this.token = token;
+            this.user = user;
+            this.refreshToken = refreshToken;
         }
     }
 }

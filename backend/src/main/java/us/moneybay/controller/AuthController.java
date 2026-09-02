@@ -118,10 +118,12 @@ public class AuthController {
             .filter(u -> passwordEncoder.matches(req.getPassword(), u.getPassword()))
             .map(user -> {
                 String token = jwtUtil.generateToken(user.getId(), user.getEmail());
+                String refresh = jwtUtil.generateRefreshToken(user.getId(), user.getEmail());
+                // Токен идёт и в куке, и в теле: кука работает, когда сайт и
+                // сервер на одном имени, тело — когда на разных
                 return ResponseEntity.ok()
-                    .header(HttpHeaders.SET_COOKIE, refreshCookie(
-                        jwtUtil.generateRefreshToken(user.getId(), user.getEmail())).toString())
-                    .body((Object) new AuthDto.AuthResponse(token, UserDto.from(user)));
+                    .header(HttpHeaders.SET_COOKIE, refreshCookie(refresh).toString())
+                    .body((Object) new AuthDto.AuthResponse(token, UserDto.from(user), refresh));
             })
             .orElse(ResponseEntity.status(401).body(Map.of(
                 "code", "INVALID_CREDENTIALS",
@@ -178,7 +180,14 @@ public class AuthController {
      */
     @PostMapping("/refresh")
     public ResponseEntity<?> refresh(
-            @CookieValue(name = REFRESH_COOKIE, required = false) String refreshToken) {
+            @CookieValue(name = REFRESH_COOKIE, required = false) String cookieToken,
+            @RequestHeader(name = "X-Refresh-Token", required = false) String headerToken) {
+
+        // Кука идёт первой, заголовок подхватывает, когда её отбросил браузер:
+        // она приходит с api.moneybay.us при сайте на moneybay.us
+        String refreshToken = (cookieToken != null && !cookieToken.isBlank())
+            ? cookieToken
+            : headerToken;
 
         if (refreshToken == null || refreshToken.isBlank()
                 || !jwtUtil.isValid(refreshToken)
@@ -192,12 +201,12 @@ public class AuthController {
         return userRepository.findById(userId)
             .map(user -> {
                 String token = jwtUtil.generateToken(user.getId(), user.getEmail());
-                // Кука выдаётся заново: иначе вход обрывался бы ровно через срок
+                String next = jwtUtil.generateRefreshToken(user.getId(), user.getEmail());
+                // Токен выдаётся заново: иначе вход обрывался бы ровно через срок
                 // обновляющего токена, сколько бы человек ни пользовался сайтом
                 return ResponseEntity.ok()
-                    .header(HttpHeaders.SET_COOKIE, refreshCookie(
-                        jwtUtil.generateRefreshToken(user.getId(), user.getEmail())).toString())
-                    .body((Object) new AuthDto.AuthResponse(token, UserDto.from(user)));
+                    .header(HttpHeaders.SET_COOKIE, refreshCookie(next).toString())
+                    .body((Object) new AuthDto.AuthResponse(token, UserDto.from(user), next));
             })
             .orElse(ResponseEntity.status(401)
                 .header(HttpHeaders.SET_COOKIE, clearedRefreshCookie().toString())

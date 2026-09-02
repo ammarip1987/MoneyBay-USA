@@ -9,6 +9,7 @@ import { SKIP_SESSION_EXPIRED } from '../interceptors/http-context.tokens';
 interface LoginResponse {
   token: string;
   user: User;
+  refreshToken?: string;
 }
 
 @Injectable({ providedIn: 'root' })
@@ -29,6 +30,12 @@ export class AuthService {
    * что живёт он пятнадцать минут.
    */
   private readonly tokenKey = 'mb_auth_token';
+
+  /**
+   * Обновляющий токен рядом с основным. Живёт год и выдаётся заново при каждом
+   * обновлении, так что вход держится, пока человек заходит хотя бы раз в год.
+   */
+  private readonly refreshKey = 'mb_refresh_token';
 
   /**
    * Токен доступа держится только здесь, в памяти вкладки.
@@ -81,11 +88,11 @@ export class AuthService {
 
     this.refreshToken().subscribe({
       error: (err) => {
-        // Отказ по куке вход не гасит, когда токен лежит в хранилище: куку
-        // браузеры отбрасывают как стороннюю, и обновление по ней всегда
-        // отвечает отказом. Гасит только просроченный токен — это покажет
-        // validateSession своим запросом к профилю.
-        if ((err?.status === 401 || err?.status === 403) && !stored) {
+        // Отказ гасит вход только тогда, когда продлевать нечем: обновляющий
+        // токен негоден или отсутствует. При живом токене доступа отказ
+        // оставляется без внимания — за просроченным придёт validateSession.
+        if ((err?.status === 401 || err?.status === 403)
+            && (!stored || !this.getRefreshToken())) {
           this.clearSession();
         }
       }
@@ -107,6 +114,11 @@ export class AuthService {
     this.refreshing = this.http
       .post<LoginResponse>(`${this.baseUrl}/api/auth/refresh`, {}, {
         withCredentials: true,
+        // Токен идёт заголовком: куку с api.moneybay.us браузер отбрасывает
+        // как стороннюю, и обновление по ней всегда отвечало отказом
+        headers: this.getRefreshToken()
+          ? { 'X-Refresh-Token': this.getRefreshToken()! }
+          : {},
         context: new HttpContext().set(SKIP_SESSION_EXPIRED, true)
       })
       .pipe(
@@ -166,6 +178,7 @@ export class AuthService {
     this.accessToken = null;
     if (this.isBrowser()) {
       localStorage.removeItem(this.tokenKey);
+      localStorage.removeItem(this.refreshKey);
       localStorage.removeItem(this.userKey);
     }
     this.setAuthHint(false);
@@ -176,6 +189,15 @@ export class AuthService {
     import('./socket.service').then(({ SocketService }) => {
       this.injector.get(SocketService).disconnect();
     });
+  }
+
+  private getRefreshToken(): string | null {
+    if (!this.isBrowser()) return null;
+    try {
+      return localStorage.getItem(this.refreshKey);
+    } catch {
+      return null;
+    }
   }
 
   getToken(): string | null {
@@ -261,6 +283,9 @@ export class AuthService {
     if (this.isBrowser()) {
       localStorage.setItem(this.tokenKey, res.token);
       localStorage.setItem(this.userKey, JSON.stringify(res.user));
+      // Приходит при входе и при каждом обновлении; при отсутствии прежний
+      // остаётся на месте, иначе одно обновление без него обрывало бы вход
+      if (res.refreshToken) localStorage.setItem(this.refreshKey, res.refreshToken);
     }
     this.setAuthHint(true);
     this.currentUser.set(res.user);
