@@ -1,0 +1,19 @@
+User-agent: *
+Allow: /
+
+# Личные разделы поисковикам ни к чему
+Disallow: /profile
+Disallow: /messages
+Disallow: /favorites
+Disallow: /my-listings
+Disallow: /settings
+Disallow: /login
+Disallow: /register
+Disallow: /verify-email
+Disallow: /reset-password
+Disallow: /admin
+Disallow: /edit-profile
+Disallow: /new-listing
+Disallow: /forgot-password
+
+Sitemap: https://moneybay.us/sitemap.xml
