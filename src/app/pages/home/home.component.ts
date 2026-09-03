@@ -760,6 +760,9 @@ export class HomeComponent implements OnInit, OnDestroy {
   /** Идёт переход между страницами: показывается кружок, а не скелет. */
   pagingNow = signal(false);
 
+  /** Места под заглушки: столько же, сколько объявлений на странице ответа */
+  readonly pageSlots = Array.from({ length: 20 }, (_, i) => i);
+
   /** К началу списка: плитки разделов и поиск листать заново незачем. */
   private scrollToListings(): void {
     if (typeof window === 'undefined') return;
