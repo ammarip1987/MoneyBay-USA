@@ -33,7 +33,7 @@ import { NotificationsService } from '../../services/notifications.service';
 
     <header class="bg-mb-dark text-white sticky top-0 z-50">
       <nav class="max-w-7xl mx-auto px-4 py-4">
-        <div class="flex justify-between items-center">
+        <div class="flex justify-between items-center relative">
           <!-- Кнопка стоит перед именем площадки: так она первой попадает под
                взгляд, а имя остаётся якорем возврата на главную.
                Цвет — синий значков категорий, чтобы читалась как часть навигации -->
@@ -49,8 +49,11 @@ import { NotificationsService } from '../../services/notifications.service';
               <path d="M1 1l5 5 5-5"/>
             </svg>
           </button>
+          <!-- Имя площадки строго по центру полосы, независимо от ширины кнопки
+               слева и набора ссылок справа: вынуто из потока и сдвинуто на
+               половину своей ширины от середины -->
 
-          <a routerLink="/" class="text-2xl font-bold flex items-center gap-2 mr-auto" (click)="closeMobileMenu()">
+          <a routerLink="/" class="text-2xl font-bold flex items-center gap-2 absolute left-1/2 -translate-x-1/2" (click)="closeMobileMenu()">
             <img src="icons/icons8-m-50.png" alt="" class="w-8 h-8" width="32" height="32" loading="eager" decoding="async">
             <span>oneyBay</span>
             @if (cityCtx.currentCity()) {
