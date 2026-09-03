@@ -151,7 +151,7 @@ import { NotificationsService } from '../../services/notifications.service';
            содержимое главной уезжало под неё. Опорой служит сама шапка —
            sticky задаёт систему координат, отдельный relative не нужен -->
       @if (catalogOpen()) {
-        <div class="hidden md:block absolute left-0 right-0 top-full bg-white text-gray-800 border-t border-gray-200 shadow-xl">
+        <div class="hidden md:block absolute left-0 right-0 top-full z-50 bg-white text-gray-800 border-t border-gray-200 shadow-xl">
           <div class="max-w-7xl mx-auto flex">
             <!-- Разделы. Выбранный подсвечен, наведение сразу меняет правую
                  часть: нажатие оставлено переходу в раздел -->
