@@ -236,6 +236,12 @@ export class ApiService {
       this.http.get<any[]>(`${this.baseUrl}/api/subcategories/category/${categorySlug}`));
   }
 
+  /** Открытые сведения о человеке: имя, снимок, город. */
+  getPublicProfile(userId: number): Observable<any> {
+    return this.cached(`user-public/${userId}`, () =>
+      this.http.get<any>(`${this.baseUrl}/api/users/${userId}/public`));
+  }
+
   getSubcategoryChildren(subcategoryId: number): Observable<any[]> {
     return this.cached(`subcategory-children/${subcategoryId}`, () =>
       this.http.get<any[]>(`${this.baseUrl}/api/subcategories/${subcategoryId}/children`));

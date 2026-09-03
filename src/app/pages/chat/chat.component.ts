@@ -18,10 +18,19 @@ import { Message } from '../../models/listing.model';
 
       <div class="bg-white rounded-2xl shadow-lg border border-gray-100 flex flex-col" style="height: 70vh;">
         <div class="border-b border-gray-100 px-6 py-4 flex items-center gap-3">
-          <div class="w-10 h-10 bg-gradient-to-br from-mb-blue to-mb-cyan rounded-full flex items-center justify-center text-white font-bold">
-            {{ otherUser().charAt(0).toUpperCase() }}
-          </div>
-          <h2 class="font-bold text-mb-dark">{{ otherUser() || 'User' }}</h2>
+          <!-- Снимок и имя собеседника: прежде стояло «User» с буквой U, потому
+               что сведений о нём не запрашивали вовсе -->
+          @if (otherAvatar()) {
+            <img [src]="otherAvatar()!" alt=""
+                 class="w-10 h-10 rounded-full object-cover"
+                 width="40" height="40" loading="eager" decoding="sync"
+                 (error)="otherAvatar.set(null)">
+          } @else {
+            <div class="w-10 h-10 bg-gradient-to-br from-mb-blue to-mb-cyan rounded-full flex items-center justify-center text-white font-bold">
+              {{ otherUser().charAt(0).toUpperCase() }}
+            </div>
+          }
+          <a [routerLink]="['/users', otherUserId]" class="font-bold text-mb-dark hover:underline">{{ otherUser() }}</a>
           <span class="ml-auto text-xs" [class.text-green-600]="connected()" [class.text-gray-400]="!connected()">
             {{ connected() ? '● Online' : '○ Offline' }}
           </span>
@@ -96,6 +105,9 @@ export class ChatComponent implements OnInit, OnDestroy, AfterViewChecked {
 
   messages = signal<Message[]>([]);
   otherUser = signal('User');
+
+  /** Снимок собеседника. Пусто — рисуется кружок с буквой. */
+  otherAvatar = signal<string | null>(null);
   // Начинаем с true: иначе пустое состояние мелькает до первого запроса
   loading = signal(true);
   sending = signal(false);
@@ -112,6 +124,7 @@ export class ChatComponent implements OnInit, OnDestroy, AfterViewChecked {
       return;
     }
     this.loadMessages();
+    this.loadOtherUser();
 
     this.socket.connect();
     this.subscriptions.push(
@@ -129,6 +142,23 @@ export class ChatComponent implements OnInit, OnDestroy, AfterViewChecked {
 
   ngOnDestroy(): void {
     this.subscriptions.forEach(s => s.unsubscribe());
+  }
+
+  /**
+   * Имя и снимок собеседника.
+   *
+   * Ответы о переписке несут только опознание отправителя, без имени, — оттого
+   * в шапке и стояло «User». Ошибка запроса оставляет прежнее: пусть лучше
+   * будет безымянно, чем пусто.
+   */
+  private loadOtherUser(): void {
+    this.api.getPublicProfile(this.otherUserId).subscribe({
+      next: (p) => {
+        if (p?.username) this.otherUser.set(p.username);
+        if (p?.avatar_url) this.otherAvatar.set(p.avatar_url);
+      },
+      error: () => {}
+    });
   }
 
   loadMessages(): void {
