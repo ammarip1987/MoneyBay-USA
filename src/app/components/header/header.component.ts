@@ -1,4 +1,4 @@
-import { Component, OnDestroy, inject, signal, afterNextRender, effect } from '@angular/core';
+import { Component, OnDestroy, HostListener, inject, signal, afterNextRender, effect } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { Router, RouterLink } from '@angular/router';
 import { AuthService } from '../../services/auth.service';
@@ -34,20 +34,12 @@ import { NotificationsService } from '../../services/notifications.service';
     <header class="bg-mb-dark text-white sticky top-0 z-50">
       <nav class="max-w-7xl mx-auto px-4 py-4">
         <div class="flex justify-between items-center">
-          <a routerLink="/" class="text-2xl font-bold flex items-center gap-2" (click)="closeMobileMenu()">
-            <img src="icons/icons8-m-50.png" alt="" class="w-8 h-8" width="32" height="32" loading="eager" decoding="async">
-            <span>oneyBay</span>
-            @if (cityCtx.currentCity()) {
-              <span class="text-sm font-normal text-mb-cyan ml-2 hidden sm:inline">{{ cityCtx.currentCity()!.name }}</span>
-            }
-          </a>
-
-          <!-- Все разделы одной кнопкой: на главной они плитками, а из раздела к
-               ним приходилось возвращаться назад. Панель раскрывается поверх
-               страницы: слева разделы, справа содержимое выбранного -->
+          <!-- Кнопка стоит перед именем площадки: так она первой попадает под
+               взгляд, а имя остаётся якорем возврата на главную.
+               Цвет — синий значков категорий, чтобы читалась как часть навигации -->
           <button type="button"
-                  (click)="toggleCatalog()"
-                  class="hidden md:flex items-center gap-2 ml-6 px-4 py-2 rounded-full border border-mb-cyan text-mb-cyan hover:bg-mb-cyan hover:text-mb-dark transition font-medium shrink-0">
+                  (click)="toggleCatalog(); $event.stopPropagation()"
+                  class="hidden md:flex items-center gap-2 mr-6 px-4 py-2 rounded-full border border-mb-blue text-mb-blue hover:bg-mb-blue hover:text-white transition font-medium shrink-0">
             <svg class="w-4 h-4" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
               <path d="M3 3h6v6H3V3zm8 0h6v6h-6V3zM3 11h6v6H3v-6zm8 0h6v6h-6v-6z"/>
             </svg>
@@ -57,6 +49,14 @@ import { NotificationsService } from '../../services/notifications.service';
               <path d="M1 1l5 5 5-5"/>
             </svg>
           </button>
+
+          <a routerLink="/" class="text-2xl font-bold flex items-center gap-2 mr-auto" (click)="closeMobileMenu()">
+            <img src="icons/icons8-m-50.png" alt="" class="w-8 h-8" width="32" height="32" loading="eager" decoding="async">
+            <span>oneyBay</span>
+            @if (cityCtx.currentCity()) {
+              <span class="text-sm font-normal text-mb-cyan ml-2 hidden sm:inline">{{ cityCtx.currentCity()!.name }}</span>
+            }
+          </a>
 
           <div class="hidden md:flex items-center gap-4 flex-wrap justify-end">
             @if (authReady() ? auth.isAuthenticated() : auth.authHint()) {
@@ -372,6 +372,27 @@ export class HeaderComponent implements OnDestroy {
    * Разделы запрашиваются при первом раскрытии, а не при загрузке страницы:
    * панель открывают не все, и лишний запрос замедлял бы первый экран.
    */
+  /**
+   * Закрыть панель щелчком мимо неё.
+   *
+   * Повторное нажатие на кнопку для закрытия неочевидно: человек тычет в
+   * страницу, ожидая что панель уйдёт. Щелчки внутри самой панели не в счёт —
+   * иначе она закрывалась бы при выборе раздела раньше перехода.
+   */
+  @HostListener('document:click', ['$event'])
+  onDocumentClick(event: MouseEvent): void {
+    if (!this.catalogOpen()) return;
+    const target = event.target as HTMLElement;
+    if (target.closest('header')) return;
+    this.catalogOpen.set(false);
+  }
+
+  /** Escape закрывает панель: привычно и доступно с клавиатуры. */
+  @HostListener('document:keydown.escape')
+  onEscape(): void {
+    if (this.catalogOpen()) this.catalogOpen.set(false);
+  }
+
   toggleCatalog(): void {
     const opening = !this.catalogOpen();
     this.catalogOpen.set(opening);
