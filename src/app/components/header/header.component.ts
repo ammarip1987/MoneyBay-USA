@@ -88,7 +88,8 @@ import { NotificationsService } from '../../services/notifications.service';
                        Кружок с буквой и снимок одного размера, наложены друг на
                        друга, поэтому подмена не сдвигает соседние ссылки -->
                   <span class="relative w-8 h-8 block">
-                    <span class="absolute inset-0 rounded-full bg-mb-blue text-white flex items-center justify-center text-sm font-semibold border-2 border-transparent hover:border-mb-cyan transition">
+                    <span class="absolute inset-0 rounded-full bg-mb-blue text-white flex items-center justify-center text-sm font-semibold border-2 border-transparent hover:border-mb-cyan transition"
+                          [class.opacity-0]="avatarLoaded()">
                       {{ initial() }}
                     </span>
                     @if (auth.currentUser()?.avatarUrl && auth.currentUser()?.showAvatar !== false && !avatarFailed()) {
