@@ -82,21 +82,26 @@ import { NotificationsService } from '../../services/notifications.service';
                      обоих случаях, поэтому соседние ссылки не сдвигаются, пока
                      снимок грузится -->
                 <a routerLink="/profile" class="flex items-center" aria-label="Profile">
-                  @if (auth.currentUser()?.avatarUrl && auth.currentUser()?.showAvatar !== false && !avatarFailed()) {
-                    <!-- fetchpriority="high" ставит снимок вперёд прочих картинок:
-                         адрес известен из хранилища с первого мига, ждать нечего.
-                         Место под него занято заранее размерами, поэтому соседние
-                         ссылки не дёргаются -->
-                    <img [src]="auth.currentUser()!.avatarUrl"
-                         alt=""
-                         class="w-8 h-8 rounded-full object-cover border-2 border-transparent hover:border-mb-cyan transition"
-                         width="32" height="32" loading="eager" fetchpriority="high" decoding="sync"
-                         (error)="avatarFailed.set(true)">
-                  } @else {
-                    <span class="w-8 h-8 rounded-full bg-mb-blue text-white flex items-center justify-center text-sm font-semibold border-2 border-transparent hover:border-mb-cyan transition">
+                  <!-- Буква лежит под снимком и видна, пока он грузится: прежде
+                       на её месте мелькал знак вопроса — браузер рисовал пустую
+                       картинку, а lazy откладывал загрузку до отрисовки.
+                       Кружок с буквой и снимок одного размера, наложены друг на
+                       друга, поэтому подмена не сдвигает соседние ссылки -->
+                  <span class="relative w-8 h-8 block">
+                    <span class="absolute inset-0 rounded-full bg-mb-blue text-white flex items-center justify-center text-sm font-semibold border-2 border-transparent hover:border-mb-cyan transition"
+                          [class.opacity-0]="avatarLoaded()">
                       {{ initial() }}
                     </span>
-                  }
+                    @if (auth.currentUser()?.avatarUrl && auth.currentUser()?.showAvatar !== false && !avatarFailed()) {
+                      <img [src]="auth.currentUser()!.avatarUrl"
+                           alt=""
+                           class="absolute inset-0 w-8 h-8 rounded-full object-cover border-2 border-transparent hover:border-mb-cyan transition"
+                           [class.opacity-0]="!avatarLoaded()"
+                           width="32" height="32" loading="eager" decoding="async"
+                           (load)="avatarLoaded.set(true)"
+                           (error)="avatarFailed.set(true)">
+                    }
+                  </span>
                 </a>
               @if (auth.currentUser()?.is_admin) {
                 <a routerLink="/admin/chats" class="btn btn-primary text-sm">Admin</a>
@@ -243,6 +248,9 @@ export class HeaderComponent implements OnDestroy {
 
   /** Снимок не открылся — рисуется буква вместо пустого места. */
   avatarFailed = signal(false);
+
+  /** Снимок дорисован: до этого поверх буквы он прозрачен. */
+  avatarLoaded = signal(false);
   /**
    * Рекламная полоса. При создании всегда показана: на сервере хранилища
    * браузера нет, и чтение оттуда давало разметку, расходящуюся с той, что
