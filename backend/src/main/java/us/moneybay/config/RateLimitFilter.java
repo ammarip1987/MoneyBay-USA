@@ -104,8 +104,17 @@ public class RateLimitFilter extends OncePerRequestFilter {
     }
 
     private String resolveClientIp(HttpServletRequest request) {
-        // За ALB доверять можно только последнему значению X-Forwarded-For:
-        // его дописывает сам балансировщик; первые значения контролирует клиент.
+        // CF-Connecting-IP ставит сам Cloudflare, и подделать его снаружи нельзя:
+        // распределитель впускает только его диапазоны, чужой заголовок до нас не
+        // доедет. Без этого все обращения считались за один адрес Cloudflare, и
+        // предел резал всех разом вместо одного обходчика.
+        String cf = request.getHeader("CF-Connecting-IP");
+        if (cf != null && !cf.isBlank()) {
+            return cf.trim();
+        }
+
+        // За ALB без Cloudflare доверять можно только последнему значению
+        // X-Forwarded-For: его дописывает сам балансировщик, первые контролирует клиент.
         String xff = request.getHeader("X-Forwarded-For");
         if (xff != null && !xff.isBlank()) {
             String[] parts = xff.split(",");
