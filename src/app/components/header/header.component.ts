@@ -38,7 +38,7 @@ import { NotificationsService } from '../../services/notifications.service';
                взгляд, а имя остаётся якорем возврата на главную.
                Цвет — синий значков категорий, чтобы читалась как часть навигации -->
           <button type="button"
-                  (click)="toggleCatalog(); $event.stopPropagation()"
+                  (click)="toggleCatalog()"
                   class="hidden md:flex items-center gap-2 mr-6 px-4 py-2 rounded-full border border-mb-blue text-mb-blue hover:bg-mb-blue hover:text-white transition font-medium shrink-0">
             <svg class="w-4 h-4" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
               <path d="M3 3h6v6H3V3zm8 0h6v6h-6V3zM3 11h6v6H3v-6zm8 0h6v6h-6v-6z"/>
@@ -383,7 +383,8 @@ export class HeaderComponent implements OnDestroy {
   onDocumentClick(event: MouseEvent): void {
     if (!this.catalogOpen()) return;
     const target = event.target as HTMLElement;
-    if (target.closest('header')) return;
+    // Щелчки внутри шапки не в счёт: там и сама кнопка, и панель
+    if (target.closest("header")) return;
     this.catalogOpen.set(false);
   }
 
