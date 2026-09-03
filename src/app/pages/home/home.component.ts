@@ -203,16 +203,27 @@ interface Subcategory {
     }
 
     @if (listings().length > 0) {
-      <!-- Прежние карточки остаются на месте, пока идёт запрос: приглушаются и
-           перестают отзываться, а поверх появляется кружок. Убирать их и
-           показывать пустоту значило бы дёргать страницу при каждой правке
-           отбора -->
+      <!-- Пока идёт запрос, на месте карточек стоят заглушки. Прежние
+           объявления, даже приглушённые, читались как содержимое нового
+           раздела или страницы. Мест столько же, сколько объявлений в
+           ответе, поэтому высота не меняется и лента не дёргается -->
       <div class="relative">
-        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 xl:grid-cols-5 gap-6 mt-4 transition-opacity duration-200"
-             [class.opacity-40]="pagingNow()"
-             [class.pointer-events-none]="pagingNow()">
-          @for (listing of listings(); track listing.id) {
-            <app-listing-card [listing]="listing"></app-listing-card>
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 xl:grid-cols-5 gap-6 mt-4">
+          @if (pagingNow() || (loading() && !loadingMore())) {
+            @for (i of pageSlots; track i) {
+              <div class="bg-white shadow-md overflow-hidden">
+                <div class="h-48 sm:h-64 bg-gray-200 animate-pulse"></div>
+                <div class="p-4">
+                  <div class="h-4 bg-gray-200 rounded animate-pulse mb-3 w-3/4"></div>
+                  <div class="h-3 bg-gray-200 rounded animate-pulse mb-2 w-1/2"></div>
+                  <div class="h-3 bg-gray-200 rounded animate-pulse w-1/3"></div>
+                </div>
+              </div>
+            }
+          } @else {
+            @for (listing of listings(); track listing.id) {
+              <app-listing-card [listing]="listing"></app-listing-card>
+            }
           }
           <!-- Пока идёт подгрузка — скелеты на месте будущих карточек: ряд не
                обрывается пустотой, и видно, куда встанут новые -->
@@ -230,14 +241,6 @@ interface Subcategory {
           }
         </div>
 
-        @if (pagingNow()) {
-          <div class="absolute inset-0 flex items-start justify-center pt-32">
-            <span class="sticky top-1/2 relative inline-flex items-center justify-center w-16 h-16">
-              <span class="absolute inset-0 border-4 border-mb-blue border-t-transparent rounded-full animate-spin"></span>
-              <span class="text-2xl font-bold text-mb-blue select-none">M</span>
-            </span>
-          </div>
-        }
       </div>
 
       @if (!searchQuery && !selectedCategory() && totalPages() > 1) {
