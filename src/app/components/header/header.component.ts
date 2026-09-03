@@ -147,11 +147,11 @@ import { NotificationsService } from '../../services/notifications.service';
         }
       </nav>
 
-      <!-- Панель разделов. Держится внутри header, чтобы наследовать sticky и
-           уходить вместе с шапкой; ширина не ограничена max-w-7xl, иначе
-           столбцы подкатегорий не помещались бы -->
+      <!-- Панель вынута из потока: в потоке она толкала страницу вниз, и
+           содержимое главной уезжало под неё. Опорой служит сама шапка —
+           sticky задаёт систему координат, отдельный relative не нужен -->
       @if (catalogOpen()) {
-        <div class="hidden md:block bg-white text-gray-800 border-t border-gray-200 shadow-xl">
+        <div class="hidden md:block absolute left-0 right-0 top-full bg-white text-gray-800 border-t border-gray-200 shadow-xl">
           <div class="max-w-7xl mx-auto flex">
             <!-- Разделы. Выбранный подсвечен, наведение сразу меняет правую
                  часть: нажатие оставлено переходу в раздел -->
