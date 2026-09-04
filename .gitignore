@@ -70,3 +70,6 @@ src/environments/environment.localwork.ts
 
 # Журнал местного запуска
 run.log
+
+# Инструментарий Claude: скрипты AWS Agent Toolkit, к площадке отношения не имеют
+.claude/skills/
