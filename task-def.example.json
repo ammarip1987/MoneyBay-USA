@@ -1,0 +1,118 @@
+{
+    "family": "default-moneybay-backend",
+    "containerDefinitions": [
+        {
+            "name": "Main",
+            "image": "<AWS_ACCOUNT_ID>.dkr.ecr.us-east-2.amazonaws.com/moneybay-usa:latest",
+            "cpu": 256,
+            "memory": 512,
+            "memoryReservation": 512,
+            "portMappings": [
+                {
+                    "containerPort": 8080,
+                    "hostPort": 8080,
+                    "protocol": "tcp",
+                    "name": "main-8080-tcp"
+                }
+            ],
+            "essential": true,
+            "command": [],
+            "environment": [
+                {
+                    "name": "DATABASE_URL",
+                    "value": "jdbc:postgresql://<RDS_ENDPOINT>:5432/moneybay"
+                },
+                {
+                    "name": "DB_USERNAME",
+                    "value": "moneybayusa"
+                },
+                {
+                    "name": "SPRING_PROFILES_ACTIVE",
+                    "value": "production"
+                },
+                {
+                    "name": "R2_PUBLIC_URL",
+                    "value": "https://photos.moneybay.us"
+                },
+                {
+                    "name": "GOOGLE_CLIENT_ID",
+                    "value": "<GOOGLE_CLIENT_ID>.apps.googleusercontent.com"
+                },
+                {
+                    "name": "FACEBOOK_APP_ID",
+                    "value": "<FACEBOOK_APP_ID>"
+                },
+                {
+                    "name": "STRIPE_SECRET_KEY",
+                    "value": "sk_test_dummy"
+                },
+                {
+                    "name": "STRIPE_WEBHOOK_SECRET",
+                    "value": "whsec_dummy"
+                }
+            ],
+            "mountPoints": [],
+            "volumesFrom": [],
+            "secrets": [
+                {
+                    "name": "DB_PASSWORD",
+                    "valueFrom": "arn:aws:secretsmanager:us-east-2:<AWS_ACCOUNT_ID>:secret:moneybay/db-password"
+                },
+                {
+                    "name": "JWT_SECRET",
+                    "valueFrom": "arn:aws:secretsmanager:us-east-2:<AWS_ACCOUNT_ID>:secret:moneybay/jwt-secret"
+                },
+                {
+                    "name": "GOOGLE_CLIENT_SECRET",
+                    "valueFrom": "arn:aws:secretsmanager:us-east-2:<AWS_ACCOUNT_ID>:secret:moneybay/oauth:GOOGLE_CLIENT_SECRET::"
+                },
+                {
+                    "name": "FACEBOOK_APP_SECRET",
+                    "valueFrom": "arn:aws:secretsmanager:us-east-2:<AWS_ACCOUNT_ID>:secret:moneybay/oauth:FACEBOOK_APP_SECRET::"
+                },
+                {
+                    "name": "R2_ACCESS_KEY_ID",
+                    "valueFrom": "arn:aws:secretsmanager:us-east-2:<AWS_ACCOUNT_ID>:secret:moneybay/oauth:R2_ACCESS_KEY_ID::"
+                },
+                {
+                    "name": "R2_SECRET_ACCESS_KEY",
+                    "valueFrom": "arn:aws:secretsmanager:us-east-2:<AWS_ACCOUNT_ID>:secret:moneybay/oauth:R2_SECRET_ACCESS_KEY::"
+                },
+                {
+                    "name": "MAIL_USERNAME",
+                    "valueFrom": "arn:aws:secretsmanager:us-east-2:<AWS_ACCOUNT_ID>:secret:moneybay/ses-smtp:MAIL_USERNAME::"
+                },
+                {
+                    "name": "MAIL_PASSWORD",
+                    "valueFrom": "arn:aws:secretsmanager:us-east-2:<AWS_ACCOUNT_ID>:secret:moneybay/ses-smtp:MAIL_PASSWORD::"
+                }
+            ],
+            "logConfiguration": {
+                "logDriver": "awslogs",
+                "options": {
+                    "awslogs-group": "moneybay-backend",
+                    "awslogs-region": "us-east-2",
+                    "awslogs-stream-prefix": "moneybay"
+                }
+            },
+            "healthCheck": {
+                "command": ["CMD-SHELL", "curl -fsS http://localhost:8080/actuator/health || exit 1"],
+                "interval": 30,
+                "timeout": 5,
+                "retries": 3,
+                "startPeriod": 180
+            }
+        }
+    ],
+    "taskRoleArn": "arn:aws:iam::<AWS_ACCOUNT_ID>:role/ecsTaskExecutionRole",
+    "executionRoleArn": "arn:aws:iam::<AWS_ACCOUNT_ID>:role/ecsTaskExecutionRole",
+    "networkMode": "awsvpc",
+    "volumes": [],
+    "requiresCompatibilities": ["FARGATE"],
+    "runtimePlatform": {
+        "cpuArchitecture": "ARM64",
+        "operatingSystemFamily": "LINUX"
+    },
+    "cpu": "256",
+    "memory": "512"
+}
