@@ -1,9 +1,10 @@
-import { Component, Input, inject, signal } from '@angular/core';
+import { Component, Input, OnInit, inject, signal, computed } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterLink } from '@angular/router';
 import { Listing } from '../../models/listing.model';
 import { AuthService } from '../../services/auth.service';
 import { ApiService } from '../../services/api.service';
+import { FavoritesService } from '../../services/favorites.service';
 
 @Component({
   selector: 'app-listing-card',
@@ -103,18 +104,23 @@ import { ApiService } from '../../services/api.service';
     </div>
   `
 })
-export class ListingCardComponent {
+export class ListingCardComponent implements OnInit {
   @Input() listing!: Listing;
 
   auth = inject(AuthService);
   private api = inject(ApiService);
+  private favorites = inject(FavoritesService);
+
+  /** Запрос в пути: повторное нажатие до ответа создало бы вторую запись */
+  busy = signal(false);
 
   currentImage = signal(0);
-  isFavorited = signal(false);
+  /** Берётся из общего списка: своё поле сервер в ответе о списке не отдаёт */
+  isFavorited = computed(() => this.favorites.isFavorite(this.listing.id));
   /** Загрузилось ли изображение: до этого видна серая подложка. */
 
   ngOnInit(): void {
-    this.isFavorited.set(this.listing.is_favorited || false);
+    this.favorites.load();
   }
 
   /**
@@ -163,8 +169,16 @@ export class ListingCardComponent {
   toggleFavorite(e: Event): void {
     e.preventDefault();
     e.stopPropagation();
+    if (this.busy()) return;
+    this.busy.set(true);
     this.api.toggleFavorite(this.listing.id).subscribe({
-      next: (res) => this.isFavorited.set(res.liked)
+      next: (res) => {
+        this.favorites.set(this.listing.id, res.liked);
+        this.busy.set(false);
+      },
+      // Отказ прежде проходил молча: звезда не менялась, и было не понять,
+      // сохранилось ли. Теперь состояние возвращается к прежнему явно.
+      error: () => this.busy.set(false)
     });
   }
 }
