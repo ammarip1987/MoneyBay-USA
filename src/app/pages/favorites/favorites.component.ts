@@ -1,9 +1,10 @@
-import { Component, OnInit, inject, signal } from '@angular/core';
+import { Component, OnInit, inject, signal, computed } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterLink } from '@angular/router';
 import { ApiService } from '../../services/api.service';
 import { Listing } from '../../models/listing.model';
 import { ListingCardComponent } from '../../components/listing-card/listing-card.component';
+import { FavoritesService } from '../../services/favorites.service';
 
 @Component({
   selector: 'app-favorites',
@@ -55,10 +56,23 @@ import { ListingCardComponent } from '../../components/listing-card/listing-card
 })
 export class FavoritesComponent implements OnInit {
   private api = inject(ApiService);
+  private favoritesService = inject(FavoritesService);
 
-  favorites = signal<Listing[]>([]);
+  /** Пришедшие с сервера объявления. Что из них показать, решает favorites(). */
+  private loaded = signal<Listing[]>([]);
   // Начинаем с true: иначе пустое состояние мелькает до первого запроса
   loading = signal(true);
+
+  /**
+   * Показываются только те, что остались в общем списке опознаний.
+   *
+   * Прежде страница держала свой набор объявлений, и снятие звезды лишь гасило
+   * её: карточка оставалась на месте до перезагрузки.
+   */
+  favorites = computed(() => {
+    const ids = this.favoritesService.favoriteIds();
+    return this.loaded().filter(l => ids.has(l.id));
+  });
 
   ngOnInit(): void {
     // Попадание в кэш отдаётся синхронно: подъём флага вставил бы заглушки
@@ -66,11 +80,15 @@ export class FavoritesComponent implements OnInit {
     this.loading.set(!this.api.hasCached('favorites'));
     this.api.getFavorites().subscribe({
       next: (data) => {
-        this.favorites.set(data || []);
+        const list = data || [];
+        this.loaded.set(list);
+        // Опознания берутся из этого же ответа, без второго запроса: иначе
+        // звёзды на карточках пустуют, пока общий список не подгрузится
+        this.favoritesService.replaceAll(list.map(l => l.id));
         this.loading.set(false);
       },
       error: () => {
-        this.favorites.set([]);
+        this.loaded.set([]);
         this.loading.set(false);
       }
     });

@@ -54,6 +54,18 @@ export class FavoritesService {
     });
   }
 
+  /**
+   * Готовый перечень опознаний вместо запроса.
+   *
+   * Страница избранного получает объявления целиком, и брать их опознания
+   * вторым запросом незачем: без этого звёзды на её карточках пустуют, пока
+   * общий список не придёт сам.
+   */
+  replaceAll(ids: number[]): void {
+    this.ids.set(new Set(ids));
+    this.loaded = true;
+  }
+
   /** Отметка после ответа сервера. */
   set(listingId: number, favorited: boolean): void {
     this.ids.update(prev => {
