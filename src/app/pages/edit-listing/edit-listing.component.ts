@@ -31,10 +31,10 @@ import { environment } from '../../../environments/environment';
           </div>
 
           <div class="form-group">
-            <label class="form-label">Selling as</label>
+            <label class="form-label">Type of listing</label>
             <select [(ngModel)]="sellerType" name="sellerType" class="form-input">
-              <option value="OWNER">Owner — selling my own item</option>
-              <option value="DEALER">Dealer — reselling</option>
+              <option value="OWNER">Owner</option>
+              <option value="DEALER">Dealer</option>
             </select>
           </div>
 
