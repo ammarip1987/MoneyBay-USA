@@ -1,8 +1,9 @@
-import { Component, OnInit, inject, signal, afterNextRender } from '@angular/core';
+import { Component, OnInit, inject, signal, computed, afterNextRender } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { FormsModule } from '@angular/forms';
 import { ApiService, SimilarListings } from '../../services/api.service';
+import { FavoritesService } from '../../services/favorites.service';
 import { AuthService } from '../../services/auth.service';
 import { SeoService } from '../../services/seo.service';
 import { Listing } from '../../models/listing.model';
@@ -295,6 +296,7 @@ import { ListingCardComponent } from '../../components/listing-card/listing-card
 })
 export class ListingDetailComponent implements OnInit {
   private api = inject(ApiService);
+  private favorites = inject(FavoritesService);
   private route = inject(ActivatedRoute);
   private router = inject(Router);
   private seo = inject(SeoService);
@@ -325,7 +327,20 @@ export class ListingDetailComponent implements OnInit {
   listing = signal<Listing | null>(null);
   loading = signal(false);
   currentImage = signal(0);
-  isFavorited = signal(false);
+  /**
+   * Берётся из общего списка избранного.
+   *
+   * Прежде состояние читалось из поля is_favorited в ответе об объявлении, а
+   * сервер его не отдаёт: кнопка всегда показывала «Save», даже когда запись
+   * уже была, и нажатие её снимало вместо добавления.
+   */
+  isFavorited = computed(() => {
+    const l = this.listing();
+    return l !== null && this.favorites.isFavorite(l.id);
+  });
+
+  /** Запрос в пути: повторное нажатие до ответа сняло бы только что созданную запись */
+  favBusy = signal(false);
   similar = signal<SimilarListings | null>(null);
   /** Для какого объявления загружены похожие: сброс только при смене. */
   private similarFor: number | null = null;
@@ -402,7 +417,6 @@ export class ListingDetailComponent implements OnInit {
 
       if (passed) {
         this.listing.set(passed);
-        this.isFavorited.set(passed.is_favorited || false);
       } else if (!alreadyShown) {
         this.listing.set(null);
       }
@@ -417,7 +431,7 @@ export class ListingDetailComponent implements OnInit {
       this.api.getListing(id).subscribe({
         next: (data) => {
           this.listing.set(data);
-          this.isFavorited.set(data.is_favorited || false);
+          this.favorites.load();
           this.loading.set(false);
           const image = data.images && data.images.length > 0
             ? data.images[0]
@@ -493,9 +507,17 @@ export class ListingDetailComponent implements OnInit {
   }
 
   toggleFavorite(): void {
-    if (!this.listing()) return;
-    this.api.toggleFavorite(this.listing()!.id).subscribe({
-      next: (res) => this.isFavorited.set(res.liked)
+    const l = this.listing();
+    if (!l || this.favBusy()) return;
+    this.favBusy.set(true);
+    this.api.toggleFavorite(l.id).subscribe({
+      next: (res) => {
+        this.favorites.set(l.id, res.liked);
+        this.favBusy.set(false);
+      },
+      // Отказ прежде проходил молча: кнопка не менялась, и было не понять,
+      // сохранилось ли
+      error: () => this.favBusy.set(false)
     });
   }
 
