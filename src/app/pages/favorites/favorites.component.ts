@@ -13,11 +13,10 @@ import { ListingCardComponent } from '../../components/listing-card/listing-card
     <div class="min-page">
     <!-- Синяя полоса за заголовком на всю ширину окна: отрицательные отступы
          выводят её за пределы обёртки, ограниченной по ширине. Заголовок на
-         ней белый, а карточки ниже остаются на светлом — на ярком синем
-         тёмный текст объявлений читался бы плохо -->
+         ней тёмный, а карточки ниже остаются на светлом -->
     <div class="-mt-8 mb-8 px-4 py-10 w-screen relative left-1/2 -translate-x-1/2"
-         style="background-color: rgb(0, 157, 255);">
-      <h1 class="max-w-7xl mx-auto text-3xl font-bold text-white">My Favorites</h1>
+         style="background-color: rgb(145, 178, 186);">
+      <h1 class="max-w-7xl mx-auto text-3xl font-bold text-mb-dark">My Favorites</h1>
     </div>
 
     <div class="max-w-7xl mx-auto px-4 pb-8">
