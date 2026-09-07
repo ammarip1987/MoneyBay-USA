@@ -10,16 +10,18 @@ import { ListingCardComponent } from '../../components/listing-card/listing-card
   standalone: true,
   imports: [CommonModule, RouterLink, ListingCardComponent],
   template: `
-    <!-- Фон под объявлениями на всю ширину окна: отрицательные отступы
-         выводят его за пределы обёртки, ограниченной по ширине. Карточки на
-         нём белые, поэтому выделяются, а не сливаются со страницей -->
-    <div class="min-page -mt-8 pt-8 pb-8 w-screen relative left-1/2 -translate-x-1/2"
-         style="background-color: rgb(145, 178, 186);">
+    <!-- Фон под объявлениями на всю ширину окна и вплотную к подвалу.
+         Отрицательные отступы гасят поля main со всех сторон, а снизу ещё и
+         mt-20 подвала: он задан снаружи, в границы блока не входит, и под
+         фоном оставалась белая полоса в его высоту. Ширина берётся от края
+         main до края окна, поэтому полоса прокрутки её не сдвигает -->
+    <div class="min-page pt-8 pb-8"
+         style="background-color: rgb(0, 157, 255); margin: -2rem calc(50% - 50vw) calc(-2rem - 5rem);">
     <div class="max-w-7xl mx-auto px-4">
       <h1 class="text-3xl font-bold text-mb-dark mb-8">My Favorites</h1>
 
       @if (favorites().length > 0) {
-        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 xl:grid-cols-5 gap-6">
           @for (listing of favorites(); track listing.id) {
             <app-listing-card [listing]="listing"></app-listing-card>
           }
@@ -32,7 +34,7 @@ import { ListingCardComponent } from '../../components/listing-card/listing-card
           <a routerLink="/" class="btn btn-primary inline-block">Browse listings</a>
         </div>
       } @else {
-        <div class="text-center py-12 text-gray-500">Loading...</div>
+        <div class="text-center py-12 text-white">Loading...</div>
       }
     </div>
     </div>
