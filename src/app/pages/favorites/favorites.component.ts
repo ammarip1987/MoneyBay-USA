@@ -22,12 +22,11 @@ import { FavoritesService } from '../../services/favorites.service';
       <h1 class="text-3xl font-bold text-mb-dark mb-8">My Favorites</h1>
 
       @if (favorites().length > 0) {
-        <!-- Раскладка на flex, а не на сетке: число карточек в ряду
-             подбирается по ширине окна, до пяти, и неполный ряд встаёт
-             посередине. Сетка так не умеет — justify-center выравнивает в
-             ней всю раскладку целиком, а последний ряд остаётся у левого
-             края. Ширина карточки от 170 до 224 пикселей -->
-        <div class="flex flex-wrap gap-6 justify-center">
+        <!-- Число карточек в ряду подбирается по ширине окна, до пяти.
+             Выравнивание по левому краю, а не по центру: при снятии звезды
+             ряд становится неполным, и центрирование сдвигало бы оставшиеся
+             карточки к середине на глазах. Ширина карточки от 170 до 224 -->
+        <div class="flex flex-wrap gap-6 justify-start">
           @for (listing of favorites(); track listing.id) {
             <div class="flex-none w-[170px] sm:w-[200px] lg:w-[224px]">
               <app-listing-card [listing]="listing"></app-listing-card>
