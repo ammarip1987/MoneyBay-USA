@@ -16,7 +16,7 @@ import { ListingCardComponent } from '../../components/listing-card/listing-card
          фоном оставалась белая полоса в его высоту. Ширина берётся от края
          main до края окна, поэтому полоса прокрутки её не сдвигает -->
     <div class="min-page pt-8 pb-8"
-         style="background-color: rgb(0, 157, 255); margin: -2rem calc(50% - 50vw) calc(-2rem - 5rem);">
+         style="background-color: rgb(239, 244, 245); margin: -2rem calc(50% - 50vw) calc(-2rem - 5rem);">
     <div class="max-w-7xl mx-auto px-4">
       <h1 class="text-3xl font-bold text-mb-dark mb-8">My Favorites</h1>
 
@@ -41,12 +41,11 @@ import { ListingCardComponent } from '../../components/listing-card/listing-card
           <a routerLink="/" class="btn btn-primary inline-block">Browse listings</a>
         </div>
       } @else {
-        <!-- Кружок вместо надписи, как в разделах магазина. Белый, а не
-             синий: на синем фоне страницы синий не виден -->
+        <!-- Кружок вместо надписи, как в разделах магазина -->
         <div class="flex items-center justify-center" style="min-height: 520px;">
           <span class="relative inline-flex items-center justify-center w-16 h-16">
-            <span class="absolute inset-0 border-4 border-white border-t-transparent rounded-full animate-spin"></span>
-            <span class="text-2xl font-bold text-white select-none">M</span>
+            <span class="absolute inset-0 border-4 border-mb-blue border-t-transparent rounded-full animate-spin"></span>
+            <span class="text-2xl font-bold text-mb-blue select-none">M</span>
           </span>
         </div>
       }
