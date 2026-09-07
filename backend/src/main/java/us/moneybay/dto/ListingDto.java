@@ -39,7 +39,9 @@ public class ListingDto {
         dto.price = listing.getPrice();
         dto.location = listing.getLocation();
         dto.area = listing.getArea();
-        dto.images = listing.getImages();
+        // Копия, а не сама коллекция Hibernate: та остаётся привязанной к
+        // сессии, и сериализация ответа после её закрытия падала отказом
+        dto.images = listing.getImages() == null ? List.of() : List.copyOf(listing.getImages());
         dto.views = listing.getViews();
         dto.isActive = listing.isActive();
         dto.isFeatured = listing.isFeatured();

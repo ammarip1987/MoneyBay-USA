@@ -14,10 +14,12 @@ public interface FavoriteRepository extends JpaRepository<Favorite, Long> {
      *
      * Без этого список избранного отвечал отказом: listing помечен LAZY, и
      * обращение к нему при сборке ответа приходилось уже на закрытую сессию —
-     * LazyInitializationException. Заодно берутся user и category, к которым
-     * обращается ListingDto.from.
+     * LazyInitializationException. Берутся user и category, к которым
+     * обращается ListingDto.from, и images: перечень путей отменяет для
+     * остальных полей их собственную настройку выборки, поэтому объявленный
+     * на images EAGER сам по себе здесь не действует.
      */
-    @EntityGraph(attributePaths = {"listing", "listing.user", "listing.category"})
+    @EntityGraph(attributePaths = {"listing", "listing.user", "listing.category", "listing.images"})
     List<Favorite> findByUserIdOrderByCreatedAtDesc(Long userId);
     boolean existsByUserIdAndListingId(Long userId, Long listingId);
 }
