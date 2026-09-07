@@ -10,9 +10,17 @@ import { ListingCardComponent } from '../../components/listing-card/listing-card
   standalone: true,
   imports: [CommonModule, RouterLink, ListingCardComponent],
   template: `
-    <div class="max-w-7xl mx-auto px-4 py-8 min-page">
-      <h1 class="text-3xl font-bold text-mb-dark mb-8">My Favorites</h1>
+    <div class="min-page">
+    <!-- Синяя полоса за заголовком на всю ширину окна: отрицательные отступы
+         выводят её за пределы обёртки, ограниченной по ширине. Заголовок на
+         ней белый, а карточки ниже остаются на светлом — на ярком синем
+         тёмный текст объявлений читался бы плохо -->
+    <div class="-mt-8 mb-8 px-4 py-10 w-screen relative left-1/2 -translate-x-1/2"
+         style="background-color: rgb(0, 157, 255);">
+      <h1 class="max-w-7xl mx-auto text-3xl font-bold text-white">My Favorites</h1>
+    </div>
 
+    <div class="max-w-7xl mx-auto px-4 pb-8">
       @if (favorites().length > 0) {
         <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
           @for (listing of favorites(); track listing.id) {
@@ -29,6 +37,7 @@ import { ListingCardComponent } from '../../components/listing-card/listing-card
       } @else {
         <div class="text-center py-12 text-gray-500">Loading...</div>
       }
+    </div>
     </div>
   `
 })
