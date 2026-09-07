@@ -160,41 +160,28 @@ import { ListingCardComponent } from '../../components/listing-card/listing-card
         <!-- Lightbox -->
         @if (lightboxOpen()) {
           <div class="fixed inset-0 bg-black/90 flex items-center justify-center" style="z-index: 99999;" (click)="closeLightbox()">
-            <!-- Крестик в кружке, как у конкурента: на светлом снимке белый
-                 знак без подложки терялся -->
-            <button (click)="closeLightbox(); $event.stopPropagation()"
-                    class="absolute top-4 right-6 w-8 h-8 rounded-full flex items-center justify-center text-white text-xl cursor-pointer border-none z-20"
-                    style="background-color: rgba(0,0,0,0.7);">&times;</button>
-
-            <!-- Снимок с полосой счётчика и стрелками поверх него, а не по
-                 краям окна: на широком экране стрелки у краёв оказывались
-                 далеко от снимка -->
-            <div class="relative" (click)="$event.stopPropagation()">
-              @if (listing()!.images.length > 1) {
-                <div class="absolute top-0 left-0 right-0 text-center text-white text-sm py-2 z-10"
-                     style="background-color: rgba(0,0,0,0.45);">
-                  image {{ currentImage() + 1 }} of {{ listing()!.images.length }}
-                </div>
-              }
-
-              <img [src]="getImageUrl(listing()!.images[currentImage()])"
-                   class="!rounded-none object-contain block"
-                   style="max-width: 92vw; max-height: 88vh;">
-
-              @if (listing()!.images.length > 1) {
-                <!-- Круглые полупрозрачные стрелки внутри снимка -->
-                <button (click)="prevImageLightbox(); $event.stopPropagation()"
-                        class="absolute left-2 top-1/2 -translate-y-1/2 w-11 h-11 rounded-full flex items-center justify-center cursor-pointer border-none z-10 transition"
-                        style="background-color: rgba(255,255,255,0.85); color: #333;">
-                  <svg width="16" height="24" viewBox="0 0 20 32" fill="none"><path d="M16 4L4 16L16 28" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/></svg>
-                </button>
-                <button (click)="nextImageLightbox(); $event.stopPropagation()"
-                        class="absolute right-2 top-1/2 -translate-y-1/2 w-11 h-11 rounded-full flex items-center justify-center cursor-pointer border-none z-10 transition"
-                        style="background-color: rgba(255,255,255,0.85); color: #333;">
-                  <svg width="16" height="24" viewBox="0 0 20 32" fill="none"><path d="M4 4L16 16L4 28" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/></svg>
-                </button>
-              }
-            </div>
+            <button (click)="closeLightbox(); $event.stopPropagation()" class="absolute top-5 right-7 text-white text-4xl cursor-pointer">&times;</button>
+            <!-- Стрелки того же вида, что на карточке до увеличения: белая
+                 подложка с закруглением с внутренней стороны. Видны всегда,
+                 а не при наведении: в затемнении наводить не на что -->
+            <button (click)="prevImageLightbox(); $event.stopPropagation()"
+                    class="absolute left-0 top-1/2 -translate-y-1/2 w-9 h-24 flex items-center justify-start z-10 border-none cursor-pointer"
+                    style="background-color: #ffffff; color: #666; border: 1px solid #ddd; border-left: none; border-top-right-radius: 2.5em; border-bottom-right-radius: 2.5em;">
+              <svg width="26" height="36" viewBox="0 0 20 32" fill="none"><path d="M16 4L4 16L16 28" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+            </button>
+            <!-- Ограничение по размерам окна, а не в пикселях: max-h-5xl в
+                 Tailwind не существует вовсе (5xl задан только для ширины),
+                 поэтому высота не ограничивалась и снимок выходил за
+                 пределы затемнения, налезая на страницу -->
+            <img [src]="getImageUrl(listing()!.images[currentImage()])"
+                 class="!rounded-none object-contain"
+                 style="max-width: 92vw; max-height: 88vh;"
+                 (click)="$event.stopPropagation()">
+            <button (click)="nextImageLightbox(); $event.stopPropagation()"
+                    class="absolute right-0 top-1/2 -translate-y-1/2 w-9 h-24 flex items-center justify-end z-10 border-none cursor-pointer"
+                    style="background-color: #ffffff; color: #666; border: 1px solid #ddd; border-right: none; border-top-left-radius: 2.5em; border-bottom-left-radius: 2.5em;">
+              <svg width="26" height="36" viewBox="0 0 20 32" fill="none"><path d="M4 4L16 16L4 28" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+            </button>
           </div>
         }
 
