@@ -33,8 +33,8 @@ export const POSTED_WITHIN_OPTIONS = [
 ];
 
 export const SELLER_TYPE_OPTIONS = [
-  { value: 'owner', label: 'By owner' },
-  { value: 'dealer', label: 'By dealer' }
+  { value: 'owner', label: 'Owner' },
+  { value: 'dealer', label: 'Dealer' }
 ];
 
 export const SORT_OPTIONS = [

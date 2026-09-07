@@ -43,7 +43,7 @@ import { ListingFilters, SORT_OPTIONS, SELLER_TYPE_OPTIONS } from '../../models/
                 (ngModelChange)="onSellerTypeChange($event)"
                 name="sellerTypeChip"
                 class="appearance-none w-40 pl-4 pr-9 py-2 bg-white border border-gray-300 rounded-full text-sm font-medium hover:border-gray-300 focus:border-gray-300 focus:outline-none focus:ring-0 transition cursor-pointer truncate">
-          <option value="">All sellers</option>
+          <option value="">From</option>
           @for (o of sellerTypeOptions; track o.value) {
             <option [value]="o.value">{{ o.label }}</option>
           }

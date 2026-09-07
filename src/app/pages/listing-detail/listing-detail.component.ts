@@ -89,7 +89,7 @@ import { ListingCardComponent } from '../../components/listing-card/listing-card
               <div class="flex items-center gap-4 text-gray-500 text-sm mb-6">
                 <span>{{ listing()!.created_at | date:'MMM d, yyyy' }}</span>
                 <span class="px-2 py-0.5 bg-gray-100 rounded text-xs font-medium text-gray-700">
-                  {{ listing()!.seller_type === 'DEALER' ? 'By dealer' : 'By owner' }}
+                  {{ listing()!.seller_type === 'DEALER' ? 'Dealer' : 'Owner' }}
                 </span>
                 <span class="flex items-center gap-1">
                   <i class="fas fa-eye"></i> {{ listing()!.views || 0 }} views
