@@ -21,9 +21,16 @@ import { ListingCardComponent } from '../../components/listing-card/listing-card
       <h1 class="text-3xl font-bold text-mb-dark mb-8">My Favorites</h1>
 
       @if (favorites().length > 0) {
-        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 xl:grid-cols-5 gap-6">
+        <!-- Раскладка на flex, а не на сетке: число карточек в ряду
+             подбирается по ширине окна, до пяти, и неполный ряд встаёт
+             посередине. Сетка так не умеет — justify-center выравнивает в
+             ней всю раскладку целиком, а последний ряд остаётся у левого
+             края. Ширина карточки от 170 до 224 пикселей -->
+        <div class="flex flex-wrap gap-6 justify-center">
           @for (listing of favorites(); track listing.id) {
-            <app-listing-card [listing]="listing"></app-listing-card>
+            <div class="flex-none w-[170px] sm:w-[200px] lg:w-[224px]">
+              <app-listing-card [listing]="listing"></app-listing-card>
+            </div>
           }
         </div>
       } @else if (!loading()) {
