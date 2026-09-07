@@ -72,7 +72,8 @@ public class ListingController {
         @RequestParam(name = "price_min", required = false) Double priceMin,
         @RequestParam(name = "price_max", required = false) Double priceMax,
         @RequestParam(name = "has_image", defaultValue = "false") boolean hasImage,
-        @RequestParam(name = "posted_within", required = false) Integer postedWithinDays) {
+        @RequestParam(name = "posted_within", required = false) Integer postedWithinDays,
+        @RequestParam(name = "seller_type", required = false) String sellerType) {
 
         city = resolveCity(city);
 
@@ -89,7 +90,7 @@ public class ListingController {
 
         long found = listingRepository.countMatching(
             q, cityOf(city), stateOf(city), category,
-            priceMin, priceMax, hasImage, postedAfter);
+            priceMin, priceMax, hasImage, postedAfter, normalizeSellerType(sellerType));
 
         return ResponseEntity.ok(Map.of(
             "count", found,
@@ -108,6 +109,7 @@ public class ListingController {
         @RequestParam(name = "price_max", required = false) Double priceMax,
         @RequestParam(name = "has_image", defaultValue = "false") boolean hasImage,
         @RequestParam(name = "posted_within", required = false) Integer postedWithinDays,
+        @RequestParam(name = "seller_type", required = false) String sellerType,
         // Размер страницы задаётся запросом: на главной идут номера страниц по 60,
         // внутри категории — подгрузка кнопкой по 20
         @RequestParam(name = "page_size", required = false) Integer requestedSize) {
@@ -150,7 +152,11 @@ public class ListingController {
         if (page < 1) page = 1;
         // 16 на страницу: ровно ложится в сетку по четыре карточки в ряд
         PageRequest pageRequest = PageRequest.of(page - 1, PAGE_SIZE, sortObj);
-        boolean advancedFilters = priceMin != null || priceMax != null || hasImage || postedAfter != null;
+        // Тип продавца входит в расширенные: без этого отбор уходил бы в общую
+        // ветвь, где его условия в запросе нет вовсе
+        final String seller = normalizeSellerType(sellerType);
+        boolean advancedFilters = priceMin != null || priceMax != null || hasImage
+            || postedAfter != null || seller != null;
 
         Map<String, Object> response = new HashMap<>();
         response.put("page", page);
@@ -166,10 +172,10 @@ public class ListingController {
             // миллион строк вместо четырёх подходящих
             List<Listing> found = hasImage
                 ? listingRepository.searchAdvanced(
-                      q, city, category, priceMin, priceMax, postedAfter,
+                      q, city, category, priceMin, priceMax, postedAfter, seller,
                       PAGE_SIZE + 1, (page - 1) * PAGE_SIZE)
                 : listingRepository.searchAdvancedAnyImage(
-                      q, city, category, priceMin, priceMax, postedAfter,
+                      q, city, category, priceMin, priceMax, postedAfter, seller,
                       PAGE_SIZE + 1, (page - 1) * PAGE_SIZE);
 
             boolean more = found.size() > PAGE_SIZE;
@@ -304,6 +310,19 @@ public class ListingController {
         return Math.round(value * 100.0) / 100.0;
     }
 
+    /**
+     * Тип продавца из запроса в вид, принятый в базе.
+     *
+     * Значение приходит от посетителя, поэтому принимаются только два известных:
+     * всё прочее считается отсутствием отбора. Иначе произвольная строка ушла бы
+     * в запрос и сравнивалась со столбцом впустую.
+     */
+    private String normalizeSellerType(String raw) {
+        if (raw == null) return null;
+        String v = raw.trim().toUpperCase();
+        return v.equals("OWNER") || v.equals("DEALER") ? v : null;
+    }
+
     // Пустой city -> город из city-subdomain (единая точка для list/facets/suggest)
     private String resolveCity(String city) {
         if (city != null && !city.isBlank()) return city;
@@ -429,6 +448,7 @@ public class ListingController {
         @RequestParam String location,
         @RequestParam(required = false) String area,
         @RequestParam(name = "category_id", required = false) Long categoryId,
+        @RequestParam(name = "seller_type", required = false) String sellerType,
         @RequestParam(value = "images", required = false) MultipartFile[] images,
         Authentication auth) {
 
@@ -439,6 +459,10 @@ public class ListingController {
         listing.setTitle(title);
         listing.setDescription(description);
         listing.setPrice(price);
+        // Не выбрано — владелец: так же считаются объявления, размещённые до
+        // появления этого поля
+        listing.setSellerType("DEALER".equals(normalizeSellerType(sellerType))
+            ? Listing.SellerType.DEALER : Listing.SellerType.OWNER);
         listing.setLocation(location);
         listing.setArea(area);
         listing.setUser(user);
@@ -478,6 +502,7 @@ public class ListingController {
         @RequestParam(required = false) Double price,
         @RequestParam(required = false) String location,
         @RequestParam(required = false) String area,
+        @RequestParam(name = "seller_type", required = false) String sellerType,
         @RequestParam(value = "removed_images", required = false) String[] removedImages,
         @RequestParam(value = "images", required = false) MultipartFile[] newImages,
         Authentication auth) {
@@ -496,6 +521,8 @@ public class ListingController {
         if (price != null) listing.setPrice(price);
         if (location != null) listing.setLocation(location);
         if (area != null) listing.setArea(area);
+        String seller = normalizeSellerType(sellerType);
+        if (seller != null) listing.setSellerType(Listing.SellerType.valueOf(seller));
 
         if (removedImages != null) {
             List<String> remaining = new ArrayList<>(listing.getImages());

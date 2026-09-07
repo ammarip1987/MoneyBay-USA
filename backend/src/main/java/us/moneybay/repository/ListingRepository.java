@@ -154,6 +154,7 @@ public interface ListingRepository extends JpaRepository<Listing, Long> {
                    // контроллер выбирает searchSlice
                    "AND l.id IN (SELECT i.listing_id FROM listing_images i) " +
                    "AND (CAST(:postedAfter AS timestamptz) IS NULL OR l.created_at >= :postedAfter) " +
+                   "AND (COALESCE(:sellerType, '') = '' OR l.seller_type = :sellerType) " +
                    // Сортировка только по дате: вычисляемое выражение
                    // (promoted_until > now()) индекс не берёт, и база сортировала
                    // весь отбор целиком. Продвинутые ставятся вперёд в
@@ -167,6 +168,7 @@ public interface ListingRepository extends JpaRepository<Listing, Long> {
                                  @Param("priceMin") Double priceMin,
                                  @Param("priceMax") Double priceMax,
                                  @Param("postedAfter") java.time.Instant postedAfter,
+                                 @Param("sellerType") String sellerType,
                                  @Param("limit") int limit,
                                  @Param("offset") int offset);
 
@@ -189,7 +191,8 @@ public interface ListingRepository extends JpaRepository<Listing, Long> {
                    "AND (CAST(:priceMin AS double precision) IS NULL OR l.price >= :priceMin) " +
                    "AND (CAST(:priceMax AS double precision) IS NULL OR l.price <= :priceMax) " +
                    "AND (:hasImage = false OR l.id IN (SELECT i.listing_id FROM listing_images i)) " +
-                   "AND (CAST(:postedAfter AS timestamptz) IS NULL OR l.created_at >= :postedAfter)",
+                   "AND (CAST(:postedAfter AS timestamptz) IS NULL OR l.created_at >= :postedAfter) " +
+                   "AND (COALESCE(:sellerType, '') = '' OR l.seller_type = :sellerType)",
            nativeQuery = true)
     long countMatching(@Param("q") String q,
                        @Param("city") String city,
@@ -198,7 +201,8 @@ public interface ListingRepository extends JpaRepository<Listing, Long> {
                        @Param("priceMin") Double priceMin,
                        @Param("priceMax") Double priceMax,
                        @Param("hasImage") boolean hasImage,
-                       @Param("postedAfter") java.time.Instant postedAfter);
+                       @Param("postedAfter") java.time.Instant postedAfter,
+                       @Param("sellerType") String sellerType);
 
     /**
      * То же, но без отбора по снимкам.
@@ -218,6 +222,7 @@ public interface ListingRepository extends JpaRepository<Listing, Long> {
                    "AND (CAST(:priceMin AS double precision) IS NULL OR l.price >= :priceMin) " +
                    "AND (CAST(:priceMax AS double precision) IS NULL OR l.price <= :priceMax) " +
                    "AND (CAST(:postedAfter AS timestamptz) IS NULL OR l.created_at >= :postedAfter) " +
+                   "AND (COALESCE(:sellerType, '') = '' OR l.seller_type = :sellerType) " +
                    "ORDER BY l.created_at DESC " +
                    "LIMIT :limit OFFSET :offset",
            nativeQuery = true)
@@ -227,6 +232,7 @@ public interface ListingRepository extends JpaRepository<Listing, Long> {
                                          @Param("priceMin") Double priceMin,
                                          @Param("priceMax") Double priceMax,
                                          @Param("postedAfter") java.time.Instant postedAfter,
+                                         @Param("sellerType") String sellerType,
                                          @Param("limit") int limit,
                                          @Param("offset") int offset);
 

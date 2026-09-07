@@ -30,6 +30,14 @@ import { environment } from '../../../environments/environment';
             <textarea [(ngModel)]="description" name="description" class="form-input" rows="6"></textarea>
           </div>
 
+          <div class="form-group">
+            <label class="form-label">Selling as</label>
+            <select [(ngModel)]="sellerType" name="sellerType" class="form-input">
+              <option value="OWNER">Owner — selling my own item</option>
+              <option value="DEALER">Dealer — reselling</option>
+            </select>
+          </div>
+
           <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div class="form-group">
               <label class="form-label">Price ($) *</label>
@@ -103,6 +111,7 @@ export class EditListingComponent implements OnInit {
   title = '';
   description = '';
   price = 0;
+  sellerType: 'OWNER' | 'DEALER' = 'OWNER';
   state = '';
   cityName = '';
 
@@ -142,6 +151,7 @@ export class EditListingComponent implements OnInit {
           this.description = data.description || '';
           this.price = data.price;
           this.splitLocation(data.location);
+          this.sellerType = data.seller_type === 'DEALER' ? 'DEALER' : 'OWNER';
           this.existingImages.set(data.images || []);
         }
       });
@@ -185,6 +195,7 @@ export class EditListingComponent implements OnInit {
     formData.append('description', this.description);
     formData.append('price', String(this.price));
     formData.append('location', this.composeLocation());
+    formData.append('seller_type', this.sellerType);
     this.removedImages.forEach(img => formData.append('removed_images', img));
     uploadFiles.forEach(f => formData.append('images', f));
 

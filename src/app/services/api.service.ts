@@ -116,6 +116,7 @@ export class ApiService {
     price_max?: number;
     has_image?: boolean;
     posted_within?: number;
+    seller_type?: string;
   } = {}): Observable<PaginatedListings> {
     let httpParams = new HttpParams();
     Object.entries(params).forEach(([key, value]) => {

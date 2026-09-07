@@ -9,6 +9,8 @@ export interface Listing {
   views: number;
   is_active: boolean;
   is_featured?: boolean;
+  /** Кто продаёт: OWNER или DEALER. */
+  seller_type?: 'OWNER' | 'DEALER';
   is_favorited?: boolean;
   promoted_until?: string | null;
   created_at: string;

@@ -22,6 +22,10 @@ public class ListingDto {
     private boolean isActive;
     @JsonProperty("is_featured")
     private boolean isFeatured;
+
+    /** Кто продаёт: OWNER или DEALER. */
+    @JsonProperty("seller_type")
+    private String sellerType;
     @JsonProperty("promoted_until")
     private Instant promotedUntil;
     @JsonProperty("user_id")
@@ -45,6 +49,7 @@ public class ListingDto {
         dto.views = listing.getViews();
         dto.isActive = listing.isActive();
         dto.isFeatured = listing.isFeatured();
+        dto.sellerType = listing.getSellerType() != null ? listing.getSellerType().name() : null;
         dto.promotedUntil = listing.getPromotedUntil();
         dto.userId = listing.getUser() != null ? listing.getUser().getId() : null;
         dto.categoryId = listing.getCategory() != null ? listing.getCategory().getId() : null;

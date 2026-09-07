@@ -360,7 +360,7 @@ export class HomeComponent implements OnInit, OnDestroy {
     const adv = this.advancedFilters();
     return !!(this.selectedCategory() || this.cityFilter || this.searchQuery
       || adv.price_min !== undefined || adv.price_max !== undefined
-      || adv.has_image || adv.posted_within);
+      || adv.has_image || adv.posted_within || adv.seller_type);
   };
   subcategories = signal<Subcategory[]>([]);
   subsubcategories = signal<Subcategory[]>([]);
@@ -468,7 +468,8 @@ export class HomeComponent implements OnInit, OnDestroy {
         (params['price_min'] || '') !== String(this.advancedFilters().price_min ?? '') ||
         (params['price_max'] || '') !== String(this.advancedFilters().price_max ?? '') ||
         (params['has_image'] === 'true') !== !!this.advancedFilters().has_image ||
-        (params['posted_within'] || '') !== String(this.advancedFilters().posted_within ?? '');
+        (params['posted_within'] || '') !== String(this.advancedFilters().posted_within ?? '') ||
+        (params['seller_type'] || '') !== String(this.advancedFilters().seller_type ?? '');
 
       this.selectedCategory.set(params['category'] || null);
       this.selectedSub.set(params['sub'] || null);
@@ -500,6 +501,9 @@ export class HomeComponent implements OnInit, OnDestroy {
       if (params['price_max']) advanced.price_max = Number(params['price_max']);
       if (params['has_image']) advanced.has_image = params['has_image'] === 'true';
       if (params['posted_within']) advanced.posted_within = Number(params['posted_within']);
+      if (params['seller_type'] === 'owner' || params['seller_type'] === 'dealer') {
+        advanced.seller_type = params['seller_type'];
+      }
       this.advancedFilters.set(advanced);
 
       this.loadHierarchy();
@@ -524,6 +528,7 @@ export class HomeComponent implements OnInit, OnDestroy {
     if (filters.price_max !== undefined) queryParams.price_max = filters.price_max;
     if (filters.has_image) queryParams.has_image = 'true';
     if (filters.posted_within) queryParams.posted_within = filters.posted_within;
+    if (filters.seller_type) queryParams.seller_type = filters.seller_type;
 
     // Подкатегория сохраняется: без неё смена порядка или цены уводила из
     // раздела наверх, к плиткам, и выбранная ветка терялась
@@ -635,6 +640,7 @@ export class HomeComponent implements OnInit, OnDestroy {
     if (adv.price_max !== undefined) params.price_max = adv.price_max;
     if (adv.has_image) params.has_image = true;
     if (adv.posted_within) params.posted_within = adv.posted_within;
+    if (adv.seller_type) params.seller_type = adv.seller_type;
 
     // Подсчёт отобранного идёт своим чередом, не задерживая карточки: он занимает
     // до пяти секунд, и число дописывается в полосу, когда придёт

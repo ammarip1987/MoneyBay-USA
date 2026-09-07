@@ -1,7 +1,7 @@
 import { Component, EventEmitter, Input, Output } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { ListingFilters, SORT_OPTIONS } from '../../models/listing-filters.model';
+import { ListingFilters, SORT_OPTIONS, SELLER_TYPE_OPTIONS } from '../../models/listing-filters.model';
 
 @Component({
   selector: 'app-filter-chips-bar',
@@ -32,6 +32,20 @@ import { ListingFilters, SORT_OPTIONS } from '../../models/listing-filters.model
           <option value="">Choose state</option>
           @for (s of states; track s.code) {
             <option [value]="s.code">{{ s.name }}, {{ s.code }}</option>
+          }
+        </select>
+        <i class="fas fa-chevron-down text-xs text-gray-400 absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none"></i>
+      </div>
+
+      <!-- Кто продаёт: сам владелец или перепродажа. Пусто — оба вида -->
+      <div class="relative">
+        <select [ngModel]="filters.seller_type || ''"
+                (ngModelChange)="onSellerTypeChange($event)"
+                name="sellerTypeChip"
+                class="appearance-none w-40 pl-4 pr-9 py-2 bg-white border border-gray-300 rounded-full text-sm font-medium hover:border-gray-300 focus:border-gray-300 focus:outline-none focus:ring-0 transition cursor-pointer truncate">
+          <option value="">All sellers</option>
+          @for (o of sellerTypeOptions; track o.value) {
+            <option [value]="o.value">{{ o.label }}</option>
           }
         </select>
         <i class="fas fa-chevron-down text-xs text-gray-400 absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none"></i>
@@ -114,6 +128,14 @@ import { ListingFilters, SORT_OPTIONS } from '../../models/listing-filters.model
           </button>
         }
 
+        @if (filters.seller_type) {
+          <button (click)="clearSellerType()"
+                  class="inline-flex items-center gap-2 px-3 py-1 bg-gray-100 rounded text-sm hover:bg-gray-200 transition">
+            {{ sellerTypeLabel() }}
+            <i class="fas fa-times text-xs text-gray-500"></i>
+          </button>
+        }
+
         <!-- Сразу за кнопками отбора, а не у правого края: читается как их
              продолжение — снять то, что перечислено слева -->
         <button (click)="clearAll()"
@@ -156,6 +178,7 @@ export class FilterChipsBarComponent {
   @Output() openDrawer = new EventEmitter<void>();
 
   sortOptions = SORT_OPTIONS;
+  sellerTypeOptions = SELLER_TYPE_OPTIONS;
   currentSort = 'newest';
 
   ngOnChanges(): void {
@@ -174,7 +197,11 @@ export class FilterChipsBarComponent {
    * полосу применённого.
    */
   appliedCount(): number {
-    return this.activeFilterCount() + (this.selectedState ? 1 : 0);
+    // Тип продавца выбирается в самой полосе, как штат, а не в скрытой панели,
+    // поэтому в activeFilterCount он не входит
+    return this.activeFilterCount()
+      + (this.selectedState ? 1 : 0)
+      + (this.filters.seller_type ? 1 : 0);
   }
 
   activeFilterCount(): number {
@@ -225,6 +252,26 @@ export class FilterChipsBarComponent {
   clearPostedWithin(): void {
     const { posted_within, ...rest } = this.filters;
     this.filtersChange.emit(rest);
+  }
+
+  /** Выбран тип продавца. Пустое значение снимает отбор. */
+  onSellerTypeChange(value: string): void {
+    if (!value) {
+      this.clearSellerType();
+      return;
+    }
+    this.filtersChange.emit({ ...this.filters, seller_type: value as 'owner' | 'dealer' });
+  }
+
+  /** Снять отбор по типу продавца. */
+  clearSellerType(): void {
+    const { seller_type, ...rest } = this.filters;
+    this.filtersChange.emit(rest);
+  }
+
+  /** Надпись для кнопки в полосе отобранного. */
+  sellerTypeLabel(): string {
+    return this.sellerTypeOptions.find(o => o.value === this.filters.seller_type)?.label ?? '';
   }
 
   /**

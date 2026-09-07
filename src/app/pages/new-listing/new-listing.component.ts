@@ -44,6 +44,16 @@ import { CityAutocompleteComponent } from '../../components/city-autocomplete/ci
           </select>
         </div>
 
+        <!-- Кто продаёт. По умолчанию владелец: так же считаются объявления,
+             размещённые до появления этого поля -->
+        <div class="form-group">
+          <label class="form-label">Selling as *</label>
+          <select [(ngModel)]="sellerType" name="sellerType" class="form-input" required>
+            <option value="OWNER">Owner — selling my own item</option>
+            <option value="DEALER">Dealer — reselling</option>
+          </select>
+        </div>
+
         <div class="form-group">
           <label class="form-label">Description *</label>
             <textarea [(ngModel)]="description" name="description" rows="6" required
@@ -124,6 +134,8 @@ export class NewListingComponent implements OnInit {
 
   title = '';
   categoryId = '';
+  /** Кто продаёт. Владелец по умолчанию: перепродажу выбирают осознанно. */
+  sellerType = 'OWNER';
   description = '';
   price = 0;
   /** Двухбуквенный код выбранного штата. */
@@ -224,6 +236,7 @@ export class NewListingComponent implements OnInit {
     const formData = new FormData();
     formData.append('title', this.title);
     formData.append('category_id', this.categoryId);
+    formData.append('seller_type', this.sellerType);
     formData.append('description', this.description);
     formData.append('price', String(this.price));
     formData.append('location', this.composeLocation());

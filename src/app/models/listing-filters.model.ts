@@ -7,6 +7,8 @@ export interface ListingFilters {
   price_max?: number;
   has_image?: boolean;
   posted_within?: number;
+  /** Кто продаёт. Пусто — оба вида. */
+  seller_type?: 'owner' | 'dealer';
 }
 
 export interface PriceBucket {
@@ -28,6 +30,11 @@ export const POSTED_WITHIN_OPTIONS = [
   { value: 3, label: 'Last 3 days' },
   { value: 7, label: 'Last week' },
   { value: 30, label: 'Last month' }
+];
+
+export const SELLER_TYPE_OPTIONS = [
+  { value: 'owner', label: 'By owner' },
+  { value: 'dealer', label: 'By dealer' }
 ];
 
 export const SORT_OPTIONS = [

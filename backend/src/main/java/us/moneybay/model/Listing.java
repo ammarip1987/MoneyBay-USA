@@ -59,6 +59,10 @@ public class Listing {
     @Column(name = "status", nullable = false)
     private ListingStatus status = ListingStatus.ACTIVE;
 
+    @Enumerated(EnumType.STRING)
+    @Column(name = "seller_type", nullable = false, length = 16)
+    private SellerType sellerType = SellerType.OWNER;
+
     /**
      * Причины отклонения через запятую: MISSING_PHOTOS, SHORT_DESCRIPTION и так
      * далее. Показываются автору окном с указанием, что поправить.
@@ -87,6 +91,17 @@ public class Listing {
     @PrePersist
     protected void onCreate() {
         createdAt = Instant.now();
+    }
+
+    /**
+     * Кто продаёт: сам владелец или перепродажа.
+     *
+     * Признак стоит на объявлении, а не на учётной записи: один человек
+     * размещает и своё, и купленное для перепродажи.
+     */
+    public enum SellerType {
+        OWNER,   // владелец продаёт своё
+        DEALER   // перепродажа
     }
 
     public enum ListingStatus {
