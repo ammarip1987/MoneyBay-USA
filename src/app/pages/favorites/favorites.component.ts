@@ -41,7 +41,14 @@ import { ListingCardComponent } from '../../components/listing-card/listing-card
           <a routerLink="/" class="btn btn-primary inline-block">Browse listings</a>
         </div>
       } @else {
-        <div class="text-center py-12 text-white">Loading...</div>
+        <!-- Кружок вместо надписи, как в разделах магазина. Белый, а не
+             синий: на синем фоне страницы синий не виден -->
+        <div class="flex items-center justify-center" style="min-height: 520px;">
+          <span class="relative inline-flex items-center justify-center w-16 h-16">
+            <span class="absolute inset-0 border-4 border-white border-t-transparent rounded-full animate-spin"></span>
+            <span class="text-2xl font-bold text-white select-none">M</span>
+          </span>
+        </div>
       }
     </div>
     </div>
