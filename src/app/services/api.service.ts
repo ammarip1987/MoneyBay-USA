@@ -312,6 +312,17 @@ export class ApiService {
     return this.http.get<PublicStorefront>(`${this.baseUrl}/api/storefront/${slug}`);
   }
 
+  /**
+   * Переход на тариф витрины.
+   *
+   * Без ключа Stripe сервер включает тариф сразу и помечает ответ dev_mode:
+   * тогда переходить некуда, достаточно перечитать витрину.
+   */
+  chooseStorefrontPlan(plan: string): Observable<{ checkout_url?: string; plan?: string; dev_mode?: boolean }> {
+    return this.http.post<{ checkout_url?: string; plan?: string; dev_mode?: boolean }>(
+      `${this.baseUrl}/api/storefront/plan/checkout`, { plan });
+  }
+
   getUnreadCount(): Observable<{ count: number }> {
     return this.http.get<{ count: number }>(`${this.baseUrl}/api/unread-messages-count`);
   }

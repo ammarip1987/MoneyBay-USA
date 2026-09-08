@@ -28,6 +28,12 @@ export interface Storefront {
   verificationStatus: VerificationStatus;
   /** Разрешены ли выплаты — приходит от Stripe. */
   payoutsEnabled: boolean;
+  /** Тариф: FREE, BASIC, PRO. */
+  plan?: 'FREE' | 'BASIC' | 'PRO';
+  /** Докуда оплачено. Пусто у бесплатного. */
+  planUntil?: string | null;
+  /** Сколько товаров разрешено тарифом. */
+  listingLimit?: number;
 }
 
 export type VerificationStatus =

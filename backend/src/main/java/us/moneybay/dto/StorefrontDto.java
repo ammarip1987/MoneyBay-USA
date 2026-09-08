@@ -28,6 +28,9 @@ public class StorefrontDto {
     /** Состояние проверки: витрина показывает его владельцу. */
     private String verificationStatus;
     private boolean payoutsEnabled;
+    private String plan;
+    private java.time.Instant planUntil;
+    private int listingLimit;
 
     public static StorefrontDto from(Storefront s) {
         StorefrontDto dto = new StorefrontDto();
@@ -44,6 +47,9 @@ public class StorefrontDto {
         dto.published = s.isPublished();
         dto.verificationStatus = s.getVerificationStatus().name();
         dto.payoutsEnabled = s.isPayoutsEnabled();
+        dto.plan = s.getPlan().name();
+        dto.planUntil = s.getPlanUntil();
+        dto.listingLimit = s.getPlan().listingLimit;
         return dto;
     }
 }

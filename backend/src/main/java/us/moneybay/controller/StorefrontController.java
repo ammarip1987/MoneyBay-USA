@@ -30,16 +30,87 @@ import java.util.Map;
 @RequestMapping("/api/storefront")
 public class StorefrontController {
 
+    private static final org.slf4j.Logger log =
+        org.slf4j.LoggerFactory.getLogger(StorefrontController.class);
+
     private final StorefrontRepository storefrontRepository;
     private final ListingRepository listingRepository;
     private final R2PhotoService r2PhotoService;
+    private final us.moneybay.service.StripeService stripeService;
+
+    @org.springframework.beans.factory.annotation.Value("${stripe.secret-key:}")
+    private String stripeSecretKey;
 
     public StorefrontController(StorefrontRepository storefrontRepository,
                                 ListingRepository listingRepository,
-                                R2PhotoService r2PhotoService) {
+                                R2PhotoService r2PhotoService,
+                                us.moneybay.service.StripeService stripeService) {
         this.storefrontRepository = storefrontRepository;
         this.listingRepository = listingRepository;
         this.r2PhotoService = r2PhotoService;
+        this.stripeService = stripeService;
+    }
+
+    /**
+     * Оплата тарифа витрины.
+     *
+     * Без настоящего ключа Stripe тариф включается сразу — так же устроено
+     * продвижение объявлений. Это позволяет пройти весь путь до появления LLC
+     * и учётной записи Stripe, а с ключом тот же код поведёт на оплату.
+     */
+    @PostMapping("/plan/checkout")
+    public ResponseEntity<?> planCheckout(@RequestBody java.util.Map<String, Object> body,
+                                          Authentication auth) {
+        if (auth == null) return ResponseEntity.status(401).body(java.util.Map.of("message", "Not authenticated"));
+        User user = (User) auth.getPrincipal();
+
+        Object planRaw = body.get("plan");
+        if (planRaw == null) {
+            return ResponseEntity.badRequest().body(java.util.Map.of("message", "plan is required"));
+        }
+        Storefront.Plan plan;
+        try {
+            plan = Storefront.Plan.valueOf(planRaw.toString().trim().toUpperCase());
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.badRequest().body(java.util.Map.of("message", "Unknown plan"));
+        }
+
+        java.util.Optional<Storefront> found = storefrontRepository.findByUserId(user.getId());
+        if (found.isEmpty()) {
+            return ResponseEntity.status(404).body(java.util.Map.of("message", "Storefront not found"));
+        }
+        Storefront store = found.get();
+
+        // Возврат на бесплатный: платить не за что, срок снимается
+        if (plan == Storefront.Plan.FREE) {
+            store.setPlan(Storefront.Plan.FREE);
+            store.setPlanUntil(null);
+            storefrontRepository.save(store);
+            log.info("event=storefront_plan_changed store_id={} plan=FREE", store.getId());
+            return ResponseEntity.ok(java.util.Map.of("plan", "FREE", "dev_mode", true));
+        }
+
+        // Ключа Stripe нет: тариф ставится сразу на месяц, платежа не было
+        if (stripeSecretKey == null || stripeSecretKey.isBlank() || stripeSecretKey.contains("dummy")) {
+            store.setPlan(plan);
+            store.setPlanUntil(java.time.Instant.now().plus(30, java.time.temporal.ChronoUnit.DAYS));
+            storefrontRepository.save(store);
+            log.info("event=storefront_plan_activated store_id={} plan={} mode=dev", store.getId(), plan);
+            return ResponseEntity.ok(java.util.Map.of(
+                "checkout_url", "/storefront?plan=" + plan.name().toLowerCase(),
+                "plan", plan.name(),
+                "dev_mode", true));
+        }
+
+        try {
+            String url = stripeService.createStorefrontPlanCheckout(
+                plan.name(), plan.priceCents, user.getId());
+            return ResponseEntity.ok(java.util.Map.of("checkout_url", url, "dev_mode", false));
+        } catch (Exception e) {
+            log.error("event=storefront_plan_checkout_failed store_id={} plan={} error={}",
+                      store.getId(), plan, e.getMessage());
+            return ResponseEntity.status(502).body(java.util.Map.of("message", "Payment service unavailable"));
+        }
     }
 
     /** Витрина текущего пользователя; пусто, если не заведена. */

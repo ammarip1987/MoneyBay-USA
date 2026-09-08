@@ -84,8 +84,43 @@ public class Storefront {
             columnDefinition = "boolean not null default false")
     private boolean payoutsEnabled = false;
 
+    /** Тариф витрины: FREE, BASIC, PRO. */
+    @Enumerated(EnumType.STRING)
+    @Column(name = "plan", nullable = false,
+            columnDefinition = "varchar(16) not null default 'FREE'")
+    private Plan plan = Plan.FREE;
+
+    /** Докуда оплачено. Пусто у бесплатного: срок ему не нужен. */
+    @Column(name = "plan_until")
+    private Instant planUntil;
+
     @Column(name = "created_at")
     private Instant createdAt = Instant.now();
+
+    /**
+     * Тариф витрины.
+     *
+     * Предел товаров задан здесь, а не в настройках: он часть договорённости с
+     * продавцом, и менять его на ходу нельзя без пересмотра оплаченного.
+     */
+    public enum Plan {
+        /** Бесплатно: до десяти товаров, простая страница. */
+        FREE(0, 10),
+        /** Девять долларов в месяц: до ста товаров, обложка и часы работы. */
+        BASIC(900, 100),
+        /** Двадцать девять в месяц: без предела, выделение в разделе. */
+        PRO(2900, Integer.MAX_VALUE);
+
+        /** Цена в центах: Stripe считает в наименьших единицах. */
+        public final int priceCents;
+        /** Сколько товаров разрешено. */
+        public final int listingLimit;
+
+        Plan(int priceCents, int listingLimit) {
+            this.priceCents = priceCents;
+            this.listingLimit = listingLimit;
+        }
+    }
 
     public enum VerificationStatus {
         /** Проверка не начиналась. */

@@ -207,6 +207,59 @@ import { Storefront } from '../../models/storefront.model';
             }
           </div>
         </div>
+
+        <!-- Тарифы. Действующий выделен рамкой, остальные предлагают переход.
+             Предел товаров держится в тарифе на сервере: обещание продавцу, а
+             не настройка вида -->
+        <div class="bg-white rounded-2xl shadow-lg p-8">
+          <div class="flex items-baseline justify-between mb-1 flex-wrap gap-2">
+            <h2 class="text-xl font-bold text-mb-dark">Plan</h2>
+            @if (store()!.planUntil) {
+              <span class="text-sm text-gray-500">
+                Paid until {{ store()!.planUntil | date:'MMM d, yyyy' }}
+              </span>
+            }
+          </div>
+          <p class="text-gray-600 text-sm mb-6">
+            Your storefront is on the {{ planLabel() }} plan.
+          </p>
+
+          <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+            @for (p of plans; track p.id) {
+              <div class="rounded-xl p-5 flex flex-col transition"
+                   [class.border-2]="currentPlan() === p.id"
+                   [class.border-mb-blue]="currentPlan() === p.id"
+                   [class.border]="currentPlan() !== p.id"
+                   [class.border-gray-200]="currentPlan() !== p.id">
+                <div class="flex items-baseline gap-2 mb-1">
+                  <span class="text-lg font-bold text-mb-dark">{{ p.name }}</span>
+                  @if (currentPlan() === p.id) {
+                    <span class="text-xs bg-mb-blue text-white rounded-full px-2 py-0.5">Current</span>
+                  }
+                </div>
+                <div class="mb-4">
+                  <span class="text-3xl font-bold text-mb-dark">\${{ p.price }}</span>
+                  <span class="text-gray-500 text-sm">/month</span>
+                </div>
+                <ul class="text-sm text-gray-700 space-y-2 mb-6 flex-1">
+                  @for (f of p.features; track f) {
+                    <li class="flex items-start gap-2">
+                      <i class="fas fa-check text-mb-blue mt-0.5 text-xs"></i>
+                      <span>{{ f }}</span>
+                    </li>
+                  }
+                </ul>
+                @if (currentPlan() === p.id) {
+                  <button class="btn btn-secondary w-full" disabled>Current plan</button>
+                } @else {
+                  <button (click)="choosePlan(p.id)" class="btn btn-primary w-full" [disabled]="busy()">
+                    {{ busy() ? '...' : (p.price === 0 ? 'Switch to Free' : 'Choose ' + p.name) }}
+                  </button>
+                }
+              </div>
+            }
+          </div>
+        </div>
       }
     </div>
   `
@@ -217,6 +270,65 @@ export class StorefrontComponent implements OnInit {
   store = signal<Storefront | null>(null);
   loading = signal(true);
   busy = signal(false);
+
+  /**
+   * Тарифы. Цены и пределы держатся заодно с сервером: там они в перечне Plan,
+   * здесь только для показа. Расхождение обнаружится при оплате — сервер берёт
+   * свою цену, не присланную.
+   */
+  readonly plans = [
+    {
+      id: 'FREE' as const,
+      name: 'Free',
+      price: 0,
+      features: ['Up to 10 listings', 'Store page with your name', 'Contact details']
+    },
+    {
+      id: 'BASIC' as const,
+      name: 'Basic',
+      price: 9,
+      features: ['Up to 100 listings', 'Cover image and logo', 'Opening hours and website', 'Custom store address']
+    },
+    {
+      id: 'PRO' as const,
+      name: 'Pro',
+      price: 29,
+      features: ['Unlimited listings', 'Everything in Basic', 'Highlighted in category', 'Priority in search']
+    }
+  ];
+
+  currentPlan = (): string => this.store()?.plan ?? 'FREE';
+
+  planLabel = (): string =>
+    this.plans.find(p => p.id === this.currentPlan())?.name ?? 'Free';
+
+  /**
+   * Переход на тариф.
+   *
+   * Без ключа Stripe сервер включает тариф сразу и возвращает свой же адрес —
+   * тогда достаточно перечитать витрину. С ключом приходит адрес оплаты.
+   */
+  choosePlan(plan: 'FREE' | 'BASIC' | 'PRO'): void {
+    if (this.busy()) return;
+    this.busy.set(true);
+    this.api.chooseStorefrontPlan(plan).subscribe({
+      next: (res) => {
+        this.busy.set(false);
+        if (res.checkout_url && !res.dev_mode) {
+          window.location.href = res.checkout_url;
+          return;
+        }
+        // Витрина перечитывается: тариф и срок пришли только на сервере
+        this.api.getMyStorefront().subscribe({
+          next: (s) => this.store.set(s)
+        });
+      },
+      error: (e) => {
+        this.busy.set(false);
+        this.error.set(e?.error?.message || 'Could not change the plan');
+      }
+    });
+  }
   error = signal<string | null>(null);
 
   newName = '';

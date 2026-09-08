@@ -58,4 +58,38 @@ public class StripeService {
         log.info("Created Stripe checkout session {} for listing {} ({}h)", session.getId(), listingId, hours);
         return session.getUrl();
     }
+
+    /**
+     * Оплата тарифа витрины на месяц.
+     *
+     * Разовый платёж, а не подписка: продление раз в месяц вручную проще для
+     * продавца, чем списания без спроса, и не требует управления подписками на
+     * стороне площадки. Срок продлевается уведомлением от Stripe.
+     */
+    public String createStorefrontPlanCheckout(String planName, int priceCents, Long userId)
+            throws StripeException {
+        SessionCreateParams params = SessionCreateParams.builder()
+            .setMode(SessionCreateParams.Mode.PAYMENT)
+            .setSuccessUrl(frontendUrl + "/storefront?plan=" + planName.toLowerCase())
+            .setCancelUrl(frontendUrl + "/storefront")
+            .addLineItem(SessionCreateParams.LineItem.builder()
+                .setQuantity(1L)
+                .setPriceData(SessionCreateParams.LineItem.PriceData.builder()
+                    .setCurrency("usd")
+                    .setUnitAmount((long) priceCents)
+                    .setProductData(SessionCreateParams.LineItem.PriceData.ProductData.builder()
+                        .setName("Storefront " + planName + " — 1 month")
+                        .build())
+                    .build())
+                .build())
+            .putMetadata("kind", "storefront_plan")
+            .putMetadata("plan", planName)
+            .putMetadata("user_id", userId.toString())
+            .build();
+
+        Session session = Session.create(params);
+        log.info("Created Stripe checkout session {} for storefront plan {} user {}",
+                 session.getId(), planName, userId);
+        return session.getUrl();
+    }
 }
