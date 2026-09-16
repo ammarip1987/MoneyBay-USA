@@ -65,7 +65,17 @@ public class RateLimitFilter extends OncePerRequestFilter {
             response.setHeader("X-RateLimit-Remaining", String.valueOf(bucket.getAvailableTokens()));
             chain.doFilter(request, response);
         } else {
-            log.warn("event=rate_limit_exceeded ip={} path={} method={}", clientIp, path, method);
+            // На несколько дней: в записи идут все заголовки с адресом, чтобы
+            // понять, откуда на самом деле приходит поток. В журнале виден
+            // только узел Cloudflare — настоящий адрес где-то в этих полях.
+            // Убрать, когда разберёмся: при большом потоке записи разрастутся
+            log.warn("event=rate_limit_exceeded ip={} path={} method={} cf={} xff={} real={} country={} ua={}",
+                clientIp, path, method,
+                request.getHeader("CF-Connecting-IP"),
+                request.getHeader("X-Forwarded-For"),
+                request.getHeader("X-Real-IP"),
+                request.getHeader("CF-IPCountry"),
+                abbreviate(request.getHeader("User-Agent")));
             response.setStatus(429);
             response.setHeader("Retry-After", "60");
             response.setContentType("application/json");
@@ -101,6 +111,12 @@ public class RateLimitFilter extends OncePerRequestFilter {
             || path.startsWith("/api/uploads/")
             || path.equals("/sitemap.xml")
             || path.equals("/robots.txt");
+    }
+
+    /** Обрезка длинного значения: строка браузера бывает в сотни знаков. */
+    private String abbreviate(String value) {
+        if (value == null) return null;
+        return value.length() <= 60 ? value : value.substring(0, 60);
     }
 
     private String resolveClientIp(HttpServletRequest request) {
