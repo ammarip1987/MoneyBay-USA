@@ -107,6 +107,53 @@ aws ec2 stop-instances --region us-east-2 --instance-ids i-0821136db2ceea87a
 `localhost:5432`, backend на порту 5001, frontend на 1100. Git и GitHub
 от AWS не зависят вовсе.
 
+### Откуда идёт поток обращений
+
+С сентября 2026 на сайт идёт около 600 тысяч обращений в сутки при двух
+настоящих учётных записях в базе. Признаки машинные: 95% без опознанного
+браузера, перебор `/api/listings/{номер}` подряд, треть ответов 4xx.
+
+**Где смотреть:**
+
+```bash
+# страны за два часа
+aws logs filter-log-events --region us-east-2 --log-group-name moneybay-backend \
+  --start-time $(( ($(date +%s) - 7200) * 1000 )) \
+  --filter-pattern "rate_limit_exceeded" --max-items 120 \
+  --query 'events[].message' --output text | grep -oE "country=[A-Z]{2}" | sort | uniq -c | sort -rn
+
+# коды ответов на балансировщике за сутки
+aws cloudwatch get-metric-statistics --region us-east-2 --namespace AWS/ApplicationELB \
+  --metric-name HTTPCode_Target_4XX_Count \
+  --dimensions Name=LoadBalancer,Value=app/moneybay-alb/6fa038abce447319 \
+  --start-time "$(date -u -d '24 hours ago' +%Y-%m-%dT%H:%M:%S)" \
+  --end-time "$(date -u +%Y-%m-%dT%H:%M:%S)" --period 86400 --statistics Sum
+```
+
+**Что выяснено на 17 сентября 2026:**
+
+- В CloudWatch настоящих адресов нет — только узлы Cloudflare
+  (`2a06:98c0:3600::103`, диапазоны `172.64–172.71`, `104.22–104.23`).
+  Обращения к API идут через Worker, и он подставляет свой адрес вместо
+  адреса посетителя. Строка браузера теряется там же — `ua=null`.
+- Страны видны: Великобритания 70 из 120, США 45. Перевес Британии для
+  площадки, рассчитанной на США, — признак машин.
+- Настоящие адреса есть только в Cloudflare: Security → Analytics, блок
+  Source IPs. Оттуда брались `74.7.242.33` и `74.7.241.35`.
+
+**Правила в Cloudflare** (Security → Security rules):
+
+| Правило | Действие | Толк |
+|---|---|---|
+| `ip.src in {74.7.241.0/24 74.7.242.0/24}` | Block | ловит, 25 срабатываний |
+| пустой `User-Agent` на `/api/` | Managed Challenge | ноль, скребок что-то подставляет |
+| `/api/`, 20 запросов за 10 секунд | Block | бесплатный тариф: период и срок только 10 с |
+
+**Временное в коде:** в `RateLimitFilter` выводятся все заголовки с
+адресом (`cf`, `xff`, `real`, `country`, `ua`). Убрать, когда разберёмся —
+при большом потоке записи разрастутся. Чтобы увидеть настоящие адреса в
+CloudWatch, Worker должен передавать `CF-Connecting-IP` дальше в API.
+
 ### Cloud Services (Cloudflare)
 
 - **Cloudflare Workers** — SSR frontend rendering
