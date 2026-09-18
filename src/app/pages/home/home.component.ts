@@ -241,6 +241,17 @@ interface Subcategory {
 
       </div>
 
+      <!-- Догрузка к показанным перед номерами страниц: смотреть подряд
+           удобнее, чем перелистывать, а номера остаются для тех, кому нужна
+           определённая страница. Кнопка пропадает на последней -->
+      @if (!searchQuery && !selectedCategory() && currentPage() < totalPages() && !loadingMore()) {
+        <div class="pt-8 flex justify-center">
+          <button (click)="loadMore()" class="btn btn-primary px-8">
+            Show more
+          </button>
+        </div>
+      }
+
       @if (!searchQuery && !selectedCategory() && totalPages() > 1) {
         <nav class="py-8 flex justify-center items-center gap-1 flex-wrap" aria-label="Pagination">
           <button (click)="goToPage(currentPage() - 1)"
