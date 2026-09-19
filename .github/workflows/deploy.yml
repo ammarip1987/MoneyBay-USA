@@ -124,15 +124,14 @@ jobs:
           exit 1
 
       # Адрес задачи меняется при каждом запуске, поэтому запись обновляется
-      # здесь, а не задаётся раз и навсегда. Пока это api2 — запасной путь в
-      # обход балансировщика; api остаётся на нём, и сайт от этого шага не
-      # зависит. Провал шага не роняет развёртывание: continue-on-error.
-      - name: Point api2 at the task address
-        continue-on-error: true
+      # здесь, а не задаётся раз и навсегда. Балансировщика больше нет, и на
+      # этом шаге держится доступность сайта: не обновит запись — api будет
+      # указывать на погашенную задачу.
+      - name: Point api at the task address
         env:
           CF_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           CF_ZONE: ${{ secrets.CLOUDFLARE_ZONE_ID }}
-          RECORD_NAME: api2.moneybay.us
+          RECORD_NAME: api.moneybay.us
         run: |
           set -uo pipefail
 
