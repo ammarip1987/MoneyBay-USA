@@ -1,6 +1,8 @@
 package us.moneybay.config;
 
 import org.apache.catalina.connector.Connector;
+import org.apache.tomcat.util.net.SSLHostConfig;
+import org.apache.tomcat.util.net.SSLHostConfigCertificate;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.web.embedded.tomcat.TomcatServletWebServerFactory;
 import org.springframework.boot.web.server.WebServerFactoryCustomizer;
@@ -54,11 +56,20 @@ public class HttpsConnectorConfig {
             connector.setScheme("https");
             connector.setSecure(true);
             connector.setProperty("SSLEnabled", "true");
-            connector.setProperty("sslProtocol", "TLS");
-            connector.setProperty("keystoreFile", keystore.getAbsolutePath());
-            connector.setProperty("keystorePass", keystorePassword);
-            connector.setProperty("keystoreType", "PKCS12");
-            connector.setProperty("keyAlias", keyAlias);
+
+            // Настройки шифрования задаются объектом, а не через setProperty:
+            // в свежем Tomcat старый способ оставляет соединитель без
+            // SSLHostConfig, и запуск падает с "No SSLHostConfig element was
+            // found with the hostName [_default_]"
+            SSLHostConfig sslHostConfig = new SSLHostConfig();
+            SSLHostConfigCertificate certificate =
+                new SSLHostConfigCertificate(sslHostConfig, SSLHostConfigCertificate.Type.UNDEFINED);
+            certificate.setCertificateKeystoreFile(keystore.getAbsolutePath());
+            certificate.setCertificateKeystorePassword(keystorePassword);
+            certificate.setCertificateKeystoreType("PKCS12");
+            certificate.setCertificateKeyAlias(keyAlias);
+            sslHostConfig.addCertificate(certificate);
+            connector.addSslHostConfig(sslHostConfig);
 
             factory.addAdditionalTomcatConnectors(connector);
         };
