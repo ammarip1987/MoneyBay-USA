@@ -122,3 +122,64 @@ jobs:
           aws ecs describe-services --cluster "$ECS_CLUSTER" --services "$ECS_SERVICE" \
             --query 'services[0].events[0:5].message' --output text | tr '\t' '\n'
           exit 1
+
+      # Адрес задачи меняется при каждом запуске, поэтому запись обновляется
+      # здесь, а не задаётся раз и навсегда. Пока это api2 — запасной путь в
+      # обход балансировщика; api остаётся на нём, и сайт от этого шага не
+      # зависит. Провал шага не роняет развёртывание: continue-on-error.
+      - name: Point api2 at the task address
+        continue-on-error: true
+        env:
+          CF_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CF_ZONE: ${{ secrets.CLOUDFLARE_ZONE_ID }}
+          RECORD_NAME: api2.moneybay.us
+        run: |
+          set -uo pipefail
+
+          TASK=$(aws ecs list-tasks --cluster "$ECS_CLUSTER" \
+            --service-name "$ECS_SERVICE" --desired-status RUNNING \
+            --query 'taskArns[0]' --output text)
+          if [ -z "$TASK" ] || [ "$TASK" = "None" ]; then
+            echo "Задач в RUNNING нет — обновлять нечем."
+            exit 1
+          fi
+
+          ENI=$(aws ecs describe-tasks --cluster "$ECS_CLUSTER" --tasks "$TASK" \
+            --query 'tasks[0].attachments[0].details[?name==`networkInterfaceId`].value' \
+            --output text)
+          IP=$(aws ec2 describe-network-interfaces --network-interface-ids "$ENI" \
+            --query 'NetworkInterfaces[0].Association.PublicIp' --output text)
+
+          if [ -z "$IP" ] || [ "$IP" = "None" ]; then
+            echo "У задачи нет публичного адреса."
+            exit 1
+          fi
+          echo "Адрес задачи: $IP"
+
+          API="https://api.cloudflare.com/client/v4/zones/$CF_ZONE/dns_records"
+          AUTH="Authorization: Bearer $CF_TOKEN"
+
+          # Запись ищется по имени: при первом прогоне её ещё нет и она
+          # заводится, дальше правится существующая
+          REC=$(curl -sS -X GET "$API?type=A&name=$RECORD_NAME" -H "$AUTH" \
+            | grep -o '"id":"[a-f0-9]\{32\}"' | head -1 | cut -d'"' -f4)
+
+          # proxied: true — адрес задачи не светится наружу, и правила
+          # Cloudflare продолжают действовать, как на api через балансировщик
+          BODY=$(printf '{"type":"A","name":"%s","content":"%s","ttl":60,"proxied":true}' \
+            "$RECORD_NAME" "$IP")
+
+          if [ -n "$REC" ]; then
+            RESP=$(curl -sS -X PUT "$API/$REC" -H "$AUTH" \
+              -H "Content-Type: application/json" --data "$BODY")
+          else
+            RESP=$(curl -sS -X POST "$API" -H "$AUTH" \
+              -H "Content-Type: application/json" --data "$BODY")
+          fi
+
+          if echo "$RESP" | grep -q '"success":true'; then
+            echo "Запись обновлена: $RECORD_NAME -> $IP"
+          else
+            echo "Cloudflare отказал: $RESP"
+            exit 1
+          fi
