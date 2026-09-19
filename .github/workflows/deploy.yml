@@ -161,8 +161,10 @@ jobs:
 
           # Запись ищется по имени: при первом прогоне её ещё нет и она
           # заводится, дальше правится существующая
-          REC=$(curl -sS -X GET "$API?type=A&name=$RECORD_NAME" -H "$AUTH" \
-            | grep -o '"id":"[a-f0-9]\{32\}"' | head -1 | cut -d'"' -f4)
+          # || true обязателен: при первом прогоне записи нет, grep ничего не
+          # находит и возвращает единицу — под set -e это обрывало весь шаг
+          LOOKUP=$(curl -sS -X GET "$API?type=A&name=$RECORD_NAME" -H "$AUTH")
+          REC=$(echo "$LOOKUP" | grep -o '"id":"[a-f0-9]\{32\}"' | head -1 | cut -d'"' -f4 || true)
 
           # proxied: true — адрес задачи не светится наружу, и правила
           # Cloudflare продолжают действовать, как на api через балансировщик
@@ -177,7 +179,8 @@ jobs:
               -H "Content-Type: application/json" --data "$BODY")
           fi
 
-          if echo "$RESP" | grep -q '"success":true'; then
+          OK=$(echo "$RESP" | grep -c '"success":true' || true)
+          if [ "$OK" -ge 1 ]; then
             echo "Запись обновлена: $RECORD_NAME -> $IP"
           else
             echo "Cloudflare отказал: $RESP"
