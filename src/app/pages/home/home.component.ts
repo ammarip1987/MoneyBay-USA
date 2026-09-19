@@ -322,7 +322,10 @@ interface Subcategory {
       <app-skeleton-loader variant="listing-grid" [count]="10"></app-skeleton-loader>
       }
 
-    @if (!loading() && listings().length === 0) {
+    <!-- Пусто только когда и правда пусто: при догрузке и смене страницы
+         список на миг опорожняется, и надпись выскакивала под номерами
+         поверх уже показанных карточек -->
+    @if (!loading() && !loadingMore() && !pagingNow() && listings().length === 0) {
       <div class="text-center py-12"><p class="text-gray-500 text-lg">No listings found.</p></div>
     }
     </div>
