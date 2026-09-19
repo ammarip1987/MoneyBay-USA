@@ -29,16 +29,22 @@ RUN ./mvnw package -B -Dspring.profiles.active=test
 # headless: без графических библиотек и компилятора, только среда выполнения
 FROM amazoncorretto:25-al2023-headless
 
-# curl нужен проверке состояния контейнера
-RUN dnf install -y curl-minimal shadow-utils && dnf clean all
+# curl нужен проверке состояния контейнера, openssl — сборке хранилища ключей
+RUN dnf install -y curl-minimal shadow-utils openssl && dnf clean all
 
 WORKDIR /app
 RUN groupadd -r spring && useradd -r -g spring spring
-USER spring
 
 COPY --from=builder /app/target/*.jar app.jar
 
-EXPOSE 8080
+# Хранилище ключей собирается при запуске, а не кладётся в образ: сертификат
+# приходит из Secrets Manager переменными среды, и в слоях образа ему не место
+COPY entrypoint.sh /app/entrypoint.sh
+RUN chmod +x /app/entrypoint.sh && chown -R spring:spring /app
+
+USER spring
+
+EXPOSE 8080 8443
 ENV SPRING_PROFILES_ACTIVE=production
 
-ENTRYPOINT ["java", "-jar", "/app/app.jar"]
+ENTRYPOINT ["/app/entrypoint.sh"]

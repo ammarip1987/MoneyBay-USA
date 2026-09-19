@@ -73,3 +73,9 @@ run.log
 
 # Инструментарий Claude: скрипты AWS Agent Toolkit, к площадке отношения не имеют
 .claude/skills/
+
+# Сертификат Cloudflare Origin: приватный ключ в репозитории не место
+cert/
+*.pem
+*.key
+*.p12

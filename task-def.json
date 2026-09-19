@@ -13,6 +13,12 @@
                     "hostPort": 8080,
                     "protocol": "tcp",
                     "name": "main-8080-tcp"
+                },
+                {
+                    "containerPort": 8443,
+                    "hostPort": 8443,
+                    "protocol": "tcp",
+                    "name": "main-8443-tcp"
                 }
             ],
             "essential": true,
@@ -85,6 +91,14 @@
                 {
                     "name": "MAIL_PASSWORD",
                     "valueFrom": "arn:aws:secretsmanager:us-east-2:172575865299:secret:moneybay/ses-smtp-8BVix0:MAIL_PASSWORD::"
+                },
+                {
+                    "name": "SSL_CERT",
+                    "valueFrom": "arn:aws:secretsmanager:us-east-2:172575865299:secret:moneybay/origin-cert-E10JpA"
+                },
+                {
+                    "name": "SSL_KEY",
+                    "valueFrom": "arn:aws:secretsmanager:us-east-2:172575865299:secret:moneybay/origin-key-myfr1G"
                 }
             ],
             "logConfiguration": {
