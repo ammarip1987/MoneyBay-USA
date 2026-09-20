@@ -88,14 +88,22 @@ jobs:
           for i in $(seq 1 40); do
             read -r RUNNING_DEF RUNNING DESIRED <<<"$(describe '[taskDefinition,runningCount,desiredCount]')"
 
-            # healthStatus задачи выставляется по тем же проверкам, что решают,
-            # пускать ли на неё трафик. Берётся из ECS, а не из elbv2: у
-            # пользователя CI нет права elasticloadbalancing:DescribeTargetHealth.
+            # healthStatus задачи выставляется проверкой контейнера. Берётся из
+            # ECS, а не из elbv2: у пользователя CI нет права
+            # elasticloadbalancing:DescribeTargetHealth, да и балансировщика
+            # больше нет в пути.
+            #
+            # Берутся только задачи в RUNNING: без этого в выборку попадают и
+            # погашенные, и состояние читается не у той.
             TASKS=$(aws ecs list-tasks --cluster "$ECS_CLUSTER" \
-              --service-name "$ECS_SERVICE" --query 'taskArns' --output text)
+              --service-name "$ECS_SERVICE" --desired-status RUNNING \
+              --query 'taskArns' --output text)
             if [ -n "$TASKS" ] && [ "$TASKS" != "None" ]; then
+              # Сравнение по номеру ревизии, а не по полному пути: ECS
+              # подменяет набор задач, пути расходятся, и выборка возвращала
+              # пусто при работающей задаче — ожидание висело все двадцать минут
               STATES=$(aws ecs describe-tasks --cluster "$ECS_CLUSTER" --tasks $TASKS \
-                --query "tasks[?taskDefinitionArn=='$EXPECTED_TASK_DEF'].healthStatus" \
+                --query "tasks[?ends_with(taskDefinitionArn, '/${EXPECTED_TASK_DEF##*/}')].healthStatus" \
                 --output text)
             else
               STATES=""
@@ -108,7 +116,7 @@ jobs:
 
             echo "[$i/40] ревизия=${RUNNING_DEF##*/} задачи=$RUNNING/$DESIRED состояние=[${STATES:-нет}]"
 
-            if [ "$RUNNING_DEF" = "$EXPECTED_TASK_DEF" ] \
+            if [ "${RUNNING_DEF##*/}" = "${EXPECTED_TASK_DEF##*/}" ] \
                && [ "$RUNNING" = "$DESIRED" ] \
                && [ "$HEALTHY" -ge 1 ]; then
               echo "Готово: новая ревизия запущена и проходит проверки состояния."
@@ -128,6 +136,10 @@ jobs:
       # этом шаге держится доступность сайта: не обновит запись — api будет
       # указывать на погашенную задачу.
       - name: Point api at the task address
+        # Выполняется даже когда ожидание не дождалось: задача к тому времени
+        # обычно уже работает, а без обновления записи api будет указывать на
+        # погашенную — сайт ляжет из-за неудачной проверки, а не из-за поломки
+        if: always()
         env:
           CF_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           CF_ZONE: ${{ secrets.CLOUDFLARE_ZONE_ID }}
