@@ -44,7 +44,7 @@ RUN chmod +x /app/entrypoint.sh && chown -R spring:spring /app
 
 USER spring
 
-EXPOSE 8080 8443
+EXPOSE 8443 8080
 ENV SPRING_PROFILES_ACTIVE=production
 
 ENTRYPOINT ["/app/entrypoint.sh"]

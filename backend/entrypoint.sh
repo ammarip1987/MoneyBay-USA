@@ -31,15 +31,22 @@ if [ -n "${SSL_CERT:-}" ] && [ -n "${SSL_KEY:-}" ]; then
   # Исходники больше не нужны: в хранилище уже всё, что требуется
   rm -f "$CERT_DIR/origin.pem" "$CERT_DIR/origin.key"
 
-  # Путь к хранилищу — признак для HttpsConnectorConfig: увидит его, поднимет
-  # второй порт с шифрованием. Основной порт остаётся без него, под балансировщик
+  # Путь к хранилищу подхватывают server.ssl.* — основной порт поднимается
+  # с шифрованием, другого порта нет
   export SSL_KEYSTORE_PATH="$CERT_DIR/keystore.p12"
   export SSL_KEYSTORE_PASSWORD="$KEYSTORE_PASS"
   export SSL_KEY_ALIAS=origin
 
-  echo "Хранилище собрано: второй порт поднимется с шифрованием"
+  echo "Хранилище собрано: основной порт поднимется с шифрованием"
 else
-  echo "Сертификата нет — работаем по обычному HTTP"
+  # Без сертификата шифрование выключается целиком, иначе запуск падает на
+  # пустом пути к хранилищу. Порт при этом обычный: так идёт местный запуск
+  # и любая среда, где сертификата нет
+  export SSL_ENABLED=false
+  export SSL_KEYSTORE_PATH=
+  export SSL_KEYSTORE_PASSWORD=
+  export PORT="${PORT:-8080}"
+  echo "Сертификата нет — работаем по обычному HTTP на порту $PORT"
 fi
 
 exec java -jar /app/app.jar

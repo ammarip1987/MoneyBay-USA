@@ -9,12 +9,6 @@
             "memoryReservation": 512,
             "portMappings": [
                 {
-                    "containerPort": 8080,
-                    "hostPort": 8080,
-                    "protocol": "tcp",
-                    "name": "main-8080-tcp"
-                },
-                {
                     "containerPort": 8443,
                     "hostPort": 8443,
                     "protocol": "tcp",
@@ -110,12 +104,13 @@
                 }
             },
             "healthCheck": {
-                "command": ["CMD-SHELL", "curl -fsS http://localhost:8080/actuator/health || exit 1"],
+                "command": ["CMD-SHELL", "curl -fsSk https://localhost:8443/actuator/health || exit 1"],
                 "interval": 30,
                 "timeout": 5,
                 "retries": 3,
                 "startPeriod": 180
-            }
+            },
+            "stopTimeout": 40
         }
     ],
     "taskRoleArn": "arn:aws:iam::172575865299:role/ecsTaskExecutionRole",
