@@ -313,8 +313,11 @@ interface Subcategory {
 
     <!-- Пусто только когда и правда пусто: при догрузке и смене страницы
          список на миг опорожняется, и надпись выскакивала под номерами
-         поверх уже показанных карточек -->
-    @if (!loading() && !loadingMore() && !pagingNow() && listings().length === 0) {
+         поверх уже показанных карточек.
+         isBrowser обязателен: на сервере отбор не запускался, список пуст
+         всегда, и надпись уходила в отданный HTML - её видно до того, как
+         браузер подхватит страницу -->
+    @if (isBrowser && !loading() && !loadingMore() && !pagingNow() && listings().length === 0) {
       <div class="text-center py-12"><p class="text-gray-500 text-lg">No listings found.</p></div>
     }
     </div>
@@ -329,6 +332,9 @@ export class HomeComponent implements OnInit, OnDestroy {
   private router = inject(Router);
   private seo = inject(SeoService);
   private platformId = inject(PLATFORM_ID);
+
+  /** На сервере отбор ещё не запускался, и пустой список там ничего не значит. */
+  protected readonly isBrowser = isPlatformBrowser(inject(PLATFORM_ID));
 
   private scrollObserver?: IntersectionObserver;
   private cityCtx = inject(CityContextService);
