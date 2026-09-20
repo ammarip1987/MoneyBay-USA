@@ -147,53 +147,73 @@ jobs:
         run: |
           set -uo pipefail
 
-          TASK=$(aws ecs list-tasks --cluster "$ECS_CLUSTER" \
-            --service-name "$ECS_SERVICE" --desired-status RUNNING \
-            --query 'taskArns[0]' --output text)
-          if [ -z "$TASK" ] || [ "$TASK" = "None" ]; then
-            echo "Задач в RUNNING нет — обновлять нечем."
-            exit 1
-          fi
-
-          ENI=$(aws ecs describe-tasks --cluster "$ECS_CLUSTER" --tasks "$TASK" \
-            --query 'tasks[0].attachments[0].details[?name==`networkInterfaceId`].value' \
-            --output text)
-          IP=$(aws ec2 describe-network-interfaces --network-interface-ids "$ENI" \
-            --query 'NetworkInterfaces[0].Association.PublicIp' --output text)
-
-          if [ -z "$IP" ] || [ "$IP" = "None" ]; then
-            echo "У задачи нет публичного адреса."
-            exit 1
-          fi
-          echo "Адрес задачи: $IP"
-
           API="https://api.cloudflare.com/client/v4/zones/$CF_ZONE/dns_records"
           AUTH="Authorization: Bearer $CF_TOKEN"
 
-          # Запись ищется по имени: при первом прогоне её ещё нет и она
-          # заводится, дальше правится существующая
-          # || true обязателен: при первом прогоне записи нет, grep ничего не
-          # находит и возвращает единицу — под set -e это обрывало весь шаг
-          LOOKUP=$(curl -sS -X GET "$API?type=A&name=$RECORD_NAME" -H "$AUTH")
-          REC=$(echo "$LOOKUP" | grep -o '"id":"[a-f0-9]\{32\}"' | head -1 | cut -d'"' -f4 || true)
+          # Адрес задачи читается, записывается, а потом перечитывается. Если
+          # ECS подменил задачу между чтением и записью, запись указывает на
+          # погашенную и сайт ложится - это уже случалось. Заход повторяется,
+          # пока прочитанный адрес не совпадёт с тем, что стоит в записи.
+          for attempt in 1 2 3 4 5; do
+            TASK=$(aws ecs list-tasks --cluster "$ECS_CLUSTER" \
+              --service-name "$ECS_SERVICE" --desired-status RUNNING \
+              --query 'taskArns[0]' --output text)
+            if [ -z "$TASK" ] || [ "$TASK" = "None" ]; then
+              echo "[$attempt/5] задач в RUNNING нет"
+              sleep 20
+              continue
+            fi
 
-          # proxied: true — адрес задачи не светится наружу, и правила
-          # Cloudflare продолжают действовать, как на api через балансировщик
-          BODY=$(printf '{"type":"A","name":"%s","content":"%s","ttl":60,"proxied":true}' \
-            "$RECORD_NAME" "$IP")
+            ENI=$(aws ecs describe-tasks --cluster "$ECS_CLUSTER" --tasks "$TASK" \
+              --query 'tasks[0].attachments[0].details[?name==`networkInterfaceId`].value' \
+              --output text)
+            IP=$(aws ec2 describe-network-interfaces --network-interface-ids "$ENI" \
+              --query 'NetworkInterfaces[0].Association.PublicIp' --output text)
 
-          if [ -n "$REC" ]; then
-            RESP=$(curl -sS -X PUT "$API/$REC" -H "$AUTH" \
-              -H "Content-Type: application/json" --data "$BODY")
-          else
-            RESP=$(curl -sS -X POST "$API" -H "$AUTH" \
-              -H "Content-Type: application/json" --data "$BODY")
-          fi
+            if [ -z "$IP" ] || [ "$IP" = "None" ]; then
+              echo "[$attempt/5] у задачи нет публичного адреса"
+              sleep 20
+              continue
+            fi
+            echo "[$attempt/5] адрес задачи: $IP"
 
-          OK=$(echo "$RESP" | grep -c '"success":true' || true)
-          if [ "$OK" -ge 1 ]; then
-            echo "Запись обновлена: $RECORD_NAME -> $IP"
-          else
-            echo "Cloudflare отказал: $RESP"
-            exit 1
-          fi
+            # Запись ищется по имени: при первом прогоне её ещё нет и она
+            # заводится, дальше правится существующая
+            # || true обязателен: при первом прогоне записи нет, grep ничего не
+            # находит и возвращает единицу - под set -e это обрывало весь шаг
+            LOOKUP=$(curl -sS -X GET "$API?type=A&name=$RECORD_NAME" -H "$AUTH")
+            REC=$(echo "$LOOKUP" | grep -o '"id":"[a-f0-9]\{32\}"' | head -1 | cut -d'"' -f4 || true)
+
+            # proxied: true - адрес задачи не светится наружу, и правила
+            # Cloudflare продолжают действовать, как на api через балансировщик
+            BODY=$(printf '{"type":"A","name":"%s","content":"%s","ttl":60,"proxied":true}' \
+              "$RECORD_NAME" "$IP")
+
+            if [ -n "$REC" ]; then
+              RESP=$(curl -sS -X PUT "$API/$REC" -H "$AUTH" \
+                -H "Content-Type: application/json" --data "$BODY")
+            else
+              RESP=$(curl -sS -X POST "$API" -H "$AUTH" \
+                -H "Content-Type: application/json" --data "$BODY")
+            fi
+
+            OK=$(echo "$RESP" | grep -c '"success":true' || true)
+            if [ "$OK" -lt 1 ]; then
+              echo "Cloudflare отказал: $RESP"
+              exit 1
+            fi
+
+            # Проверка после записи: задача всё ещё та же и всё ещё работает
+            sleep 15
+            NOW=$(aws ecs list-tasks --cluster "$ECS_CLUSTER" \
+              --service-name "$ECS_SERVICE" --desired-status RUNNING \
+              --query 'taskArns[0]' --output text)
+            if [ "$NOW" = "$TASK" ]; then
+              echo "Запись обновлена: $RECORD_NAME -> $IP"
+              exit 0
+            fi
+            echo "[$attempt/5] задача сменилась после записи, заходим снова"
+          done
+
+          echo "Адрес задачи не устоялся за пять заходов."
+          exit 1
