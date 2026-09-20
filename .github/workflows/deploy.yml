@@ -150,70 +150,87 @@ jobs:
           API="https://api.cloudflare.com/client/v4/zones/$CF_ZONE/dns_records"
           AUTH="Authorization: Bearer $CF_TOKEN"
 
-          # Адрес задачи читается, записывается, а потом перечитывается. Если
-          # ECS подменил задачу между чтением и записью, запись указывает на
-          # погашенную и сайт ложится - это уже случалось. Заход повторяется,
-          # пока прочитанный адрес не совпадёт с тем, что стоит в записи.
-          for attempt in 1 2 3 4 5; do
-            TASK=$(aws ecs list-tasks --cluster "$ECS_CLUSTER" \
+          # Адрес работающей задачи, либо пусто, если готовой задачи нет.
+          # Берётся только HEALTHY: на UNKNOWN задача ещё прогревается и порт
+          # не отвечает - запись на неё роняет сайт
+          current_ip() {
+            local task eni
+            task=$(aws ecs list-tasks --cluster "$ECS_CLUSTER" \
               --service-name "$ECS_SERVICE" --desired-status RUNNING \
-              --query 'taskArns[0]' --output text)
-            if [ -z "$TASK" ] || [ "$TASK" = "None" ]; then
-              echo "[$attempt/5] задач в RUNNING нет"
-              sleep 20
-              continue
-            fi
-
-            ENI=$(aws ecs describe-tasks --cluster "$ECS_CLUSTER" --tasks "$TASK" \
-              --query 'tasks[0].attachments[0].details[?name==`networkInterfaceId`].value' \
+              --query 'taskArns' --output text)
+            [ -z "$task" ] || [ "$task" = "None" ] && return 0
+            task=$(aws ecs describe-tasks --cluster "$ECS_CLUSTER" --tasks $task \
+              --query 'tasks[?healthStatus==`HEALTHY`]|[0].attachments[0].details[?name==`networkInterfaceId`].value' \
               --output text)
-            IP=$(aws ec2 describe-network-interfaces --network-interface-ids "$ENI" \
-              --query 'NetworkInterfaces[0].Association.PublicIp' --output text)
+            [ -z "$task" ] || [ "$task" = "None" ] && return 0
+            aws ec2 describe-network-interfaces --network-interface-ids "$task" \
+              --query 'NetworkInterfaces[0].Association.PublicIp' --output text
+          }
 
-            if [ -z "$IP" ] || [ "$IP" = "None" ]; then
-              echo "[$attempt/5] у задачи нет публичного адреса"
-              sleep 20
-              continue
-            fi
-            echo "[$attempt/5] адрес задачи: $IP"
-
-            # Запись ищется по имени: при первом прогоне её ещё нет и она
-            # заводится, дальше правится существующая
-            # || true обязателен: при первом прогоне записи нет, grep ничего не
-            # находит и возвращает единицу - под set -e это обрывало весь шаг
-            LOOKUP=$(curl -sS -X GET "$API?type=A&name=$RECORD_NAME" -H "$AUTH")
-            REC=$(echo "$LOOKUP" | grep -o '"id":"[a-f0-9]\{32\}"' | head -1 | cut -d'"' -f4 || true)
-
+          # Запись правится под переданный адрес. При первом прогоне её ещё
+          # нет и она заводится, дальше правится существующая.
+          # || true обязателен: grep возвращает единицу, когда ничего не нашёл
+          write_record() {
+            local ip resp rec body
+            ip="$1"
+            rec=$(curl -sS -X GET "$API?type=A&name=$RECORD_NAME" -H "$AUTH" \
+              | grep -o '"id":"[a-f0-9]\{32\}"' | head -1 | cut -d'"' -f4 || true)
             # proxied: true - адрес задачи не светится наружу, и правила
-            # Cloudflare продолжают действовать, как на api через балансировщик
-            BODY=$(printf '{"type":"A","name":"%s","content":"%s","ttl":60,"proxied":true}' \
-              "$RECORD_NAME" "$IP")
-
-            if [ -n "$REC" ]; then
-              RESP=$(curl -sS -X PUT "$API/$REC" -H "$AUTH" \
-                -H "Content-Type: application/json" --data "$BODY")
+            # Cloudflare продолжают действовать
+            body=$(printf '{"type":"A","name":"%s","content":"%s","ttl":60,"proxied":true}' \
+              "$RECORD_NAME" "$ip")
+            if [ -n "$rec" ]; then
+              resp=$(curl -sS -X PUT "$API/$rec" -H "$AUTH" \
+                -H "Content-Type: application/json" --data "$body")
             else
-              RESP=$(curl -sS -X POST "$API" -H "$AUTH" \
-                -H "Content-Type: application/json" --data "$BODY")
+              resp=$(curl -sS -X POST "$API" -H "$AUTH" \
+                -H "Content-Type: application/json" --data "$body")
             fi
-
-            OK=$(echo "$RESP" | grep -c '"success":true' || true)
-            if [ "$OK" -lt 1 ]; then
-              echo "Cloudflare отказал: $RESP"
-              exit 1
+            if [ "$(echo "$resp" | grep -c '"success":true' || true)" -ge 1 ]; then
+              echo "Запись обновлена: $RECORD_NAME -> $ip"
+              return 0
             fi
+            echo "Cloudflare отказал: $resp"
+            return 1
+          }
 
-            # Проверка после записи: задача всё ещё та же и всё ещё работает
+          # Сначала дождаться готовой задачи: сразу после развёртывания их
+          # бывает две - прежняя ещё отвечает, новая прогревается
+          WRITTEN=""
+          for i in $(seq 1 20); do
+            IP=$(current_ip)
+            if [ -n "$IP" ] && [ "$IP" != "None" ]; then
+              write_record "$IP" || exit 1
+              WRITTEN="$IP"
+              break
+            fi
+            echo "[$i/20] готовой задачи пока нет"
             sleep 15
-            NOW=$(aws ecs list-tasks --cluster "$ECS_CLUSTER" \
-              --service-name "$ECS_SERVICE" --desired-status RUNNING \
-              --query 'taskArns[0]' --output text)
-            if [ "$NOW" = "$TASK" ]; then
-              echo "Запись обновлена: $RECORD_NAME -> $IP"
-              exit 0
-            fi
-            echo "[$attempt/5] задача сменилась после записи, заходим снова"
           done
 
-          echo "Адрес задачи не устоялся за пять заходов."
-          exit 1
+          if [ -z "$WRITTEN" ]; then
+            echo "Готовой задачи не появилось за пять минут."
+            exit 1
+          fi
+
+          # Дальше - слежение. ECS гасит прежнюю задачу уже после того, как
+          # новая прошла проверки, и замена случается позже записи: адрес
+          # уходит на погашенную и сайт отдаёт 522. Так было трижды.
+          # Двенадцать проверок по пятнадцать секунд - три минуты, этого
+          # хватает, чтобы замена завершилась целиком.
+          echo "Следим за адресом три минуты."
+          for i in $(seq 1 12); do
+            sleep 15
+            IP=$(current_ip)
+            if [ -z "$IP" ] || [ "$IP" = "None" ]; then
+              echo "[$i/12] готовой задачи нет - ждём"
+              continue
+            fi
+            if [ "$IP" != "$WRITTEN" ]; then
+              echo "[$i/12] задача сменилась: $WRITTEN -> $IP"
+              write_record "$IP" || exit 1
+              WRITTEN="$IP"
+            fi
+          done
+
+          echo "Адрес устоялся: $WRITTEN"
