@@ -1,5 +1,5 @@
-import { Component, OnInit, inject, signal } from '@angular/core';
-import { CommonModule } from '@angular/common';
+import { Component, OnInit, inject, signal, PLATFORM_ID } from '@angular/core';
+import { CommonModule, isPlatformBrowser } from '@angular/common';
 import { ActivatedRoute, RouterLink } from '@angular/router';
 import { ApiService } from '../../services/api.service';
 import { ListingCardComponent } from '../../components/listing-card/listing-card.component';
@@ -91,7 +91,9 @@ import { SeoService } from '../../services/seo.service';
         } @else {
           <p class="text-gray-500 py-12 text-center">Nothing listed yet.</p>
         }
-      } @else if (loading()) {
+      } @else if (loading() || !isBrowser) {
+        <!-- !isBrowser обязателен: на сервере витрина не загружалась, и ветка
+             "Storefront not found" уходила в отданный HTML -->
         <div class="flex items-center justify-center" style="min-height: 520px;">
           <span class="relative inline-flex items-center justify-center w-16 h-16">
             <span class="absolute inset-0 border-4 border-mb-blue border-t-transparent rounded-full animate-spin"></span>
@@ -108,6 +110,9 @@ import { SeoService } from '../../services/seo.service';
   `
 })
 export class ShopComponent implements OnInit {
+  /** На сервере витрина ещё не загружена, и её отсутствие ничего не значит. */
+  protected readonly isBrowser = isPlatformBrowser(inject(PLATFORM_ID));
+
   api = inject(ApiService);
   private route = inject(ActivatedRoute);
   private seo = inject(SeoService);

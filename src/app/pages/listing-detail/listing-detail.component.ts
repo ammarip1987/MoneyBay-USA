@@ -1,5 +1,5 @@
-import { Component, OnInit, inject, signal, computed, afterNextRender } from '@angular/core';
-import { CommonModule } from '@angular/common';
+import { Component, OnInit, inject, signal, computed, afterNextRender, PLATFORM_ID } from '@angular/core';
+import { CommonModule, isPlatformBrowser } from '@angular/common';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { FormsModule } from '@angular/forms';
 import { ApiService, SimilarListings } from '../../services/api.service';
@@ -308,8 +308,13 @@ import { ListingCardComponent } from '../../components/listing-card/listing-card
           </div>
         }
       </div>
-    } @else if (loading()) {
-      <div class="text-center py-12"><p class="text-gray-500">Loading listing...</p></div>
+    } @else if (loading() || !isBrowser) {
+      <!-- !isBrowser обязателен: на сервере объявление не загружалось, и ветка
+           ниже уходила в отданный HTML - "Listing not found" было видно при
+           каждом обновлении страницы, пока браузер не подхватит её -->
+      <div class="flex justify-center py-12">
+        <div class="w-10 h-10 border-4 border-gray-200 border-t-mb-blue rounded-full animate-spin"></div>
+      </div>
     } @else {
       <div class="text-center py-12">
         <p class="text-gray-500 text-lg">Listing not found</p>
@@ -319,6 +324,9 @@ import { ListingCardComponent } from '../../components/listing-card/listing-card
   `
 })
 export class ListingDetailComponent implements OnInit {
+  /** На сервере объявление ещё не загружено, и его отсутствие ничего не значит. */
+  protected readonly isBrowser = isPlatformBrowser(inject(PLATFORM_ID));
+
   private api = inject(ApiService);
   private favorites = inject(FavoritesService);
   private route = inject(ActivatedRoute);

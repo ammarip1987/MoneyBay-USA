@@ -1,5 +1,5 @@
-import { Component, OnInit, inject, signal } from '@angular/core';
-import { CommonModule } from '@angular/common';
+import { Component, OnInit, inject, signal, PLATFORM_ID } from '@angular/core';
+import { CommonModule, isPlatformBrowser } from '@angular/common';
 import { ActivatedRoute, RouterLink } from '@angular/router';
 import { HttpClient } from '@angular/common/http';
 import { environment } from '../../../environments/environment';
@@ -23,7 +23,9 @@ interface PublicProfile {
   standalone: true,
   imports: [CommonModule, RouterLink, ListingCardComponent, SkeletonLoaderComponent],
   template: `
-    @if (loading()) {
+    <!-- !isBrowser обязателен: на сервере профиль не загружался, и ветка
+         "User not found" уходила в отданный HTML -->
+    @if (loading() || !isBrowser) {
       <app-skeleton-loader variant="profile"></app-skeleton-loader>
       <div class="max-w-6xl mx-auto px-4">
         <app-skeleton-loader variant="listing-grid" [count]="8"></app-skeleton-loader>
@@ -74,6 +76,9 @@ interface PublicProfile {
   `
 })
 export class PublicProfileComponent implements OnInit {
+  /** На сервере профиль ещё не загружен, и его отсутствие ничего не значит. */
+  protected readonly isBrowser = isPlatformBrowser(inject(PLATFORM_ID));
+
   private route = inject(ActivatedRoute);
   private http = inject(HttpClient);
   private seo = inject(SeoService);
