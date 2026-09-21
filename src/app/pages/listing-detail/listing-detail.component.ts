@@ -102,8 +102,10 @@ import { ListingCardComponent } from '../../components/listing-card/listing-card
                   <a [routerLink]="['/chat', listing()!.user_id]"
                      class="btn w-full text-center block bg-gray-100 hover:bg-gray-200 text-gray-800">Contact Seller</a>
                   <div class="flex gap-3">
-                    <button (click)="toggleFavorite()" class="btn btn-secondary flex-1">{{ isFavorited() ? '★ Saved' : '☆ Save' }}</button>
-                    <button (click)="openFlagModal()" class="btn btn-secondary flex-1"><i class="fas fa-flag mr-1"></i>Flag</button>
+                    <button (click)="toggleFavorite()"
+                            class="btn flex-1 bg-gray-100 hover:bg-gray-200 text-gray-800">{{ isFavorited() ? '★ Saved' : '☆ Save' }}</button>
+                    <button (click)="openFlagModal()"
+                            class="btn flex-1 bg-gray-100 hover:bg-gray-200 text-gray-800"><i class="fas fa-flag mr-1"></i>Flag</button>
                   </div>
                 </div>
               } @else {
