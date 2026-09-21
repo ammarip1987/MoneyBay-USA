@@ -602,70 +602,6 @@ Subcategory hierarchy (3 levels):
 - **Food** → 18 subs (Alcohol, Pantry, Frozen, Coffee & Tea, Meat, Cheese, etc.)
 - **Beauty & Cosmetics** → 12 subs + 36 subsubs (Pharmacy/Cica/Sterile, Makeup/Lips/Eyes, etc.)
 
-## API Endpoints
-
-### Auth (public)
-- `POST /api/auth/register`
-- `POST /api/auth/login`
-- `POST /api/auth/forgot-password`
-- `POST /api/auth/reset-password`
-- `POST /api/auth/verify-email?token=...` (email verification with DB-backed tokens)
-- `GET /api/auth/oauth2/config` — enabled social providers with their client ids
-- `POST /api/auth/oauth2/{provider}` — `google` | `facebook` | `apple`; accepts
-  `{code, redirect_uri}` (authorization code flow) or a token from a client SDK
-
-### Listings
-- `GET /api/listings?page=&q=&city=&category=&sort=` (public)
-- `GET /api/listings/{id}` (public)
-- `GET /api/listings/suggest?q=&city=&limit=` (public, search autocomplete)
-- `GET /api/listings/{id}/similar` (public, returns `same_location`, `similar_price`, `from_seller`)
-- `POST /api/listings` multipart (auth)
-- `PUT /api/listings/{id}` multipart (auth)
-- `DELETE /api/listings/{id}` (auth)
-
-### Reference (public)
-- `GET /api/categories`
-- `GET /api/subcategories/category/{slug}`
-- `GET /api/subcategories/{id}/children`
-- `GET /api/cities`
-- `GET /api/cities/current` (returns city by subdomain context)
-- `GET /api/states` — 51 states plus DC, derived from the `us_city` catalogue
-- `GET /api/us-cities?state=&q=&limit=` — city autocomplete inside one state;
-  `state` takes a code (`CA`) or a full name (`California`), `limit` capped at 25
-
-### User (auth)
-- `GET /api/profile`
-- `PUT /api/profile`
-- `GET /api/my-listings`
-
-### Messages (auth)
-- `GET /api/unread-messages-count`
-- `GET /api/conversations`
-- `GET /api/chats/{otherUserId}/messages`
-- `POST /api/chats/{otherUserId}/messages`
-- WebSocket `/ws` (STOMP, `/app/chat.send`, `/user/{email}/queue/messages`)
-
-### Favorites (auth)
-- `GET /api/favorites`
-- `POST /listing/{id}/like`
-
-### Files (auth upload, public read)
-- `POST /api/uploads`
-- `GET /api/uploads/{filename}`
-
-### Boost / Stripe
-- `POST /api/boost/checkout` (auth) — creates Stripe Checkout Session
-- `POST /api/stripe/webhook` — Stripe webhook handler
-
-### Admin (auth, requires `is_admin`)
-- `GET /api/admin/users` / `POST /api/admin/users/{id}/toggle-admin` / `DELETE /api/admin/users/{id}`
-- `GET /api/admin/listings` / `POST /api/admin/listings/{id}/toggle-active` / `DELETE /api/admin/listings/{id}`
-- `GET /api/admin/stats`
-
-### SEO
-- `GET /sitemap.xml`
-- `GET /robots.txt`
-
 ## Authentication
 
 1. Сайт → `POST /api/auth/login` с почтой и паролем
@@ -1058,6 +994,214 @@ H2. Поэтому они не ловят недостающие индексы,
 **Кто проверяет вид.** Вручную, при выкладке: главная, страница объявления,
 подборки внутри неё, вход, публикация. Именно на этом пути были найдены все
 дефекты, дошедшие до сайта.
+
+## Подключённые службы
+
+Что проект берёт снаружи, чем это оплачивается и где лежит ключ.
+
+### Cloudflare
+
+Домен `moneybay.us` обслуживается Cloudflare целиком: имена, шифрование,
+защита от ботов.
+
+| Что | Для чего | Платно |
+|---|---|---|
+| DNS | Записи `moneybay.us`, `www`, `api`, `photos`. Все проксированные — адрес сервера наружу не виден | нет |
+| Origin Certificate | Шифрование между Cloudflare и задачей ECS. Сертификат на пятнадцать лет, лежит в Secrets Manager, собирается в хранилище при запуске | нет |
+| Origin Rules | Перевод обращений с порта 443 на 8443 — задача слушает только его | нет |
+| WAF и ограничитель | Отсев ботов по адресу и стране. На бесплатном тарифе одно правило ограничения | нет |
+| R2 | Хранение снимков объявлений, отдаются с `photos.moneybay.us` | по объёму |
+| API ключ | `Zone.DNS: Edit` на одну зону. Прогон правит им запись `api` после каждого развёртывания | нет |
+
+Записи DNS: `moneybay.us` (AAAA и TXT), `www` (CNAME), `api` (A, меняется при
+каждом развёртывании), `api2` (A, остаток прежней схемы), `photos` (CNAME на
+R2), плюс CNAME проверки владения для сертификата ACM.
+
+### GitHub
+
+Репозиторий `ammarip1987/MoneyBay-USA`, прогон `.github/workflows/deploy.yml`
+собирает и выкладывает при каждом пуше в `main`.
+
+| Секрет | Для чего |
+|---|---|
+| `AWS_ACCESS_KEY_ID` / `AWS_SECRET_ACCESS_KEY` | Доступ к AWS: CodeBuild, ECR, ECS |
+| `CLOUDFLARE_API_TOKEN` | Правка записи `api` после развёртывания |
+| `CLOUDFLARE_ZONE_ID` | Зона, в которой лежит запись |
+| `DB_PASSWORD` / `JWT_SECRET` | Остались от прежней схемы; задача берёт их из Secrets Manager, прогон ими не пользуется |
+
+Actions бесплатны для этого репозитория. Оплачивается только то, что прогон
+запускает в AWS — сборка в CodeBuild.
+
+### AWS
+
+| Служба | Для чего |
+|---|---|
+| ECS Fargate | Сам сервер: одна задача с Spring Boot, ARM64 |
+| RDS PostgreSQL | База: объявления, пользователи, сообщения |
+| ECR | Хранение собранных образов |
+| CodeBuild | Сборка образа на ARM при каждом пуше |
+| Secrets Manager | Пароль базы, ключ JWT, сертификат и ключ Cloudflare Origin |
+| CloudWatch | Журналы задачи |
+| SES | Отправка писем: подтверждение почты, восстановление пароля |
+| ACM | Сертификат, оставшийся от балансировщика; не удалён ради возврата |
+
+### Прочее
+
+| Служба | Для чего | Где ключ |
+|---|---|---|
+| Stripe | Оплата поднятия объявлений и тарифов витрины | Переменные задачи |
+| reCAPTCHA | Отсев роботов при входе и подаче объявления | Переменные задачи |
+| OAuth2 | Вход через Google, Facebook, Apple | Переменные задачи |
+
+## API Endpoints (полный перечень)
+
+### Вход и учётная запись — `/api/auth`, публичные
+
+| Путь | Для чего |
+|---|---|
+| `POST /register` | Заведение учётной записи |
+| `POST /login` | Вход, выдаёт ключ доступа |
+| `POST /refresh` | Продление ключа без повторного входа |
+| `POST /logout` | Выход |
+| `POST /verify-email` | Подтверждение почты по ссылке из письма |
+| `POST /resend-verification` | Повторная отправка письма |
+| `POST /forgot-password` | Запрос восстановления пароля |
+| `POST /reset-password` | Смена пароля по ссылке из письма |
+| `GET /oauth2/config` | Какие способы входа включены |
+| `POST /oauth2/{provider}` | Вход через Google, Facebook или Apple |
+
+### Объявления — `/api/listings`
+
+| Путь | Для чего | Доступ |
+|---|---|---|
+| `GET /` | Перечень с отбором по городу, категории, цене, типу продавца | все |
+| `GET /count` | Сколько объявлений под текущий отбор | все |
+| `GET /facets` | Счётчики по категориям для боковой панели | все |
+| `GET /suggest` | Подсказки при вводе в поиске | все |
+| `GET /{id}` | Одно объявление | все |
+| `GET /{id}/similar` | Похожие: рядом, по цене, от того же продавца | все |
+| `POST /` | Подача | вход |
+| `PUT /` | Правка | вход |
+| `DELETE /{id}` | Снятие | вход |
+| `POST /{id}/restore` | Возврат снятого | вход |
+
+### Справочники — публичные
+
+| Путь | Для чего |
+|---|---|
+| `GET /api/categories` | Двенадцать категорий |
+| `GET /api/subcategories/category/{slug}` | Подкатегории одной категории |
+| `GET /api/subcategories/{id}/children` | Третий уровень вложенности |
+| `GET /api/cities` | Города площадки |
+| `GET /api/cities/current` | Город по поддомену |
+| `GET /api/states` | Пятьдесят штатов и округ Колумбия |
+| `GET /api/us-cities` | Подсказки городов внутри штата |
+
+### Профиль — вход
+
+| Путь | Для чего |
+|---|---|
+| `GET /api/profile` | Свои данные |
+| `PUT /api/profile` | Правка данных |
+| `POST /api/profile/delete` | Запрос удаления учётной записи |
+| `POST /api/profile/delete/cancel` | Отмена удаления |
+| `GET /api/my-listings` | Свои объявления |
+| `GET /api/users/{id}/public` | Открытые данные продавца |
+
+### Сообщения — вход
+
+| Путь | Для чего |
+|---|---|
+| `GET /api/unread-messages-count` | Счётчик непрочитанного |
+| `GET /api/conversations` | Перечень переписок |
+| `GET /api/chats/{id}/messages` | Переписка с одним собеседником |
+| `POST /api/chats/{id}/messages` | Отправка |
+| `GET /api/support/messages` | Переписка с поддержкой |
+| `POST /api/support/messages` | Письмо в поддержку |
+| `POST /api/admin/support/users/{id}/messages` | Ответ поддержки |
+| WebSocket `/ws` | Доставка сообщений без обновления страницы |
+
+### Избранное — вход
+
+| Путь | Для чего |
+|---|---|
+| `GET /api/favorites` | Отмеченные объявления |
+| `POST /listing/{id}/like` | Отметить или снять отметку |
+
+### Снимки и файлы
+
+| Путь | Для чего | Доступ |
+|---|---|---|
+| `POST /api/photos/upload` | Загрузка снимка в R2 | вход |
+| `GET /api/photos/{filename}` | Отдача снимка | все |
+| `POST /api/uploads` | Загрузка файла | вход |
+| `POST /api/uploads/photos/upload` | Загрузка снимка объявления | вход |
+| `GET /api/uploads/{filename}` | Отдача файла | все |
+
+### Оплата
+
+| Путь | Для чего | Доступ |
+|---|---|---|
+| `POST /api/boost/checkout` | Оплата поднятия объявления | вход |
+| `POST /api/storefront/plan/checkout` | Оплата тарифа витрины | вход |
+| `POST /api/stripe/webhook` | Ответ Stripe об оплате | Stripe |
+
+### Витрина продавца — `/api/storefront`
+
+| Путь | Для чего | Доступ |
+|---|---|---|
+| `GET /mine` | Своя витрина | вход |
+| `POST /` | Заведение | вход |
+| `PUT /` | Правка | вход |
+| `POST /image/{kind}` | Обложка или значок | вход |
+| `GET /{slug}` | Открытая витрина | все |
+
+### Жалобы и отметки
+
+| Путь | Для чего | Доступ |
+|---|---|---|
+| `POST /api/listings/{id}/flag` | Отметка о нарушении | вход |
+| `POST /api/listings/{id}/flag/resolve` | Снятие отметок | админ |
+| `POST /api/listings/{id}/report` | Жалоба с пояснением | вход |
+| `GET /api/admin/reports` | Перечень жалоб | админ |
+| `GET /api/admin/listings/{id}/reports` | Жалобы на одно объявление | админ |
+| `POST /api/admin/reports/{id}/review` | Разбор жалобы | админ |
+
+### Управление — `/api/admin`, только админ
+
+| Путь | Для чего |
+|---|---|
+| `GET /users` | Перечень пользователей |
+| `POST /users/{id}/toggle-admin` | Выдача или снятие прав |
+| `DELETE /users/{id}` | Удаление пользователя |
+| `GET /listings` | Все объявления |
+| `POST /listings/{id}/toggle-active` | Скрытие или возврат |
+| `DELETE /listings/{id}` | Удаление |
+| `GET /listings/{id}/chats` | Переписка по объявлению |
+| `GET /support/users` | Кто писал в поддержку |
+| `GET /support/users/{id}/messages` | Переписка с одним |
+| `GET /stats` | Счётчики площадки |
+
+### Служебные
+
+| Путь | Для чего |
+|---|---|
+| `GET /health` | Проверка состояния; по нему ECS решает, готова ли задача |
+| `GET /actuator/health` | То же, средствами Spring |
+| `GET /sitemap.xml` | Карта для поисковых систем |
+| `GET /robots.txt` | Указания поисковым роботам |
+
+### Тестовые — `/api/test`
+
+Заполнение базы для проверок. На production доступны, но пользоваться ими
+не следует: миллион с лишним объявлений в базе появился отсюда.
+
+| Путь | Для чего |
+|---|---|
+| `POST /create-listings` | Создание объявлений |
+| `POST /seed-listings` | Заполнение набором |
+| `GET /count-test-listings` | Сколько их |
+| `DELETE /purge-test-listings` | Удаление |
 
 ## Configuration
 
