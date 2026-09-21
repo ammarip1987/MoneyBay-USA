@@ -99,7 +99,7 @@ import { ListingCardComponent } from '../../components/listing-card/listing-card
 
               @if (signedIn()) {
                 <div class="space-y-3">
-                  <a [routerLink]="['/chat', listing()!.user_id]" class="btn btn-primary w-full text-center block">Contact Seller</a>
+                  <a [routerLink]="['/chat', listing()!.user_id]" class="btn btn-secondary w-full text-center block">Contact Seller</a>
                   <div class="flex gap-3">
                     <button (click)="toggleFavorite()" class="btn btn-secondary flex-1">{{ isFavorited() ? '★ Saved' : '☆ Save' }}</button>
                     <button (click)="openFlagModal()" class="btn btn-secondary flex-1"><i class="fas fa-flag mr-1"></i>Flag</button>
