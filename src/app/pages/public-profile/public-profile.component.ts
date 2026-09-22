@@ -8,6 +8,7 @@ import { ListingCardComponent } from '../../components/listing-card/listing-card
 import { SkeletonLoaderComponent } from '../../components/skeleton-loader/skeleton-loader.component';
 import { AuthService } from '../../services/auth.service';
 import { SeoService } from '../../services/seo.service';
+import { SsrAwaitService } from '../../services/ssr-await.service';
 
 interface PublicProfile {
   id: number;
@@ -79,6 +80,7 @@ export class PublicProfileComponent implements OnInit {
   /** На сервере профиль ещё не загружен, и его отсутствие ничего не значит. */
   protected readonly isBrowser = isPlatformBrowser(inject(PLATFORM_ID));
 
+  private ssr = inject(SsrAwaitService);
   private route = inject(ActivatedRoute);
   private http = inject(HttpClient);
   private seo = inject(SeoService);
@@ -95,7 +97,9 @@ export class PublicProfileComponent implements OnInit {
       this.loading.set(true);
       this.profile.set(null);
 
-      this.http.get<PublicProfile>(`${environment.apiUrl}/api/users/${id}/public`).subscribe({
+      this.ssr.wrap(
+        this.http.get<PublicProfile>(`${environment.apiUrl}/api/users/${id}/public`)
+      ).subscribe({
         next: (data) => {
           this.profile.set(data);
           this.loading.set(false);

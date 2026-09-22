@@ -1,6 +1,6 @@
-import { Injectable, inject, signal, TransferState, makeStateKey, PendingTasks, PLATFORM_ID } from '@angular/core';
-import { isPlatformServer } from '@angular/common';
+import { Injectable, inject, signal, TransferState, makeStateKey } from '@angular/core';
 import { HttpClient, HttpParams } from '@angular/common/http';
+import { SsrAwaitService } from './ssr-await.service';
 import { Observable, of } from 'rxjs';
 import { tap, map } from 'rxjs/operators';
 import { environment } from '../../environments/environment';
@@ -46,40 +46,11 @@ export class ApiService {
   private state = inject(TransferState);
   private readonly baseUrl = environment.apiUrl;
 
-  private readonly pending = inject(PendingTasks);
-  private readonly onServer = isPlatformServer(inject(PLATFORM_ID));
+  private readonly ssr = inject(SsrAwaitService);
 
-  /**
-   * Задержка отдачи страницы до ответа — только на сервере.
-   *
-   * Приложение работает без zone.js, и сервер сам не отслеживает
-   * незавершённые запросы: он отдавал каркас, не дождавшись ответа. Страница
-   * объявления уходила пустой, а её ветка ошибки ставила заголовок
-   * "Listing not found" — поисковые системы видели ненайденную страницу
-   * вместо товара.
-   *
-   * PendingTasks.run держит отдачу, пока запрос не завершится. Ответ затем
-   * попадает в браузер вместе со страницей через withHttpTransferCacheOptions,
-   * и повторного запроса не будет.
-   *
-   * В браузере обёртка не нужна и ничего не меняет: запрос уходит как прежде.
-   */
+  /** Держит отдачу страницы на сервере до ответа. Смотри SsrAwaitService. */
   private awaited<T>(request: Observable<T>): Observable<T> {
-    if (!this.onServer) {
-      return request;
-    }
-    // add, а не run: run возвращает void, и результат запроса через него не
-    // достать. add выдаёт функцию завершения — её вызываем и при ответе, и при
-    // отказе, иначе отдача страницы повиснет до тайм-аута
-    return new Observable<T>(subscriber => {
-      const done = this.pending.add();
-      const sub = request.subscribe({
-        next: value => subscriber.next(value),
-        error: err => { done(); subscriber.error(err); },
-        complete: () => { done(); subscriber.complete(); }
-      });
-      return () => { done(); sub.unsubscribe(); };
-    });
+    return this.ssr.wrap(request);
   }
 
   /**
