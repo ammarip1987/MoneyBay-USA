@@ -1,4 +1,5 @@
-import { Injectable, inject, signal, TransferState, makeStateKey } from '@angular/core';
+import { Injectable, inject, signal, TransferState, makeStateKey, PendingTasks, PLATFORM_ID } from '@angular/core';
+import { isPlatformServer } from '@angular/common';
 import { HttpClient, HttpParams } from '@angular/common/http';
 import { Observable, of } from 'rxjs';
 import { tap, map } from 'rxjs/operators';
@@ -45,6 +46,42 @@ export class ApiService {
   private state = inject(TransferState);
   private readonly baseUrl = environment.apiUrl;
 
+  private readonly pending = inject(PendingTasks);
+  private readonly onServer = isPlatformServer(inject(PLATFORM_ID));
+
+  /**
+   * Задержка отдачи страницы до ответа — только на сервере.
+   *
+   * Приложение работает без zone.js, и сервер сам не отслеживает
+   * незавершённые запросы: он отдавал каркас, не дождавшись ответа. Страница
+   * объявления уходила пустой, а её ветка ошибки ставила заголовок
+   * "Listing not found" — поисковые системы видели ненайденную страницу
+   * вместо товара.
+   *
+   * PendingTasks.run держит отдачу, пока запрос не завершится. Ответ затем
+   * попадает в браузер вместе со страницей через withHttpTransferCacheOptions,
+   * и повторного запроса не будет.
+   *
+   * В браузере обёртка не нужна и ничего не меняет: запрос уходит как прежде.
+   */
+  private awaited<T>(request: Observable<T>): Observable<T> {
+    if (!this.onServer) {
+      return request;
+    }
+    // add, а не run: run возвращает void, и результат запроса через него не
+    // достать. add выдаёт функцию завершения — её вызываем и при ответе, и при
+    // отказе, иначе отдача страницы повиснет до тайм-аута
+    return new Observable<T>(subscriber => {
+      const done = this.pending.add();
+      const sub = request.subscribe({
+        next: value => subscriber.next(value),
+        error: err => { done(); subscriber.error(err); },
+        complete: () => { done(); subscriber.complete(); }
+      });
+      return () => { done(); sub.unsubscribe(); };
+    });
+  }
+
   /**
    * Кэш для запросов, которые повторяются при возврате из объявления: лента,
    * фасеты, справочники.
@@ -82,7 +119,8 @@ export class ApiService {
       return of(hit.value as T);
     }
 
-    return request().pipe(tap(value => this.cache.set(key, { at: Date.now(), value })));
+    // awaited только здесь: ветки выше отдают из памяти мгновенно, ждать нечего
+    return this.awaited(request().pipe(tap(value => this.cache.set(key, { at: Date.now(), value }))));
   }
 
   /** Сбрасывает кэш: вызывается после создания, правки или удаления объявления. */
@@ -155,7 +193,7 @@ export class ApiService {
   }
 
   getListing(id: number): Observable<Listing> {
-    return this.http.get<Listing>(`${this.baseUrl}/api/listings/${id}`);
+    return this.awaited(this.http.get<Listing>(`${this.baseUrl}/api/listings/${id}`));
   }
 
   suggestListings(q: string, city?: string, limit = 8): Observable<ListingSuggestion[]> {
@@ -309,7 +347,7 @@ export class ApiService {
 
   /** Открытая страница магазина по адресу. */
   getPublicStorefront(slug: string): Observable<PublicStorefront> {
-    return this.http.get<PublicStorefront>(`${this.baseUrl}/api/storefront/${slug}`);
+    return this.awaited(this.http.get<PublicStorefront>(`${this.baseUrl}/api/storefront/${slug}`));
   }
 
   /**
