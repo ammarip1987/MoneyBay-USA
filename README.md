@@ -104,6 +104,28 @@ curl -sS "https://api.cloudflare.com/client/v4/accounts/$ACC/subscriptions" \
 Расход по службам — экран Billable usage в панели; ключу он не доступен, для
 него нужно ещё право `Account Analytics: Read`.
 
+Ключи Cloudflare в `cert/` (папка в `.gitignore`):
+
+| Файл | Что открывает | Как обращаться |
+|---|---|---|
+| `cf.token` | `Zone.DNS: Edit` одной зоны | `Authorization: Bearer` |
+| `cf-billing.token` | `Billing: Read` | `Authorization: Bearer` |
+| `cf-global.token` | Global API Key — весь аккаунт без ограничений | `X-Auth-Email` + `X-Auth-Key` |
+
+Global API Key обращается иначе остальных: одного ключа мало, нужна ещё почта
+учётной записи в заголовке.
+
+```bash
+K=$(tr -d ' \r\n' < cert/cf-global.token)
+curl -sS "https://api.cloudflare.com/client/v4/accounts" \
+  -H "X-Auth-Email: a.m.marip1987@gmail.com" -H "X-Auth-Key: $K"
+```
+
+Вид ключа сменился: прежде 37 знаков из цифр и букв, теперь начинается с
+`cfk_`. Ограничить его правами нельзя и удалить нельзя — только сменить
+кнопкой `Change` в My Profile → API Tokens → API Keys, после чего прежнее
+значение перестаёт работать.
+
 По счетам из панели Cloudflare, Manage Account → Billing:
 
 | Счёт | Сумма |
