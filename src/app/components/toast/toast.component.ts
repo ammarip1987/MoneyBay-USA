@@ -7,7 +7,15 @@ import { NotificationService } from '../../services/notification.service';
   standalone: true,
   imports: [CommonModule],
   template: `
-    <div class="fixed top-20 right-4 z-50 flex flex-col gap-2 max-w-sm">
+    <!-- aria-live=polite: чтение с экрана озвучивает оповещение само, когда
+         оно появится, не перебивая того, что человек слушает сейчас.
+         role=status с тем же смыслом — для старых программ чтения -->
+    <div
+      class="fixed top-20 right-4 z-50 flex flex-col gap-2 max-w-sm"
+      role="status"
+      aria-live="polite"
+      aria-atomic="true"
+    >
       @for (n of notification.notifications(); track n.id) {
         <div
           class="rounded-lg shadow-lg px-4 py-3 text-sm font-medium flex items-start gap-3 animate-slide-in"

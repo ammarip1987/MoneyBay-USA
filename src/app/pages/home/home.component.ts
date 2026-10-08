@@ -272,7 +272,14 @@ interface Subcategory {
            раздела или страницы. Мест столько же, сколько объявлений в
            ответе, поэтому высота не меняется и лента не дёргается -->
         <div class="relative">
-          <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 xl:grid-cols-5 gap-6 mt-4">
+          <!-- role=list и aria-label: чтение с экрана объявляет перечень и
+               его длину, иначе слышно только «ссылка, ссылка, ссылка».
+               aria-busy на время загрузки — программа не читает содержимое,
+               пока оно меняется -->
+          <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 xl:grid-cols-5 gap-6 mt-4"
+               role="list"
+               [attr.aria-label]="'Listings' + (matchCount() ? ', ' + matchCount()!.count + ' found' : '')"
+               [attr.aria-busy]="loading() || loadingMore() ? 'true' : 'false'">
             @if (pagingNow() || (loading() && !loadingMore())) {
               @for (i of pageSlots; track i) {
                 <div class="bg-white shadow-md overflow-hidden">

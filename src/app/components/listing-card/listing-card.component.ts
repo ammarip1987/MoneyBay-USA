@@ -22,8 +22,13 @@ import { FavoritesService } from '../../services/favorites.service';
   template: `
     <!-- h-full и колонка: карточка занимает всю высоту ячейки сетки, чтобы
          блок описания мог растянуться и прижать дату к низу -->
+    <!-- role=listitem: карточка объявляется частью перечня, у которого
+         role=list. aria-label собирает название и цену в одну строку, чтобы
+         чтение с экрана давало суть сразу, а не по кускам -->
     <div
       class="card-hover relative group h-full flex flex-col"
+      role="listitem"
+      [attr.aria-label]="listing.title + ', $' + listing.price"
       [class.ring-2]="listing.is_featured"
       [class.ring-mb-blue]="listing.is_featured"
     >

@@ -55,6 +55,8 @@ import { NotificationsService } from '../../services/notifications.service';
             <button
               type="button"
               (click)="toggleCatalog()"
+              [attr.aria-expanded]="catalogOpen()"
+              aria-controls="catalog-panel"
               class="hidden md:flex items-center gap-2 mr-6 px-4 py-2 rounded-full border border-mb-blue text-mb-blue hover:bg-mb-blue hover:text-white transition font-medium shrink-0"
             >
               <svg class="w-4 h-4" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
@@ -291,7 +293,12 @@ import { NotificationsService } from '../../services/notifications.service';
            содержимое главной уезжало под неё. Опорой служит сама шапка —
            sticky задаёт систему координат, отдельный relative не нужен -->
         @if (catalogOpen()) {
+          <!-- id связывает панель с кнопкой через aria-controls: чтение с
+               экрана объявляет, что кнопка раскрывает именно её -->
           <div
+            id="catalog-panel"
+            role="region"
+            aria-label="All listings by category"
             class="hidden md:block absolute left-0 right-0 top-full z-50 bg-white text-gray-800 border-t border-gray-200 shadow-xl"
           >
             <div class="max-w-7xl mx-auto flex">
