@@ -496,10 +496,13 @@ import { ListingCardComponent } from '../../components/listing-card/listing-card
           </div>
         }
       </div>
-    } @else if (loading() || !isBrowser) {
-      <!-- !isBrowser обязателен: на сервере объявление не загружалось, и ветка
-           ниже уходила в отданный HTML - "Listing not found" было видно при
-           каждом обновлении страницы, пока браузер не подхватит её -->
+    } @else if (loading()) {
+      <!-- Прежде здесь стояло loading() || !isBrowser: на сервере объявление
+           не загружалось, и ветка ниже уходила в отданный HTML — «Listing not
+           found» мелькало при каждом обновлении страницы.
+           Теперь сервер ждёт ответа (SsrAwaitService), и !isBrowser стал
+           вреден: при 404 загрузка кончалась, а условие оставалось истинным,
+           и отрисовка висела в этой ветке до обрыва по времени -->
       <div class="flex justify-center py-12">
         <div
           class="w-10 h-10 border-4 border-gray-200 border-t-mb-blue rounded-full animate-spin"

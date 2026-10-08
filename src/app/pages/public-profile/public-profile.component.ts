@@ -34,7 +34,7 @@ interface PublicProfile {
   template: `
     <!-- !isBrowser обязателен: на сервере профиль не загружался, и ветка
          "User not found" уходила в отданный HTML -->
-    @if (loading() || !isBrowser) {
+    @if (loading()) {
       <app-skeleton-loader variant="profile"></app-skeleton-loader>
       <div class="max-w-6xl mx-auto px-4">
         <app-skeleton-loader variant="listing-grid" [count]="8"></app-skeleton-loader>

@@ -119,7 +119,7 @@ import { SeoService } from '../../services/seo.service';
         } @else {
           <p class="text-gray-500 py-12 text-center">Nothing listed yet.</p>
         }
-      } @else if (loading() || !isBrowser) {
+      } @else if (loading()) {
         <!-- !isBrowser обязателен: на сервере витрина не загружалась, и ветка
              "Storefront not found" уходила в отданный HTML -->
         <div class="flex items-center justify-center" style="min-height: 520px;">
