@@ -30,6 +30,7 @@ MoneyBay project is built in Enterprise using strict typing and preserving inher
 - **TypeScript 5.9** — type-safe JavaScript
 - **Angular 22.2** — SPA framework (standalone components, signals, SSR, Service Worker)
 - **Tailwind CSS 3.4** — utility-first CSS framework
+- **Angular Material 22.2 + CDK** — на пробу, применён только на `/about`
 - **SASS 1.99** — CSS preprocessor для UGC контента
 - **PostCSS 8.5** — CSS transformations
 - **Autoprefixer 10.5** — browser prefixes
@@ -1180,6 +1181,46 @@ GET /api/us-cities?state=TX&q=San   → San Antonio, San Angelo, San Marcos
 `backend/src/main/resources/db/migration`. Они применяются при запуске, учёт ведётся в
 таблице `flyway_schema_history`. Данные городов заливает `V2__us_cities_data.sql`;
 повторный запуск безопасен — вставляются только отсутствующие записи.
+
+## Доступность
+
+Добавлено 9 октября 2026. Признаки `aria-*` пишутся в разметке руками,
+библиотека для них не нужна.
+
+| Где | Что добавлено | Зачем |
+|---|---|---|
+| Сетка объявлений, `home.component.ts` | `role="list"`, `aria-label` с числом найденных, `aria-busy` при загрузке | чтение с экрана давало «ссылка, ссылка, ссылка» шестьдесят раз подряд; `aria-busy` молчит, пока список перерисовывается |
+| Карточка, `listing-card.component.ts` | `role="listitem"`, `aria-label` с названием и ценой | суть объявления слышна сразу, а не по кускам |
+| Оболочка, `app.html` | ссылка `Skip to main content`, `id` и `tabindex="-1"` на `main` | до содержимого с клавиатуры добирались двумя десятками нажатий Tab |
+| Кнопка каталога, `header.component.ts` | `aria-expanded`, `aria-controls` | слышно, что кнопка раскрывает панель и открыта ли она |
+| Панель каталога | `role="region"`, `aria-label`, `id` | панель объявляется областью, связанной с кнопкой |
+| Оповещения, `toast.component.ts` | `role="status"`, `aria-live="polite"`, `aria-atomic` | оповещение озвучивается само, не перебивая |
+
+Ссылка пропуска видна только при переходе с клавиатуры: `sr-only` прячет её,
+`focus:not-sr-only` показывает при получении фокуса.
+
+`header`, `nav`, `main` и `footer` роль несут сами — `role` им не нужен.
+
+## Angular Material
+
+Поставлен 9 октября 2026 на пробу, применён на одной странице — `/about`, под
+нынешней кнопкой, чтобы обе манеры были видны на одном экране. Пакеты
+`@angular/material` и `@angular/cdk` версии 22.2.2.
+
+**Чего стоит.** Страница `/about` выросла с размера, не выделяемого в перечне
+сборки, до **158 КБ** — за четыре кнопки, карточку и одно поле ввода. Общий
+размер страницы вырос с 434 до 449 КБ.
+
+Material несёт своё оформление и с Tailwind его не делит: два набора стилей в
+одном проекте. Вид приводится к гугловскому.
+
+**Откат.** Пока Material применён в одном месте, откат — удалить зависимость и
+убрать блок из `about.component.ts`. Если применить в десятках мест, каждое
+придётся переписывать обратно на Tailwind.
+
+**`@angular/cdk` пришёл вместе с Material** и остаётся полезен сам по себе, без
+оформления: виртуальная прокрутка для больших перечней, наблюдение за точками
+перелома в коде, всплывающие окна, перетаскивание.
 
 ## Переход на Spring Boot 4 и Angular 22
 
