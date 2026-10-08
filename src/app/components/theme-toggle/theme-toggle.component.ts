@@ -1,14 +1,17 @@
-import { Component, inject } from '@angular/core';
+import { Component, inject, ChangeDetectionStrategy } from '@angular/core';
 import { ThemeService } from '../../services/theme.service';
 
 @Component({
   selector: 'app-theme-toggle',
   standalone: true,
+  changeDetection: ChangeDetectionStrategy.Eager,
   template: `
-    <button (click)="theme.toggle()"
-            class="w-9 h-9 rounded-lg hover:bg-white/10 flex items-center justify-center transition"
-            [attr.aria-label]="ariaLabel()"
-            [title]="ariaLabel()">
+    <button
+      (click)="theme.toggle()"
+      class="w-9 h-9 rounded-lg hover:bg-white/10 flex items-center justify-center transition"
+      [attr.aria-label]="ariaLabel()"
+      [title]="ariaLabel()"
+    >
       @switch (theme.mode()) {
         @case ('light') {
           <i class="fas fa-sun text-yellow-400"></i>
@@ -21,16 +24,19 @@ import { ThemeService } from '../../services/theme.service';
         }
       }
     </button>
-  `
+  `,
 })
 export class ThemeToggleComponent {
   theme = inject(ThemeService);
 
   ariaLabel(): string {
     switch (this.theme.mode()) {
-      case 'light': return 'Light mode (click for dark)';
-      case 'dark': return 'Dark mode (click for system)';
-      case 'system': return 'System mode (click for light)';
+      case 'light':
+        return 'Light mode (click for dark)';
+      case 'dark':
+        return 'Dark mode (click for system)';
+      case 'system':
+        return 'System mode (click for light)';
     }
   }
 }

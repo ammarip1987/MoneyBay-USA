@@ -1,4 +1,12 @@
-import { Component, Input, OnInit, inject, signal, computed } from '@angular/core';
+import {
+  Component,
+  Input,
+  OnInit,
+  inject,
+  signal,
+  computed,
+  ChangeDetectionStrategy,
+} from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterLink } from '@angular/router';
 import { Listing } from '../../models/listing.model';
@@ -10,30 +18,37 @@ import { FavoritesService } from '../../services/favorites.service';
   selector: 'app-listing-card',
   standalone: true,
   imports: [CommonModule, RouterLink],
+  changeDetection: ChangeDetectionStrategy.Eager,
   template: `
     <!-- h-full и колонка: карточка занимает всю высоту ячейки сетки, чтобы
          блок описания мог растянуться и прижать дату к низу -->
-    <div class="card-hover relative group h-full flex flex-col"
-         [class.ring-2]="listing.is_featured"
-         [class.ring-mb-blue]="listing.is_featured">
-
+    <div
+      class="card-hover relative group h-full flex flex-col"
+      [class.ring-2]="listing.is_featured"
+      [class.ring-mb-blue]="listing.is_featured"
+    >
       <!-- Price Badge (Top Left) -->
       <span class="absolute top-0 left-0 text-mb-green font-bold text-xs z-10 bg-white px-2 py-1">
-        \${{ listing.price | number:'1.0-0' }}
+        \${{ listing.price | number: '1.0-0' }}
       </span>
 
       <!-- Favorite Button (Top Right) -->
       @if (auth.isAuthenticated()) {
-        <button class="absolute top-2 right-2 text-2xl z-10 transition"
-                style="color: #FFD700;"
-                (click)="toggleFavorite($event)">
+        <button
+          class="absolute top-2 right-2 text-2xl z-10 transition"
+          style="color: #FFD700;"
+          (click)="toggleFavorite($event)"
+        >
           {{ isFavorited() ? '★' : '☆' }}
         </button>
       }
 
       <!-- Promoted / Featured badges (Top Right Below Favorite) -->
       @if (isPromoted()) {
-        <span class="absolute top-12 right-2 bg-yellow-400 text-yellow-900 px-2 py-1 rounded-full text-xs font-bold z-10">TOP</span>
+        <span
+          class="absolute top-12 right-2 bg-yellow-400 text-yellow-900 px-2 py-1 rounded-full text-xs font-bold z-10"
+          >TOP</span
+        >
       }
       @if (listing.is_featured) {
         <span class="absolute top-12 right-2 text-2xl z-10">⭐</span>
@@ -41,33 +56,48 @@ import { FavoritesService } from '../../services/favorites.service';
 
       <!-- Image carousel -->
       @if (listing.images && listing.images.length > 0) {
-        <a [routerLink]="['/listing', listing.id]" [state]="{ listing: listing }" class="block overflow-hidden">
+        <a
+          [routerLink]="['/listing', listing.id]"
+          [state]="{ listing: listing }"
+          class="block overflow-hidden"
+        >
           <div class="relative h-64 cursor-pointer">
-            <img [src]="getImageUrl(listing.images[currentImage()])"
-                 [alt]="listing.title"
-                 class="w-full h-full object-cover"
-                 loading="lazy"
-                 decoding="async"
-                 width="600"
-                 height="450">
+            <img
+              [src]="getImageUrl(listing.images[currentImage()])"
+              [alt]="listing.title"
+              class="w-full h-full object-cover"
+              loading="lazy"
+              decoding="async"
+              width="600"
+              height="450"
+            />
 
             @if (listing.images.length > 1) {
               <!-- Стрелки без подложки: тень делает их различимыми и на светлой,
                    и на тёмной фотографии -->
-              <button (click)="prevImage($event)"
-                        class="absolute left-px top-1/2 -translate-y-1/2 opacity-0 group-hover:opacity-60 w-6 h-20 flex items-center justify-center z-10 cursor-pointer" style="background-color: #ffffff; color: #666; border: 1px solid #ddd; border-left: none; border-top-right-radius: 2.5em; border-bottom-right-radius: 2.5em;">
+              <button
+                (click)="prevImage($event)"
+                class="absolute left-px top-1/2 -translate-y-1/2 opacity-0 group-hover:opacity-60 w-6 h-20 flex items-center justify-center z-10 cursor-pointer"
+                style="background-color: #ffffff; color: #666; border: 1px solid #ddd; border-left: none; border-top-right-radius: 2.5em; border-bottom-right-radius: 2.5em;"
+              >
                 <i class="fas fa-chevron-left text-xl"></i>
               </button>
-              <button (click)="nextImage($event)"
-                        class="absolute right-px top-1/2 -translate-y-1/2 opacity-0 group-hover:opacity-60 w-6 h-20 flex items-center justify-center z-10 cursor-pointer" style="background-color: #ffffff; color: #666; border: 1px solid #ddd; border-right: none; border-top-left-radius: 2.5em; border-bottom-left-radius: 2.5em;">
+              <button
+                (click)="nextImage($event)"
+                class="absolute right-px top-1/2 -translate-y-1/2 opacity-0 group-hover:opacity-60 w-6 h-20 flex items-center justify-center z-10 cursor-pointer"
+                style="background-color: #ffffff; color: #666; border: 1px solid #ddd; border-right: none; border-top-left-radius: 2.5em; border-bottom-left-radius: 2.5em;"
+              >
                 <i class="fas fa-chevron-right text-xl"></i>
               </button>
-
             }
           </div>
         </a>
       } @else {
-        <a [routerLink]="['/listing', listing.id]" [state]="{ listing: listing }" class="block overflow-hidden bg-gray-100 h-64">
+        <a
+          [routerLink]="['/listing', listing.id]"
+          [state]="{ listing: listing }"
+          class="block overflow-hidden bg-gray-100 h-64"
+        >
           <div class="w-full h-full flex items-center justify-center text-gray-400 bg-gray-50">
             <span class="text-center">
               <p class="text-lg font-medium">📷</p>
@@ -82,11 +112,12 @@ import { FavoritesService } from '../../services/favorites.service';
       @if (listing.images && listing.images.length > 1) {
         <div class="flex gap-3 px-4 pt-3">
           @for (img of listing.images; track $index) {
-            <button (click)="setImage($index, $event)"
-                    class="carousel-dot w-1 h-1 rounded-full cursor-pointer"
-                    [style.background-color]="currentImage() === $index ? '#009900' : '#ccc'"
-                    [attr.aria-label]="'Image ' + ($index + 1)">
-            </button>
+            <button
+              (click)="setImage($index, $event)"
+              class="carousel-dot w-1 h-1 rounded-full cursor-pointer"
+              [style.background-color]="currentImage() === $index ? '#009900' : '#ccc'"
+              [attr.aria-label]="'Image ' + ($index + 1)"
+            ></button>
           }
         </div>
       }
@@ -94,15 +125,22 @@ import { FavoritesService } from '../../services/favorites.service';
       <!-- Info: колонка, дата прижата к низу. Заголовок занимает одну или две
            строки, и без этого дата у соседних карточек стояла бы на разной
            высоте. -->
-      <a [routerLink]="['/listing', listing.id]" [state]="{ listing: listing }" class="flex flex-col flex-1 px-4 pt-2 pb-4 hover:bg-gray-50 transition">
+      <a
+        [routerLink]="['/listing', listing.id]"
+        [state]="{ listing: listing }"
+        class="flex flex-col flex-1 px-4 pt-2 pb-4 hover:bg-gray-50 transition"
+      >
         <h3 class="font-bold text-mb-dark text-lg mb-2 line-clamp-2">{{ listing.title }}</h3>
         <p class="text-sm text-gray-600 mb-2 line-clamp-1">
-          {{ listing.location }}@if (listing.area) { · {{ listing.area }} }
+          {{ listing.location }}
+          @if (listing.area) {
+            · {{ listing.area }}
+          }
         </p>
         <p class="text-xs text-gray-500 mt-auto">{{ postedOn() }}</p>
       </a>
     </div>
-  `
+  `,
 })
 export class ListingCardComponent implements OnInit {
   @Input() listing!: Listing;
@@ -150,14 +188,14 @@ export class ListingCardComponent implements OnInit {
     e.preventDefault();
     e.stopPropagation();
     const len = this.listing.images.length;
-    this.currentImage.update(i => (i - 1 + len) % len);
+    this.currentImage.update((i) => (i - 1 + len) % len);
   }
 
   nextImage(e: Event): void {
     e.preventDefault();
     e.stopPropagation();
     const len = this.listing.images.length;
-    this.currentImage.update(i => (i + 1) % len);
+    this.currentImage.update((i) => (i + 1) % len);
   }
 
   setImage(index: number, e: Event): void {
@@ -178,7 +216,7 @@ export class ListingCardComponent implements OnInit {
       },
       // Отказ прежде проходил молча: звезда не менялась, и было не понять,
       // сохранилось ли. Теперь состояние возвращается к прежнему явно.
-      error: () => this.busy.set(false)
+      error: () => this.busy.set(false),
     });
   }
 }

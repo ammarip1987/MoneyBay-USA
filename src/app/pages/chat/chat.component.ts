@@ -1,4 +1,14 @@
-import { Component, OnInit, OnDestroy, inject, signal, ElementRef, ViewChild, AfterViewChecked } from '@angular/core';
+import {
+  Component,
+  OnInit,
+  OnDestroy,
+  inject,
+  signal,
+  ElementRef,
+  ViewChild,
+  AfterViewChecked,
+  ChangeDetectionStrategy,
+} from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
@@ -14,24 +24,45 @@ import { Message } from '../../models/listing.model';
   imports: [CommonModule, FormsModule, RouterLink],
   template: `
     <div class="max-w-4xl mx-auto px-4 py-8 min-page">
-      <a routerLink="/messages" class="text-mb-blue hover:underline mb-4 inline-block">← Back to messages</a>
+      <a routerLink="/messages" class="text-mb-blue hover:underline mb-4 inline-block"
+        >← Back to messages</a
+      >
 
-      <div class="bg-white rounded-2xl shadow-lg border border-gray-100 flex flex-col" style="height: 70vh;">
+      <div
+        class="bg-white rounded-2xl shadow-lg border border-gray-100 flex flex-col"
+        style="height: 70vh;"
+      >
         <div class="border-b border-gray-100 px-6 py-4 flex items-center gap-3">
           <!-- Снимок и имя собеседника: прежде стояло «User» с буквой U, потому
                что сведений о нём не запрашивали вовсе -->
           @if (otherAvatar()) {
-            <img [src]="otherAvatar()!" alt=""
-                 class="w-10 h-10 rounded-full object-cover"
-                 width="40" height="40" loading="eager" decoding="sync"
-                 (error)="otherAvatar.set(null)">
+            <img
+              [src]="otherAvatar()!"
+              alt=""
+              class="w-10 h-10 rounded-full object-cover"
+              width="40"
+              height="40"
+              loading="eager"
+              decoding="sync"
+              (error)="otherAvatar.set(null)"
+            />
           } @else {
-            <div class="w-10 h-10 bg-gradient-to-br from-mb-blue to-mb-cyan rounded-full flex items-center justify-center text-white font-bold">
+            <div
+              class="w-10 h-10 bg-gradient-to-br from-mb-blue to-mb-cyan rounded-full flex items-center justify-center text-white font-bold"
+            >
               {{ otherUser().charAt(0).toUpperCase() }}
             </div>
           }
-          <a [routerLink]="['/users', otherUserId]" class="font-bold text-mb-dark hover:underline">{{ otherUser() }}</a>
-          <span class="ml-auto text-xs" [class.text-green-600]="connected()" [class.text-gray-400]="!connected()">
+          <a
+            [routerLink]="['/users', otherUserId]"
+            class="font-bold text-mb-dark hover:underline"
+            >{{ otherUser() }}</a
+          >
+          <span
+            class="ml-auto text-xs"
+            [class.text-green-600]="connected()"
+            [class.text-gray-400]="!connected()"
+          >
             {{ connected() ? '● Online' : '○ Offline' }}
           </span>
         </div>
@@ -39,23 +70,30 @@ import { Message } from '../../models/listing.model';
         <div #messageContainer class="flex-1 overflow-y-auto p-6 space-y-3">
           @for (msg of messages(); track msg.id) {
             <div class="flex" [class.justify-end]="msg.sender_id === currentUserId()">
-              <div [class.bg-mb-blue]="msg.sender_id === currentUserId()"
-                   [class.text-white]="msg.sender_id === currentUserId()"
-                   [class.bg-gray-100]="msg.sender_id !== currentUserId()"
-                   [class.text-gray-800]="msg.sender_id !== currentUserId()"
-                   class="rounded-2xl px-4 py-2 max-w-md">
+              <div
+                [class.bg-mb-blue]="msg.sender_id === currentUserId()"
+                [class.text-white]="msg.sender_id === currentUserId()"
+                [class.bg-gray-100]="msg.sender_id !== currentUserId()"
+                [class.text-gray-800]="msg.sender_id !== currentUserId()"
+                class="rounded-2xl px-4 py-2 max-w-md"
+              >
                 <!-- Снимок приходит строкой "Photo: <адрес>" и до сих пор так и
                      показывался. Отрисовывается картинкой, а не ссылкой:
                      собеседнику видно, что прислали, без перехода -->
                 @if (photoUrl(msg.content); as url) {
                   <a [href]="url" target="_blank" rel="noopener">
-                    <img [src]="url" alt="Photo"
-                         class="chat-photo" loading="lazy" decoding="async">
+                    <img
+                      [src]="url"
+                      alt="Photo"
+                      class="chat-photo"
+                      loading="lazy"
+                      decoding="async"
+                    />
                   </a>
                 } @else {
                   <p>{{ msg.content }}</p>
                 }
-                <p class="text-xs mt-1 opacity-70">{{ msg.created_at | date:'shortTime' }}</p>
+                <p class="text-xs mt-1 opacity-70">{{ msg.created_at | date: 'shortTime' }}</p>
               </div>
             </div>
           }
@@ -65,33 +103,54 @@ import { Message } from '../../models/listing.model';
         </div>
 
         <form (ngSubmit)="sendMessage()" class="border-t border-gray-100 p-4 flex gap-2">
-          <input #fileInput type="file" accept="image/*" style="display: none;" (change)="onPhotoSelected($event)">
-          <button type="button" class="btn btn-secondary px-4" (click)="fileInput.click()" [disabled]="sending()" title="Attach photo">
+          <input
+            #fileInput
+            type="file"
+            accept="image/*"
+            style="display: none;"
+            (change)="onPhotoSelected($event)"
+          />
+          <button
+            type="button"
+            class="btn btn-secondary px-4"
+            (click)="fileInput.click()"
+            [disabled]="sending()"
+            title="Attach photo"
+          >
             <i class="fas fa-image"></i>
           </button>
-          <input type="text"
-                 [(ngModel)]="newMessage"
-                 name="message"
-                 placeholder="Type a message..."
-                 class="flex-1 form-input"
-                 [disabled]="sending()">
-          <button type="submit" class="btn btn-primary px-6" [disabled]="!newMessage.trim() || sending()">
+          <input
+            type="text"
+            [(ngModel)]="newMessage"
+            name="message"
+            placeholder="Type a message..."
+            class="flex-1 form-input"
+            [disabled]="sending()"
+          />
+          <button
+            type="submit"
+            class="btn btn-primary px-6"
+            [disabled]="!newMessage.trim() || sending()"
+          >
             {{ sending() ? '...' : 'Send' }}
           </button>
         </form>
       </div>
     </div>
   `,
-  styles: [`
-    .chat-photo {
-      max-width: 250px;
-      max-height: 250px;
-      border-radius: 8px;
-      display: block;
-      object-fit: cover;
-      cursor: zoom-in;
-    }
-  `]
+  changeDetection: ChangeDetectionStrategy.Eager,
+  styles: [
+    `
+      .chat-photo {
+        max-width: 250px;
+        max-height: 250px;
+        border-radius: 8px;
+        display: block;
+        object-fit: cover;
+        cursor: zoom-in;
+      }
+    `,
+  ],
 })
 export class ChatComponent implements OnInit, OnDestroy, AfterViewChecked {
   @ViewChild('messageContainer') private messageContainer!: ElementRef;
@@ -128,20 +187,20 @@ export class ChatComponent implements OnInit, OnDestroy, AfterViewChecked {
 
     this.socket.connect();
     this.subscriptions.push(
-      this.socket.connected$.subscribe(c => this.connected.set(c)),
-      this.socket.messages$.subscribe(msg => {
+      this.socket.connected$.subscribe((c) => this.connected.set(c)),
+      this.socket.messages$.subscribe((msg) => {
         if (msg.sender_id === this.otherUserId || msg.receiver_id === this.otherUserId) {
-          this.messages.update(list => {
-            if (list.find(m => m.id === msg.id)) return list;
+          this.messages.update((list) => {
+            if (list.find((m) => m.id === msg.id)) return list;
             return [...list, msg as any];
           });
         }
-      })
+      }),
     );
   }
 
   ngOnDestroy(): void {
-    this.subscriptions.forEach(s => s.unsubscribe());
+    this.subscriptions.forEach((s) => s.unsubscribe());
   }
 
   /**
@@ -157,7 +216,7 @@ export class ChatComponent implements OnInit, OnDestroy, AfterViewChecked {
         if (p?.username) this.otherUser.set(p.username);
         if (p?.avatar_url) this.otherAvatar.set(p.avatar_url);
       },
-      error: () => {}
+      error: () => {},
     });
   }
 
@@ -169,7 +228,7 @@ export class ChatComponent implements OnInit, OnDestroy, AfterViewChecked {
         this.messages.set(data || []);
         this.loading.set(false);
       },
-      error: () => this.loading.set(false)
+      error: () => this.loading.set(false),
     });
   }
 
@@ -179,7 +238,8 @@ export class ChatComponent implements OnInit, OnDestroy, AfterViewChecked {
 
   scrollToBottom(): void {
     try {
-      this.messageContainer.nativeElement.scrollTop = this.messageContainer.nativeElement.scrollHeight;
+      this.messageContainer.nativeElement.scrollTop =
+        this.messageContainer.nativeElement.scrollHeight;
     } catch {}
   }
 
@@ -195,11 +255,11 @@ export class ChatComponent implements OnInit, OnDestroy, AfterViewChecked {
     } else {
       this.api.sendMessage(this.otherUserId, content).subscribe({
         next: (msg) => {
-          this.messages.update(list => [...list, msg]);
+          this.messages.update((list) => [...list, msg]);
           this.newMessage = '';
           this.sending.set(false);
         },
-        error: () => this.sending.set(false)
+        error: () => this.sending.set(false),
       });
     }
   }
@@ -232,14 +292,14 @@ export class ChatComponent implements OnInit, OnDestroy, AfterViewChecked {
           this.socket.sendMessage(this.otherUserId, message);
         } else {
           this.api.sendMessage(this.otherUserId, message).subscribe({
-            next: (msg) => this.messages.update(list => [...list, msg]),
-            error: () => this.sending.set(false)
+            next: (msg) => this.messages.update((list) => [...list, msg]),
+            error: () => this.sending.set(false),
           });
         }
         this.sending.set(false);
         input.value = '';
       },
-      error: () => this.sending.set(false)
+      error: () => this.sending.set(false),
     });
   }
 }

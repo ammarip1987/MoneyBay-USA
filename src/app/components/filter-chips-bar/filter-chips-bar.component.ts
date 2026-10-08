@@ -1,7 +1,11 @@
-import { Component, EventEmitter, Input, Output } from '@angular/core';
+import { Component, EventEmitter, Input, Output, ChangeDetectionStrategy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { ListingFilters, SORT_OPTIONS, SELLER_TYPE_OPTIONS } from '../../models/listing-filters.model';
+import {
+  ListingFilters,
+  SORT_OPTIONS,
+  SELLER_TYPE_OPTIONS,
+} from '../../models/listing-filters.model';
 
 @Component({
   selector: 'app-filter-chips-bar',
@@ -12,12 +16,16 @@ import { ListingFilters, SORT_OPTIONS, SELLER_TYPE_OPTIONS } from '../../models/
          отобрано. Прежде применённое и неприменённое стояло вперемешку, и
          разобрать, что действует, а что лишь открывает панель, было нельзя -->
     <div class="flex items-center gap-2 flex-wrap py-3">
-      <button (click)="openDrawer.emit()"
-              class="inline-flex items-center gap-2 px-4 py-2 bg-white border border-gray-300 rounded-full text-sm font-medium hover:border-mb-blue transition shadow-sm">
+      <button
+        (click)="openDrawer.emit()"
+        class="inline-flex items-center gap-2 px-4 py-2 bg-white border border-gray-300 rounded-full text-sm font-medium hover:border-mb-blue transition shadow-sm"
+      >
         <i class="fas fa-sliders"></i>
         Filters
         @if (activeFilterCount() > 0) {
-          <span class="bg-mb-blue text-white text-xs rounded-full px-2 py-0.5">{{ activeFilterCount() }}</span>
+          <span class="bg-mb-blue text-white text-xs rounded-full px-2 py-0.5">{{
+            activeFilterCount()
+          }}</span>
         }
       </button>
 
@@ -25,51 +33,65 @@ import { ListingFilters, SORT_OPTIONS, SELLER_TYPE_OPTIONS } from '../../models/
            объявления из Delano и Corona, тоже калифорнийских. Точное место
            ищут строкой поиска -->
       <div class="relative">
-        <select [ngModel]="selectedState"
-                (ngModelChange)="onStateChange($event)"
-                name="stateChip"
-                class="appearance-none w-52 pl-4 pr-9 py-2 bg-white border border-gray-300 rounded-full text-sm font-medium hover:border-gray-300 focus:border-gray-300 focus:outline-none focus:ring-0 transition cursor-pointer truncate">
+        <select
+          [ngModel]="selectedState"
+          (ngModelChange)="onStateChange($event)"
+          name="stateChip"
+          class="appearance-none w-52 pl-4 pr-9 py-2 bg-white border border-gray-300 rounded-full text-sm font-medium hover:border-gray-300 focus:border-gray-300 focus:outline-none focus:ring-0 transition cursor-pointer truncate"
+        >
           <option value="">Choose state</option>
           @for (s of states; track s.code) {
             <option [value]="s.code">{{ s.name }}, {{ s.code }}</option>
           }
         </select>
-        <i class="fas fa-chevron-down text-xs text-gray-400 absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none"></i>
+        <i
+          class="fas fa-chevron-down text-xs text-gray-400 absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none"
+        ></i>
       </div>
 
       <!-- Кто продаёт: сам владелец или перепродажа. Пусто — оба вида -->
       <div class="relative">
-        <select [ngModel]="filters.seller_type || ''"
-                (ngModelChange)="onSellerTypeChange($event)"
-                name="sellerTypeChip"
-                class="appearance-none w-40 pl-4 pr-9 py-2 bg-white border border-gray-300 rounded-full text-sm font-medium hover:border-gray-300 focus:border-gray-300 focus:outline-none focus:ring-0 transition cursor-pointer truncate">
+        <select
+          [ngModel]="filters.seller_type || ''"
+          (ngModelChange)="onSellerTypeChange($event)"
+          name="sellerTypeChip"
+          class="appearance-none w-40 pl-4 pr-9 py-2 bg-white border border-gray-300 rounded-full text-sm font-medium hover:border-gray-300 focus:border-gray-300 focus:outline-none focus:ring-0 transition cursor-pointer truncate"
+        >
           <option value="">From</option>
           @for (o of sellerTypeOptions; track o.value) {
             <option [value]="o.value">{{ o.label }}</option>
           }
         </select>
-        <i class="fas fa-chevron-down text-xs text-gray-400 absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none"></i>
+        <i
+          class="fas fa-chevron-down text-xs text-gray-400 absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none"
+        ></i>
       </div>
 
       <!-- Без подсветки: применённое видно в полосе ниже. Прежде здесь
            переключался text-white, а bg-white из общего перечня перебивал
            bg-mb-blue — надпись пропадала на белом -->
-      <button (click)="toggleHasImage()"
-              [class.border-mb-blue]="filters.has_image"
-              class="px-4 py-2 bg-white border border-gray-300 rounded-full text-sm hover:border-mb-blue transition">
+      <button
+        (click)="toggleHasImage()"
+        [class.border-mb-blue]="filters.has_image"
+        class="px-4 py-2 bg-white border border-gray-300 rounded-full text-sm hover:border-mb-blue transition"
+      >
         Has image
       </button>
 
-      <button (click)="openDrawer.emit()"
-              class="px-4 py-2 bg-white border border-gray-300 rounded-full text-sm hover:border-mb-blue transition">
+      <button
+        (click)="openDrawer.emit()"
+        class="px-4 py-2 bg-white border border-gray-300 rounded-full text-sm hover:border-mb-blue transition"
+      >
         Date posted
       </button>
 
       <div class="flex-1"></div>
 
-      <select [(ngModel)]="currentSort"
-              (ngModelChange)="onSortChange($event)"
-              class="px-3 py-2 bg-white border border-gray-300 rounded-full text-sm focus:ring-2 focus:ring-mb-blue cursor-pointer">
+      <select
+        [(ngModel)]="currentSort"
+        (ngModelChange)="onSortChange($event)"
+        class="px-3 py-2 bg-white border border-gray-300 rounded-full text-sm focus:ring-2 focus:ring-mb-blue cursor-pointer"
+      >
         @for (opt of sortOptions; track opt.value) {
           <option [value]="opt.value">{{ opt.label }}</option>
         }
@@ -78,7 +100,9 @@ import { ListingFilters, SORT_OPTIONS, SELLER_TYPE_OPTIONS } from '../../models/
 
     <!-- Что отобрано: рамка появляется, только когда есть чему в ней быть -->
     @if (appliedCount() > 0) {
-      <div class="flex items-center gap-2 flex-wrap px-4 py-3 mb-3 border border-mb-blue rounded-lg bg-white">
+      <div
+        class="flex items-center gap-2 flex-wrap px-4 py-3 mb-3 border border-mb-blue rounded-lg bg-white"
+      >
         <!-- Надпись одна и та же, пока идёт подсчёт: меняются только числа,
              когда придут. Прежде здесь стояло «Filtered by:», сменявшееся на
              «Selected …» через несколько секунд, и полоса мигала при каждой
@@ -88,49 +112,61 @@ import { ListingFilters, SORT_OPTIONS, SELLER_TYPE_OPTIONS } from '../../models/
           @if (matchCount) {
             <!-- Число проступает плавно: подсчёт идёт секунды, и появление
                  рывком читается как подмена -->
-            <strong class="count-appear">{{ matchCount.count | number }}</strong> products
-            from {{ matchCount.total | number }}:
+            <strong class="count-appear">{{ matchCount.count | number }}</strong> products from
+            {{ matchCount.total | number }}:
           } @else {
-            <span class="inline-block w-10 h-3 bg-gray-200 rounded animate-pulse align-middle"></span>
+            <span
+              class="inline-block w-10 h-3 bg-gray-200 rounded animate-pulse align-middle"
+            ></span>
             products:
           }
         </span>
 
         @if (selectedState) {
-          <button (click)="clearCity()"
-                  class="inline-flex items-center gap-2 px-3 py-1 bg-gray-100 rounded text-sm hover:bg-gray-200 transition">
+          <button
+            (click)="clearCity()"
+            class="inline-flex items-center gap-2 px-3 py-1 bg-gray-100 rounded text-sm hover:bg-gray-200 transition"
+          >
             {{ stateLabel() }}
             <i class="fas fa-times text-xs text-gray-500"></i>
           </button>
         }
 
         @if (filters.price_min !== undefined || filters.price_max !== undefined) {
-          <button (click)="clearPrice()"
-                  class="inline-flex items-center gap-2 px-3 py-1 bg-gray-100 rounded text-sm hover:bg-gray-200 transition">
+          <button
+            (click)="clearPrice()"
+            class="inline-flex items-center gap-2 px-3 py-1 bg-gray-100 rounded text-sm hover:bg-gray-200 transition"
+          >
             \${{ filters.price_min || 0 }} – \${{ filters.price_max || '∞' }}
             <i class="fas fa-times text-xs text-gray-500"></i>
           </button>
         }
 
         @if (filters.has_image) {
-          <button (click)="toggleHasImage()"
-                  class="inline-flex items-center gap-2 px-3 py-1 bg-gray-100 rounded text-sm hover:bg-gray-200 transition">
+          <button
+            (click)="toggleHasImage()"
+            class="inline-flex items-center gap-2 px-3 py-1 bg-gray-100 rounded text-sm hover:bg-gray-200 transition"
+          >
             Has image
             <i class="fas fa-times text-xs text-gray-500"></i>
           </button>
         }
 
         @if (filters.posted_within) {
-          <button (click)="clearPostedWithin()"
-                  class="inline-flex items-center gap-2 px-3 py-1 bg-gray-100 rounded text-sm hover:bg-gray-200 transition">
+          <button
+            (click)="clearPostedWithin()"
+            class="inline-flex items-center gap-2 px-3 py-1 bg-gray-100 rounded text-sm hover:bg-gray-200 transition"
+          >
             {{ getPostedLabel() }}
             <i class="fas fa-times text-xs text-gray-500"></i>
           </button>
         }
 
         @if (filters.seller_type) {
-          <button (click)="clearSellerType()"
-                  class="inline-flex items-center gap-2 px-3 py-1 bg-gray-100 rounded text-sm hover:bg-gray-200 transition">
+          <button
+            (click)="clearSellerType()"
+            class="inline-flex items-center gap-2 px-3 py-1 bg-gray-100 rounded text-sm hover:bg-gray-200 transition"
+          >
             {{ sellerTypeLabel() }}
             <i class="fas fa-times text-xs text-gray-500"></i>
           </button>
@@ -138,25 +174,36 @@ import { ListingFilters, SORT_OPTIONS, SELLER_TYPE_OPTIONS } from '../../models/
 
         <!-- Сразу за кнопками отбора, а не у правого края: читается как их
              продолжение — снять то, что перечислено слева -->
-        <button (click)="clearAll()"
-                class="inline-flex items-center gap-1 text-sm text-gray-600 hover:text-red-600 transition">
+        <button
+          (click)="clearAll()"
+          class="inline-flex items-center gap-1 text-sm text-gray-600 hover:text-red-600 transition"
+        >
           Clean
           <i class="fas fa-times text-xs"></i>
         </button>
       </div>
     }
   `,
-  styles: [`
-    /* Число проступает и слегка приподнимается: подсчёт идёт секунды, и
+  changeDetection: ChangeDetectionStrategy.Eager,
+  styles: [
+    `
+      /* Число проступает и слегка приподнимается: подсчёт идёт секунды, и
        появление рывком читается как подмена значения */
-    .count-appear {
-      animation: count-in 260ms ease-out;
-    }
-    @keyframes count-in {
-      from { opacity: 0; transform: translateY(3px); }
-      to   { opacity: 1; transform: translateY(0); }
-    }
-  `]
+      .count-appear {
+        animation: count-in 260ms ease-out;
+      }
+      @keyframes count-in {
+        from {
+          opacity: 0;
+          transform: translateY(3px);
+        }
+        to {
+          opacity: 1;
+          transform: translateY(0);
+        }
+      }
+    `,
+  ],
 })
 export class FilterChipsBarComponent {
   @Input() filters: ListingFilters = {};
@@ -171,7 +218,7 @@ export class FilterChipsBarComponent {
 
   /** Название выбранного штата для кнопки: «California, CA». */
   stateLabel = (): string => {
-    const found = this.states.find(s => s.code === this.selectedState);
+    const found = this.states.find((s) => s.code === this.selectedState);
     return found ? `${found.name}, ${found.code}` : this.selectedState;
   };
   @Output() filtersChange = new EventEmitter<ListingFilters>();
@@ -199,9 +246,9 @@ export class FilterChipsBarComponent {
   appliedCount(): number {
     // Тип продавца выбирается в самой полосе, как штат, а не в скрытой панели,
     // поэтому в activeFilterCount он не входит
-    return this.activeFilterCount()
-      + (this.selectedState ? 1 : 0)
-      + (this.filters.seller_type ? 1 : 0);
+    return (
+      this.activeFilterCount() + (this.selectedState ? 1 : 0) + (this.filters.seller_type ? 1 : 0)
+    );
   }
 
   activeFilterCount(): number {
@@ -271,7 +318,7 @@ export class FilterChipsBarComponent {
 
   /** Надпись для кнопки в полосе отобранного. */
   sellerTypeLabel(): string {
-    return this.sellerTypeOptions.find(o => o.value === this.filters.seller_type)?.label ?? '';
+    return this.sellerTypeOptions.find((o) => o.value === this.filters.seller_type)?.label ?? '';
   }
 
   /**
@@ -285,7 +332,7 @@ export class FilterChipsBarComponent {
     this.filtersChange.emit({
       q: this.filters.q,
       category: this.filters.category,
-      sort: this.filters.sort
+      sort: this.filters.sort,
     });
   }
 

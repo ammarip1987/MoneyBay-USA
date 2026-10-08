@@ -1,4 +1,4 @@
-import { Component, inject, afterNextRender } from '@angular/core';
+import { Component, inject, afterNextRender, ChangeDetectionStrategy } from '@angular/core';
 import { SwUpdate } from '@angular/service-worker';
 import { RouterOutlet } from '@angular/router';
 import { HeaderComponent } from './components/header/header.component';
@@ -13,7 +13,8 @@ import { AuthService } from './services/auth.service';
   standalone: true,
   imports: [RouterOutlet, HeaderComponent, FooterComponent, ToastComponent, ScrollTopComponent],
   templateUrl: './app.html',
-  styleUrl: './app.css'
+  changeDetection: ChangeDetectionStrategy.Eager,
+  styleUrl: './app.css',
 })
 export class App {
   private swUpdate = inject(SwUpdate);
@@ -28,7 +29,7 @@ export class App {
     // посетитель сам чистил кэш — а чаще не доходили вовсе
     afterNextRender(() => {
       if (!this.swUpdate.isEnabled) return;
-      this.swUpdate.versionUpdates.subscribe(e => {
+      this.swUpdate.versionUpdates.subscribe((e) => {
         if (e.type === 'VERSION_READY') {
           // Страница берёт свежее при следующем переходе, а не рывком под
           // руками у того, кто заполняет форму

@@ -1,4 +1,4 @@
-import { Component, inject, signal } from '@angular/core';
+import { Component, inject, signal, ChangeDetectionStrategy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Router, RouterLink } from '@angular/router';
@@ -10,12 +10,15 @@ import { OAuthButtonsComponent } from '../../components/oauth-buttons/oauth-butt
   selector: 'app-register',
   standalone: true,
   imports: [CommonModule, FormsModule, RouterLink, OAuthButtonsComponent],
+  changeDetection: ChangeDetectionStrategy.Eager,
   template: `
     <div class="min-h-[calc(100vh-200px)] flex items-center justify-center px-4 py-12">
       <div class="max-w-md w-full">
         <div class="bg-white rounded-2xl shadow-xl p-8 border border-gray-100">
           <div class="text-center mb-8">
-            <div class="w-16 h-16 bg-gradient-to-br from-mb-blue to-mb-cyan rounded-2xl mx-auto mb-4 flex items-center justify-center shadow-md">
+            <div
+              class="w-16 h-16 bg-gradient-to-br from-mb-blue to-mb-cyan rounded-2xl mx-auto mb-4 flex items-center justify-center shadow-md"
+            >
               <i class="fas fa-user-plus text-white text-2xl"></i>
             </div>
             <h1 class="text-3xl font-bold text-mb-dark">Create account</h1>
@@ -23,7 +26,9 @@ import { OAuthButtonsComponent } from '../../components/oauth-buttons/oauth-butt
           </div>
 
           @if (error()) {
-            <div class="bg-red-50 border border-red-200 text-red-700 rounded-lg p-3 mb-4 text-sm flex items-start gap-2">
+            <div
+              class="bg-red-50 border border-red-200 text-red-700 rounded-lg p-3 mb-4 text-sm flex items-start gap-2"
+            >
               <i class="fas fa-exclamation-circle mt-0.5"></i>
               <span>{{ error() }}</span>
             </div>
@@ -31,28 +36,69 @@ import { OAuthButtonsComponent } from '../../components/oauth-buttons/oauth-butt
 
           <form (ngSubmit)="onSubmit()" class="space-y-4">
             <div>
-              <label class="form-label"><i class="fas fa-user text-mb-blue mr-2"></i>Username</label>
-              <input type="text" [(ngModel)]="username" name="username" class="form-input" required minlength="3" placeholder="johndoe">
+              <label class="form-label"
+                ><i class="fas fa-user text-mb-blue mr-2"></i>Username</label
+              >
+              <input
+                type="text"
+                [(ngModel)]="username"
+                name="username"
+                class="form-input"
+                required
+                minlength="3"
+                placeholder="johndoe"
+              />
             </div>
 
             <div>
-              <label class="form-label"><i class="fas fa-envelope text-mb-blue mr-2"></i>Email</label>
-              <input type="email" autocomplete="email" [(ngModel)]="email" name="email" class="form-input" required placeholder="you@example.com">
+              <label class="form-label"
+                ><i class="fas fa-envelope text-mb-blue mr-2"></i>Email</label
+              >
+              <input
+                type="email"
+                autocomplete="email"
+                [(ngModel)]="email"
+                name="email"
+                class="form-input"
+                required
+                placeholder="you@example.com"
+              />
             </div>
 
             <div>
-              <label class="form-label"><i class="fas fa-lock text-mb-blue mr-2"></i>Password</label>
-              <input type="password" autocomplete="new-password" [(ngModel)]="password" name="password" class="form-input" required minlength="6" placeholder="At least 6 characters">
+              <label class="form-label"
+                ><i class="fas fa-lock text-mb-blue mr-2"></i>Password</label
+              >
+              <input
+                type="password"
+                autocomplete="new-password"
+                [(ngModel)]="password"
+                name="password"
+                class="form-input"
+                required
+                minlength="6"
+                placeholder="At least 6 characters"
+              />
             </div>
 
             <div>
-              <label class="form-label"><i class="fas fa-map-marker-alt text-mb-blue mr-2"></i>City</label>
-              <input type="text" [(ngModel)]="city" name="city" class="form-input" placeholder="Los Angeles, CA">
+              <label class="form-label"
+                ><i class="fas fa-map-marker-alt text-mb-blue mr-2"></i>City</label
+              >
+              <input
+                type="text"
+                [(ngModel)]="city"
+                name="city"
+                class="form-input"
+                placeholder="Los Angeles, CA"
+              />
             </div>
 
-            <button type="submit"
-                    class="w-full bg-mb-blue hover:bg-blue-700 text-white font-bold py-3 rounded-lg transition shadow-md hover:shadow-lg disabled:opacity-50 disabled:cursor-not-allowed"
-                    [disabled]="loading()">
+            <button
+              type="submit"
+              class="w-full bg-mb-blue hover:bg-blue-700 text-white font-bold py-3 rounded-lg transition shadow-md hover:shadow-lg disabled:opacity-50 disabled:cursor-not-allowed"
+              [disabled]="loading()"
+            >
               {{ loading() ? 'Creating account...' : 'Create account' }}
             </button>
           </form>
@@ -66,12 +112,13 @@ import { OAuthButtonsComponent } from '../../components/oauth-buttons/oauth-butt
           </p>
 
           <div class="text-center text-sm text-gray-600 mt-6 pt-6 border-t border-gray-100">
-            Already registered? <a routerLink="/login" class="text-mb-blue hover:underline font-medium">Log in</a>
+            Already registered?
+            <a routerLink="/login" class="text-mb-blue hover:underline font-medium">Log in</a>
           </div>
         </div>
       </div>
     </div>
-  `
+  `,
 })
 export class RegisterComponent {
   private auth = inject(AuthService);
@@ -88,21 +135,23 @@ export class RegisterComponent {
   onSubmit(): void {
     this.loading.set(true);
     this.error.set(null);
-    this.auth.register({
-      email: this.email,
-      username: this.username,
-      password: this.password,
-      city: this.city || undefined
-    }).subscribe({
-      next: () => {
-        this.loading.set(false);
-        this.notification.success('Account created. Welcome!');
-        this.router.navigate(['/']);
-      },
-      error: (err) => {
-        this.loading.set(false);
-        this.error.set(err?.error?.message || 'Registration failed');
-      }
-    });
+    this.auth
+      .register({
+        email: this.email,
+        username: this.username,
+        password: this.password,
+        city: this.city || undefined,
+      })
+      .subscribe({
+        next: () => {
+          this.loading.set(false);
+          this.notification.success('Account created. Welcome!');
+          this.router.navigate(['/']);
+        },
+        error: (err) => {
+          this.loading.set(false);
+          this.error.set(err?.error?.message || 'Registration failed');
+        },
+      });
   }
 }

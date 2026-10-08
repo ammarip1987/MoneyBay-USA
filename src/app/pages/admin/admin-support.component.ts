@@ -1,4 +1,4 @@
-import { Component, OnInit, signal } from '@angular/core';
+import { Component, OnInit, signal, ChangeDetectionStrategy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterLink } from '@angular/router';
 
@@ -14,6 +14,7 @@ interface SupportTicket {
   selector: 'app-admin-support',
   standalone: true,
   imports: [CommonModule, RouterLink],
+  changeDetection: ChangeDetectionStrategy.Eager,
   template: `
     <div class="max-w-7xl mx-auto px-4 py-8 min-page">
       <div class="flex justify-between items-center mb-8">
@@ -39,17 +40,21 @@ interface SupportTicket {
               <td class="px-4 py-3">{{ ticket.user }}</td>
               <td class="px-4 py-3 text-gray-600 truncate max-w-xs">{{ ticket.last_message }}</td>
               <td class="px-4 py-3">
-                <span [class.bg-green-100]="ticket.status === 'open'"
-                      [class.text-green-800]="ticket.status === 'open'"
-                      [class.bg-gray-100]="ticket.status === 'closed'"
-                      [class.text-gray-800]="ticket.status === 'closed'"
-                      class="inline-block px-2 py-1 rounded-full text-xs font-bold">
+                <span
+                  [class.bg-green-100]="ticket.status === 'open'"
+                  [class.text-green-800]="ticket.status === 'open'"
+                  [class.bg-gray-100]="ticket.status === 'closed'"
+                  [class.text-gray-800]="ticket.status === 'closed'"
+                  class="inline-block px-2 py-1 rounded-full text-xs font-bold"
+                >
                   {{ ticket.status }}
                 </span>
               </td>
-              <td class="px-4 py-3 text-gray-500">{{ ticket.updated_at | date:'short' }}</td>
+              <td class="px-4 py-3 text-gray-500">{{ ticket.updated_at | date: 'short' }}</td>
               <td class="px-4 py-3">
-                <a [routerLink]="['/admin/support', ticket.id]" class="text-mb-blue hover:underline">Open</a>
+                <a [routerLink]="['/admin/support', ticket.id]" class="text-mb-blue hover:underline"
+                  >Open</a
+                >
               </td>
             </tr>
           </tbody>
@@ -60,7 +65,7 @@ interface SupportTicket {
         </div>
       </div>
     </div>
-  `
+  `,
 })
 export class AdminSupportComponent implements OnInit {
   tickets = signal<SupportTicket[]>([]);

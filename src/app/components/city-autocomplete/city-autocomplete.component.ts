@@ -1,6 +1,16 @@
 import {
-  Component, EventEmitter, HostListener, Input, OnDestroy, OnInit, Output,
-  ElementRef, ViewChild, inject, signal
+  Component,
+  EventEmitter,
+  HostListener,
+  Input,
+  OnDestroy,
+  OnInit,
+  Output,
+  ElementRef,
+  ViewChild,
+  inject,
+  signal,
+  ChangeDetectionStrategy,
 } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
@@ -16,6 +26,7 @@ import { ApiService, UsCitySuggestion } from '../../services/api.service';
   selector: 'app-city-autocomplete',
   standalone: true,
   imports: [CommonModule, FormsModule],
+  changeDetection: ChangeDetectionStrategy.Eager,
   template: `
     <div class="relative" #wrapper>
       <input
@@ -27,20 +38,28 @@ import { ApiService, UsCitySuggestion } from '../../services/api.service';
         [disabled]="!state"
         [placeholder]="state ? placeholder : 'Select a state first'"
         autocomplete="off"
-        class="form-input disabled:bg-gray-100 disabled:cursor-not-allowed">
+        class="form-input disabled:bg-gray-100 disabled:cursor-not-allowed"
+      />
 
       @if (open() && (loading() || suggestions().length > 0)) {
-        <div class="absolute top-full left-0 right-0 mt-1 bg-white rounded-lg shadow-xl border border-gray-200 z-40 max-h-72 overflow-y-auto">
+        <div
+          class="absolute top-full left-0 right-0 mt-1 bg-white rounded-lg shadow-xl border border-gray-200 z-40 max-h-72 overflow-y-auto"
+        >
           @if (loading()) {
             <div class="px-4 py-2 text-sm text-gray-500 flex items-center gap-2">
-              <span class="inline-block w-4 h-4 border-2 border-mb-blue border-t-transparent rounded-full animate-spin"></span>
+              <span
+                class="inline-block w-4 h-4 border-2 border-mb-blue border-t-transparent rounded-full animate-spin"
+              ></span>
               Searching...
             </div>
           } @else {
             @for (c of suggestions(); track c.name + c.state_code; let i = $index) {
-              <button type="button" (click)="pick(c)"
-                      [class.bg-blue-50]="i === highlighted()"
-                      class="w-full text-left px-4 py-2 hover:bg-blue-50 border-b border-gray-100 last:border-0 flex items-center justify-between gap-2">
+              <button
+                type="button"
+                (click)="pick(c)"
+                [class.bg-blue-50]="i === highlighted()"
+                class="w-full text-left px-4 py-2 hover:bg-blue-50 border-b border-gray-100 last:border-0 flex items-center justify-between gap-2"
+              >
                 <span class="font-medium text-gray-900">{{ c.name }}</span>
                 <span class="text-xs text-gray-500">{{ c.state_code }}</span>
               </button>
@@ -49,7 +68,7 @@ import { ApiService, UsCitySuggestion } from '../../services/api.service';
         </div>
       }
     </div>
-  `
+  `,
 })
 export class CityAutocompleteComponent implements OnInit, OnDestroy {
   /** Название штата ("California") либо его код ("CA"). */
@@ -73,19 +92,21 @@ export class CityAutocompleteComponent implements OnInit, OnDestroy {
   private sub?: Subscription;
 
   ngOnInit(): void {
-    this.sub = this.input$.pipe(
-      debounceTime(200),
-      distinctUntilChanged(),
-      switchMap((q) => {
-        if (!this.state) return of([]);
-        this.loading.set(true);
-        return this.api.suggestUsCities(this.state, q, 10).pipe(catchError(() => of([])));
-      })
-    ).subscribe((list) => {
-      this.suggestions.set(list);
-      this.loading.set(false);
-      this.highlighted.set(-1);
-    });
+    this.sub = this.input$
+      .pipe(
+        debounceTime(200),
+        distinctUntilChanged(),
+        switchMap((q) => {
+          if (!this.state) return of([]);
+          this.loading.set(true);
+          return this.api.suggestUsCities(this.state, q, 10).pipe(catchError(() => of([])));
+        }),
+      )
+      .subscribe((list) => {
+        this.suggestions.set(list);
+        this.loading.set(false);
+        this.highlighted.set(-1);
+      });
   }
 
   ngOnDestroy(): void {

@@ -1,4 +1,4 @@
-import { Component, inject, signal } from '@angular/core';
+import { Component, inject, signal, ChangeDetectionStrategy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { RouterLink } from '@angular/router';
@@ -9,6 +9,7 @@ import { NotificationService } from '../../services/notification.service';
   selector: 'app-forgot-password',
   standalone: true,
   imports: [CommonModule, FormsModule, RouterLink],
+  changeDetection: ChangeDetectionStrategy.Eager,
   template: `
     <div class="max-w-md mx-auto px-4 py-12 min-page">
       <div class="bg-white rounded-2xl shadow-lg p-8">
@@ -25,7 +26,7 @@ import { NotificationService } from '../../services/notification.service';
           <form (ngSubmit)="onSubmit()">
             <div class="form-group">
               <label class="form-label">Email</label>
-              <input type="email" [(ngModel)]="email" name="email" class="form-input" required>
+              <input type="email" [(ngModel)]="email" name="email" class="form-input" required />
             </div>
             <button type="submit" class="btn btn-primary w-full mt-4" [disabled]="loading()">
               {{ loading() ? 'Sending...' : 'Send Reset Link' }}
@@ -38,7 +39,7 @@ import { NotificationService } from '../../services/notification.service';
         </p>
       </div>
     </div>
-  `
+  `,
 })
 export class ForgotPasswordComponent {
   private api = inject(ApiService);
@@ -59,7 +60,7 @@ export class ForgotPasswordComponent {
       error: () => {
         this.loading.set(false);
         this.notification.error('Failed to send reset link');
-      }
+      },
     });
   }
 }

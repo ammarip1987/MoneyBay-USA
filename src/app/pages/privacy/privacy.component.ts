@@ -1,10 +1,11 @@
-import { Component } from '@angular/core';
+import { Component, ChangeDetectionStrategy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 
 @Component({
   selector: 'app-privacy',
   standalone: true,
   imports: [CommonModule],
+  changeDetection: ChangeDetectionStrategy.Eager,
   template: `
     <div class="max-w-4xl mx-auto px-4 py-12 min-page">
       <h1 class="text-4xl font-bold mb-8">Privacy Policy</h1>
@@ -27,6 +28,6 @@ import { CommonModule } from '@angular/common';
         </section>
       </div>
     </div>
-  `
+  `,
 })
 export class PrivacyComponent {}

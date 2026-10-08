@@ -1,4 +1,4 @@
-import { Component, inject, OnInit, signal } from '@angular/core';
+import { Component, inject, OnInit, signal, ChangeDetectionStrategy } from '@angular/core';
 import { RouterLink } from '@angular/router';
 import { SeoService } from '../../services/seo.service';
 
@@ -6,6 +6,7 @@ import { SeoService } from '../../services/seo.service';
   selector: 'app-server-error',
   standalone: true,
   imports: [RouterLink],
+  changeDetection: ChangeDetectionStrategy.Eager,
   template: `
     <div class="min-h-[calc(100vh-200px)] flex items-center justify-center px-4 py-12">
       <div class="max-w-md text-center">
@@ -24,16 +25,14 @@ import { SeoService } from '../../services/seo.service';
           <button (click)="retry()" class="btn btn-primary">
             <i class="fas fa-redo mr-2"></i> Try Again
           </button>
-          <a routerLink="/" class="btn btn-secondary">
-            <i class="fas fa-home mr-2"></i> Home
-          </a>
+          <a routerLink="/" class="btn btn-secondary"> <i class="fas fa-home mr-2"></i> Home </a>
           <a routerLink="/contact" class="btn btn-secondary">
             <i class="fas fa-headset mr-2"></i> Report Issue
           </a>
         </div>
       </div>
     </div>
-  `
+  `,
 })
 export class ServerErrorComponent implements OnInit {
   private seo = inject(SeoService);
@@ -43,7 +42,7 @@ export class ServerErrorComponent implements OnInit {
     this.seo.update({
       title: 'Server Error',
       description: 'A server error has occurred',
-      noindex: true
+      noindex: true,
     });
     this.errorRef.set(this.generateRef());
   }

@@ -1,4 +1,10 @@
-import { Component, signal, afterNextRender, OnDestroy } from '@angular/core';
+import {
+  Component,
+  signal,
+  afterNextRender,
+  OnDestroy,
+  ChangeDetectionStrategy,
+} from '@angular/core';
 
 /**
  * Кнопка возврата наверх. Появляется после прокрутки на пару экранов — при
@@ -7,16 +13,19 @@ import { Component, signal, afterNextRender, OnDestroy } from '@angular/core';
 @Component({
   selector: 'app-scroll-top',
   standalone: true,
+  changeDetection: ChangeDetectionStrategy.Eager,
   template: `
     @if (visible()) {
-      <button (click)="toTop()"
-              class="fixed bottom-6 right-6 z-40 w-12 h-12 rounded-full bg-mb-blue text-white shadow-lg
+      <button
+        (click)="toTop()"
+        class="fixed bottom-6 right-6 z-40 w-12 h-12 rounded-full bg-mb-blue text-white shadow-lg
                      flex items-center justify-center hover:bg-blue-700 transition"
-              aria-label="Back to top">
+        aria-label="Back to top"
+      >
         <i class="fas fa-chevron-up"></i>
       </button>
     }
-  `
+  `,
 })
 export class ScrollTopComponent implements OnDestroy {
   visible = signal(false);

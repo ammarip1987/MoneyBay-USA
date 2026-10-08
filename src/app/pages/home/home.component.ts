@@ -1,4 +1,17 @@
-import { Component, OnInit, OnDestroy, inject, signal, effect, ViewChild, ElementRef, AfterViewInit, PLATFORM_ID, afterNextRender } from '@angular/core';
+import {
+  Component,
+  OnInit,
+  OnDestroy,
+  inject,
+  signal,
+  effect,
+  ViewChild,
+  ElementRef,
+  AfterViewInit,
+  PLATFORM_ID,
+  afterNextRender,
+  ChangeDetectionStrategy,
+} from '@angular/core';
 import { CommonModule, isPlatformBrowser } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { RouterLink, ActivatedRoute, Router } from '@angular/router';
@@ -29,299 +42,371 @@ interface Subcategory {
 @Component({
   selector: 'app-home',
   standalone: true,
-  imports: [CommonModule, FormsModule, RouterLink, ListingCardComponent, SearchAutocompleteComponent, SkeletonLoaderComponent, FilterChipsBarComponent, FilterDrawerComponent],
+  imports: [
+    CommonModule,
+    FormsModule,
+    RouterLink,
+    ListingCardComponent,
+    SearchAutocompleteComponent,
+    SkeletonLoaderComponent,
+    FilterChipsBarComponent,
+    FilterDrawerComponent,
+  ],
+  changeDetection: ChangeDetectionStrategy.Eager,
   template: `
     <div class="min-page">
-    <!-- Тёмная подложка за поиском на всю ширину окна: отрицательные отступы
+      <!-- Тёмная подложка за поиском на всю ширину окна: отрицательные отступы
          выводят её за пределы main, ограниченного по ширине. Поиск на ней
          читается как отдельная часть страницы, а не висит в пустоте.
          Одинаково на главной и в разделах -->
-    <div class="-mt-8 mb-12 px-4 py-16 bg-mb-dark flex items-center justify-center w-screen relative left-1/2 -translate-x-1/2">
-      <!-- Без кнопки: поиск запускается по Enter, а подсказки появляются на
+      <div
+        class="-mt-8 mb-12 px-4 py-16 bg-mb-dark flex items-center justify-center w-screen relative left-1/2 -translate-x-1/2"
+      >
+        <!-- Без кнопки: поиск запускается по Enter, а подсказки появляются на
            лету. Кнопка нажималась редко и занимала место -->
-      <div class="w-full max-w-3xl mx-auto bg-white rounded-xl shadow-lg p-2 border border-gray-100">
-        <app-search-autocomplete
-          placeholder="Search listings..."
-          [initialQuery]="searchQuery"
-          (search)="onAutocompleteSearch($event)"></app-search-autocomplete>
+        <div
+          class="w-full max-w-3xl mx-auto bg-white rounded-xl shadow-lg p-2 border border-gray-100"
+        >
+          <app-search-autocomplete
+            placeholder="Search listings..."
+            [initialQuery]="searchQuery"
+            (search)="onAutocompleteSearch($event)"
+          ></app-search-autocomplete>
+        </div>
       </div>
-    </div>
 
-    <!-- Categories grid (only on main page) -->
-    @if (!selectedCategory()) {
-      <!-- Оставшиеся две трети первого экрана. Ниже этой высоты не сжимается,
+      <!-- Categories grid (only on main page) -->
+      @if (!selectedCategory()) {
+        <!-- Оставшиеся две трети первого экрана. Ниже этой высоты не сжимается,
            но и не ограничивается ею: на телефоне двенадцать плиток в столбец
            всё равно выше экрана, и обрезать их нельзя -->
-      <div class="flex flex-col mb-12">
-        <!-- Место под плитки занято с первого кадра: без этого лента
+        <div class="flex flex-col mb-12">
+          <!-- Место под плитки занято с первого кадра: без этого лента
              подпрыгивает, когда категории приходят -->
-        @if (categories().length === 0) {
-          <!-- Та же заглушка, что на объявлениях: круг под значок, полоска под
+          @if (categories().length === 0) {
+            <!-- Та же заглушка, что на объявлениях: круг под значок, полоска под
                название. Пока категории идут с сервера, места заняты -->
-          <div class="flex-1">
-            <app-skeleton-loader variant="category-grid" [count]="12"></app-skeleton-loader>
-          </div>
-        } @else {
-        <!-- Плитки сжаты так, чтобы три ряда умещались в отведённые две трети
+            <div class="flex-1">
+              <app-skeleton-loader variant="category-grid" [count]="12"></app-skeleton-loader>
+            </div>
+          } @else {
+            <!-- Плитки сжаты так, чтобы три ряда умещались в отведённые две трети
              экрана: меньше значок, одна строка под название, описание в одну
              строку. Прежде ряды не влезали и третий уходил за край -->
-          <!-- Сетка той же ширины и с тем же промежутком, что у объявлений -->
-        <div class="flex-1 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8">
-          @for (cat of categories(); track cat.id) {
-            <!-- При наведении ничего не меняется: указатель мыши и так
+            <!-- Сетка той же ширины и с тем же промежутком, что у объявлений -->
+            <div class="flex-1 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8">
+              @for (cat of categories(); track cat.id) {
+                <!-- При наведении ничего не меняется: указатель мыши и так
                  показывает, что плитка нажимается -->
-            <a [routerLink]="['/']"
-               [queryParams]="{category: cat.slug}"
-               class="w-full max-w-[200px] mx-auto p-3 text-center flex flex-col items-center justify-center focus:outline-none">
-              <!-- Место под значок заданной высоты: он приходит с данными, и без
+                <a
+                  [routerLink]="['/']"
+                  [queryParams]="{ category: cat.slug }"
+                  class="w-full max-w-[200px] mx-auto p-3 text-center flex flex-col items-center justify-center focus:outline-none"
+                >
+                  <!-- Место под значок заданной высоты: он приходит с данными, и без
                    отведённого места плитка схлопывалась, а потом раздвигалась —
                    это и было мелькание при обновлении -->
-              <div class="text-5xl mb-3 text-mb-blue h-14 flex items-center justify-center" [innerHTML]="iconOf(cat.icon)"></div>
-              <h3 class="font-bold text-mb-dark text-sm line-clamp-2">{{ cat.name }}</h3>
-            </a>
+                  <div
+                    class="text-5xl mb-3 text-mb-blue h-14 flex items-center justify-center"
+                    [innerHTML]="iconOf(cat.icon)"
+                  ></div>
+                  <h3 class="font-bold text-mb-dark text-sm line-clamp-2">{{ cat.name }}</h3>
+                </a>
+              }
+            </div>
           }
         </div>
-        }
-      </div>
-    }
+      }
 
-    <!-- Category page header -->
-    @if (selectedCategory() && currentCategory()) {
-      <div class="rounded-lg p-8 mb-8 shadow-md"
-           [style.background-color]="currentCategory()!.color">
-        <div class="flex justify-between items-center flex-wrap gap-4">
-          <h2 class="text-3xl font-bold text-mb-dark flex items-center gap-3">
-            <span class="text-mb-blue" [innerHTML]="iconOf(currentCategory()!.icon)"></span>
-            {{ currentCategory()!.name }}
-            @if (currentSub()) {
-              <span class="text-gray-600 text-2xl">/ {{ currentSub()!.name }}</span>
-            }
-            @if (currentSubSub()) {
-              <span class="text-gray-600 text-2xl">/ {{ currentSubSub()!.name }}</span>
-            }
-          </h2>
-          <div class="flex gap-2 flex-wrap">
-            @if (currentSubSub()) {
-              <a [routerLink]="['/']" [queryParams]="{category: selectedCategory(), sub: selectedSub()}" class="btn btn-secondary text-sm">← {{ currentSub()!.name }}</a>
-            } @else if (currentSub()) {
-              <a [routerLink]="['/']" [queryParams]="{category: selectedCategory()}" class="btn btn-secondary text-sm">← {{ currentCategory()!.name }}</a>
-            } @else {
-              <a routerLink="/" class="btn btn-secondary text-sm">← All listings</a>
+      <!-- Category page header -->
+      @if (selectedCategory() && currentCategory()) {
+        <div
+          class="rounded-lg p-8 mb-8 shadow-md"
+          [style.background-color]="currentCategory()!.color"
+        >
+          <div class="flex justify-between items-center flex-wrap gap-4">
+            <h2 class="text-3xl font-bold text-mb-dark flex items-center gap-3">
+              <span class="text-mb-blue" [innerHTML]="iconOf(currentCategory()!.icon)"></span>
+              {{ currentCategory()!.name }}
+              @if (currentSub()) {
+                <span class="text-gray-600 text-2xl">/ {{ currentSub()!.name }}</span>
+              }
+              @if (currentSubSub()) {
+                <span class="text-gray-600 text-2xl">/ {{ currentSubSub()!.name }}</span>
+              }
+            </h2>
+            <div class="flex gap-2 flex-wrap">
+              @if (currentSubSub()) {
+                <a
+                  [routerLink]="['/']"
+                  [queryParams]="{ category: selectedCategory(), sub: selectedSub() }"
+                  class="btn btn-secondary text-sm"
+                  >← {{ currentSub()!.name }}</a
+                >
+              } @else if (currentSub()) {
+                <a
+                  [routerLink]="['/']"
+                  [queryParams]="{ category: selectedCategory() }"
+                  class="btn btn-secondary text-sm"
+                  >← {{ currentCategory()!.name }}</a
+                >
+              } @else {
+                <a routerLink="/" class="btn btn-secondary text-sm">← All listings</a>
+              }
+            </div>
+          </div>
+        </div>
+      }
+
+      <!-- Subcategories grid (when category selected, no sub) -->
+      @if (selectedCategory() && !selectedSub() && subcategories().length > 0) {
+        <div class="mb-8">
+          <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+            @for (sub of subcategories(); track sub.id) {
+              <a
+                [routerLink]="['/']"
+                [queryParams]="{ category: selectedCategory(), sub: sub.slug }"
+                class="card-hover p-4"
+                [style.background-color]="sub.color + '33'"
+                [style.border]="'2px solid ' + sub.color"
+              >
+                <div
+                  class="text-3xl mb-2 text-mb-blue h-9 flex items-center justify-center"
+                  [innerHTML]="iconOf(sub.icon)"
+                ></div>
+                <h3 class="font-bold text-mb-dark">{{ sub.name }}</h3>
+                @if (sub.description) {
+                  <p class="text-sm text-gray-600">{{ sub.description }}</p>
+                }
+              </a>
             }
           </div>
         </div>
-      </div>
-    }
+      }
 
-    <!-- Subcategories grid (when category selected, no sub) -->
-    @if (selectedCategory() && !selectedSub() && subcategories().length > 0) {
-      <div class="mb-8">
-        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-          @for (sub of subcategories(); track sub.id) {
-            <a [routerLink]="['/']"
-               [queryParams]="{category: selectedCategory(), sub: sub.slug}"
-               class="card-hover p-4"
-               [style.background-color]="sub.color + '33'"
-               [style.border]="'2px solid ' + sub.color">
-              <div class="text-3xl mb-2 text-mb-blue h-9 flex items-center justify-center" [innerHTML]="iconOf(sub.icon)"></div>
-              <h3 class="font-bold text-mb-dark">{{ sub.name }}</h3>
-              @if (sub.description) {
-                <p class="text-sm text-gray-600">{{ sub.description }}</p>
-              }
-            </a>
-          }
+      <!-- Sub-subcategories grid (when sub selected, has subsubs) -->
+      @if (selectedSub() && !selectedSubSub() && subsubcategories().length > 0) {
+        <div class="mb-8">
+          <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+            @for (ss of subsubcategories(); track ss.id) {
+              <a
+                [routerLink]="['/']"
+                [queryParams]="{
+                  category: selectedCategory(),
+                  sub: selectedSub(),
+                  subsub: ss.slug,
+                }"
+                class="card-hover p-4"
+                [style.background-color]="ss.color + '33'"
+                [style.border]="'2px solid ' + ss.color"
+              >
+                <div
+                  class="text-3xl mb-2 text-mb-blue h-9 flex items-center justify-center"
+                  [innerHTML]="iconOf(ss.icon)"
+                ></div>
+                <h3 class="font-bold text-mb-dark">{{ ss.name }}</h3>
+                @if (ss.description) {
+                  <p class="text-sm text-gray-600">{{ ss.description }}</p>
+                }
+              </a>
+            }
+          </div>
         </div>
-      </div>
-    }
-
-    <!-- Sub-subcategories grid (when sub selected, has subsubs) -->
-    @if (selectedSub() && !selectedSubSub() && subsubcategories().length > 0) {
-      <div class="mb-8">
-        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-          @for (ss of subsubcategories(); track ss.id) {
-            <a [routerLink]="['/']"
-               [queryParams]="{category: selectedCategory(), sub: selectedSub(), subsub: ss.slug}"
-               class="card-hover p-4"
-               [style.background-color]="ss.color + '33'"
-               [style.border]="'2px solid ' + ss.color">
-              <div class="text-3xl mb-2 text-mb-blue h-9 flex items-center justify-center" [innerHTML]="iconOf(ss.icon)"></div>
-              <h3 class="font-bold text-mb-dark">{{ ss.name }}</h3>
-              @if (ss.description) {
-                <p class="text-sm text-gray-600">{{ ss.description }}</p>
-              }
-            </a>
-          }
-        </div>
-      </div>
-    }
+      }
 
       <!-- Якорь перехода по страницам стоит над заголовком: прокрутка приводит
            к «Hot offers», а не к первому ряду карточек под ним -->
       <div #listingsAnchor></div>
 
-    <!-- Listings -->
-    @if (!selectedCategory()) {
-      <h2 class="text-2xl font-bold text-gray-900 mb-6 text-center">Hot offers</h2>
-    }
+      <!-- Listings -->
+      @if (!selectedCategory()) {
+        <h2 class="text-2xl font-bold text-gray-900 mb-6 text-center">Hot offers</h2>
+      }
 
-
-    @if (!selectedCategory() && !cityFilter && geo.nearestCity()) {
-      <div class="mb-6 bg-blue-50 border border-blue-200 rounded-lg p-4 flex items-center justify-between gap-3 flex-wrap">
-        <div class="flex items-center gap-3">
-          <i class="fas fa-location-arrow text-mb-blue text-xl"></i>
-          <div>
-            <p class="text-sm text-gray-700">Show listings near you in <strong>{{ geo.nearestCity() }}</strong>?</p>
-            <p class="text-xs text-gray-500">Detected from your location</p>
+      @if (!selectedCategory() && !cityFilter && geo.nearestCity()) {
+        <div
+          class="mb-6 bg-blue-50 border border-blue-200 rounded-lg p-4 flex items-center justify-between gap-3 flex-wrap"
+        >
+          <div class="flex items-center gap-3">
+            <i class="fas fa-location-arrow text-mb-blue text-xl"></i>
+            <div>
+              <p class="text-sm text-gray-700">
+                Show listings near you in <strong>{{ geo.nearestCity() }}</strong
+                >?
+              </p>
+              <p class="text-xs text-gray-500">Detected from your location</p>
+            </div>
+          </div>
+          <div class="flex gap-2">
+            <button (click)="applyGeoCity()" class="btn btn-primary text-sm">Apply</button>
+            <button (click)="dismissGeoSuggestion()" class="btn btn-secondary text-sm">
+              Dismiss
+            </button>
           </div>
         </div>
-        <div class="flex gap-2">
-          <button (click)="applyGeoCity()" class="btn btn-primary text-sm">Apply</button>
-          <button (click)="dismissGeoSuggestion()" class="btn btn-secondary text-sm">Dismiss</button>
-        </div>
-      </div>
-    }
+      }
 
+      @if (selectedCategory()) {
+        <app-filter-chips-bar
+          [filters]="currentFilters()"
+          [states]="states()"
+          [matchCount]="matchCount()"
+          (filtersChange)="onFiltersChange($event)"
+          (openDrawer)="drawerOpen.set(true)"
+        >
+        </app-filter-chips-bar>
 
-    @if (selectedCategory()) {
-      <app-filter-chips-bar
-        [filters]="currentFilters()"
-        [states]="states()"
-        [matchCount]="matchCount()"
-        (filtersChange)="onFiltersChange($event)"
-        (openDrawer)="drawerOpen.set(true)">
-      </app-filter-chips-bar>
+        <app-filter-drawer
+          [open]="drawerOpen()"
+          [filters]="currentFilters()"
+          [states]="states()"
+          (close)="drawerOpen.set(false)"
+          (apply$)="onFiltersChange($event)"
+        >
+        </app-filter-drawer>
+      }
 
-      <app-filter-drawer
-        [open]="drawerOpen()"
-        [filters]="currentFilters()"
-        [states]="states()"
-        (close)="drawerOpen.set(false)"
-        (apply$)="onFiltersChange($event)">
-      </app-filter-drawer>
-    }
-
-    @if (listings().length > 0) {
-      <!-- Пока идёт запрос, на месте карточек стоят заглушки. Прежние
+      @if (listings().length > 0) {
+        <!-- Пока идёт запрос, на месте карточек стоят заглушки. Прежние
            объявления, даже приглушённые, читались как содержимое нового
            раздела или страницы. Мест столько же, сколько объявлений в
            ответе, поэтому высота не меняется и лента не дёргается -->
-      <div class="relative">
-        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 xl:grid-cols-5 gap-6 mt-4">
-          @if (pagingNow() || (loading() && !loadingMore())) {
-            @for (i of pageSlots; track i) {
-              <div class="bg-white shadow-md overflow-hidden">
-                <div class="h-48 sm:h-64 bg-gray-200 animate-pulse"></div>
-                <div class="p-4">
-                  <div class="h-4 bg-gray-200 rounded animate-pulse mb-3 w-3/4"></div>
-                  <div class="h-3 bg-gray-200 rounded animate-pulse mb-2 w-1/2"></div>
-                  <div class="h-3 bg-gray-200 rounded animate-pulse w-1/3"></div>
+        <div class="relative">
+          <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 xl:grid-cols-5 gap-6 mt-4">
+            @if (pagingNow() || (loading() && !loadingMore())) {
+              @for (i of pageSlots; track i) {
+                <div class="bg-white shadow-md overflow-hidden">
+                  <div class="h-48 sm:h-64 bg-gray-200 animate-pulse"></div>
+                  <div class="p-4">
+                    <div class="h-4 bg-gray-200 rounded animate-pulse mb-3 w-3/4"></div>
+                    <div class="h-3 bg-gray-200 rounded animate-pulse mb-2 w-1/2"></div>
+                    <div class="h-3 bg-gray-200 rounded animate-pulse w-1/3"></div>
+                  </div>
                 </div>
-              </div>
+              }
+            } @else {
+              @for (listing of listings(); track listing.id) {
+                <app-listing-card [listing]="listing"></app-listing-card>
+              }
             }
-          } @else {
-            @for (listing of listings(); track listing.id) {
-              <app-listing-card [listing]="listing"></app-listing-card>
-            }
-          }
-          <!-- Пока идёт подгрузка — скелеты на месте будущих карточек: ряд не
+            <!-- Пока идёт подгрузка — скелеты на месте будущих карточек: ряд не
                обрывается пустотой, и видно, куда встанут новые -->
-          @if (loadingMore()) {
-            @for (i of [1,2,3,4,5,6,7,8,9,11,12,13,14,15,16,17,18,19,20,21]; track i) {
-              <div class="bg-white shadow-md overflow-hidden">
-                <div class="h-48 sm:h-64 bg-gray-200 animate-pulse"></div>
-                <div class="p-4">
-                  <div class="h-4 bg-gray-200 rounded animate-pulse mb-3 w-3/4"></div>
-                  <div class="h-3 bg-gray-200 rounded animate-pulse mb-2 w-1/2"></div>
-                  <div class="h-3 bg-gray-200 rounded animate-pulse w-1/3"></div>
+            @if (loadingMore()) {
+              @for (
+                i of [1, 2, 3, 4, 5, 6, 7, 8, 9, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21];
+                track i
+              ) {
+                <div class="bg-white shadow-md overflow-hidden">
+                  <div class="h-48 sm:h-64 bg-gray-200 animate-pulse"></div>
+                  <div class="p-4">
+                    <div class="h-4 bg-gray-200 rounded animate-pulse mb-3 w-3/4"></div>
+                    <div class="h-3 bg-gray-200 rounded animate-pulse mb-2 w-1/2"></div>
+                    <div class="h-3 bg-gray-200 rounded animate-pulse w-1/3"></div>
+                  </div>
                 </div>
-              </div>
+              }
             }
-          }
+          </div>
         </div>
 
-      </div>
+        @if (!searchQuery && !selectedCategory() && totalPages() > 1) {
+          <nav
+            class="py-8 flex justify-center items-center gap-1 flex-wrap"
+            aria-label="Pagination"
+          >
+            <button
+              (click)="goToPage(currentPage() - 1)"
+              [disabled]="currentPage() <= 1"
+              class="px-3 py-2 rounded-lg text-sm font-medium transition disabled:opacity-40 disabled:cursor-not-allowed hover:bg-gray-100 text-gray-700"
+              aria-label="Previous page"
+            >
+              <i class="fas fa-chevron-left"></i>
+            </button>
 
-      @if (!searchQuery && !selectedCategory() && totalPages() > 1) {
-        <nav class="py-8 flex justify-center items-center gap-1 flex-wrap" aria-label="Pagination">
-          <button (click)="goToPage(currentPage() - 1)"
-                  [disabled]="currentPage() <= 1"
-                  class="px-3 py-2 rounded-lg text-sm font-medium transition disabled:opacity-40 disabled:cursor-not-allowed hover:bg-gray-100 text-gray-700"
-                  aria-label="Previous page">
-            <i class="fas fa-chevron-left"></i>
-          </button>
-
-          @for (p of pageNumbers(); track $index) {
-            @if (p === 0) {
-              <span class="px-2 text-gray-400">…</span>
-            } @else {
-              <button (click)="goToPage(p)"
-                      class="min-w-[2.5rem] px-3 py-2 rounded-lg text-sm font-medium transition"
-                      [class.bg-mb-blue]="p === currentPage()"
-                      [class.text-white]="p === currentPage()"
-                      [class.text-gray-700]="p !== currentPage()"
-                      [class.hover:bg-gray-100]="p !== currentPage()"
-                      [attr.aria-current]="p === currentPage() ? 'page' : null">
-                {{ p }}
-              </button>
+            @for (p of pageNumbers(); track $index) {
+              @if (p === 0) {
+                <span class="px-2 text-gray-400">…</span>
+              } @else {
+                <button
+                  (click)="goToPage(p)"
+                  class="min-w-[2.5rem] px-3 py-2 rounded-lg text-sm font-medium transition"
+                  [class.bg-mb-blue]="p === currentPage()"
+                  [class.text-white]="p === currentPage()"
+                  [class.text-gray-700]="p !== currentPage()"
+                  [class.hover:bg-gray-100]="p !== currentPage()"
+                  [attr.aria-current]="p === currentPage() ? 'page' : null"
+                >
+                  {{ p }}
+                </button>
+              }
             }
+
+            <button
+              (click)="goToPage(currentPage() + 1)"
+              [disabled]="currentPage() >= totalPages()"
+              class="px-3 py-2 rounded-lg text-sm font-medium transition disabled:opacity-40 disabled:cursor-not-allowed hover:bg-gray-100 text-gray-700"
+              aria-label="Next page"
+            >
+              <i class="fas fa-chevron-right"></i>
+            </button>
+          </nav>
+          @if (!searchQuery && totalLabel()) {
+            <p class="text-center text-sm text-gray-500 -mt-4 pb-8">{{ totalLabel() }}</p>
           }
-
-          <button (click)="goToPage(currentPage() + 1)"
-                  [disabled]="currentPage() >= totalPages()"
-                  class="px-3 py-2 rounded-lg text-sm font-medium transition disabled:opacity-40 disabled:cursor-not-allowed hover:bg-gray-100 text-gray-700"
-                  aria-label="Next page">
-            <i class="fas fa-chevron-right"></i>
-          </button>
-        </nav>
-        @if (!searchQuery && totalLabel()) {
-          <p class="text-center text-sm text-gray-500 -mt-4 pb-8">{{ totalLabel() }}</p>
         }
-      }
 
-      <!-- Внутри категории — подгрузка кнопкой с полосой хода: человек листает
+        <!-- Внутри категории — подгрузка кнопкой с полосой хода: человек листает
            один раздел подряд, и номера страниц ему ни к чему. На главной
            номера остаются: там переходят к нужной странице сразу -->
-      @if ((selectedCategory() || searchQuery) && listings().length > 0 && (hasMore() || listings().length > 20)) {
-        <div class="py-8 flex flex-col items-center gap-2 max-w-xs mx-auto w-full">
-          @if (matchCount()) {
-            <p class="text-sm text-gray-600">
-              You've viewed <strong>{{ listings().length | number }}</strong>
-              of {{ matchCount()!.count | number }} listings
-            </p>
-            <div class="w-full h-1.5 bg-gray-200 rounded-full overflow-hidden">
-              <div class="h-full bg-mb-dark rounded-full transition-all duration-300"
-                   [style.width.%]="viewedPercent()"></div>
-            </div>
-          }
+        @if (
+          (selectedCategory() || searchQuery) &&
+          listings().length > 0 &&
+          (hasMore() || listings().length > 20)
+        ) {
+          <div class="py-8 flex flex-col items-center gap-2 max-w-xs mx-auto w-full">
+            @if (matchCount()) {
+              <p class="text-sm text-gray-600">
+                You've viewed <strong>{{ listings().length | number }}</strong> of
+                {{ matchCount()!.count | number }} listings
+              </p>
+              <div class="w-full h-1.5 bg-gray-200 rounded-full overflow-hidden">
+                <div
+                  class="h-full bg-mb-dark rounded-full transition-all duration-300"
+                  [style.width.%]="viewedPercent()"
+                ></div>
+              </div>
+            }
 
-          @if (hasMore() && !loadingMore()) {
-            <button (click)="loadMore()"
-                    [disabled]="loadingMore()"
-                    class="mt-1 text-mb-blue hover:text-blue-700 text-sm disabled:opacity-50">
-              Show more
-            </button>
-          }
-        </div>
+            @if (hasMore() && !loadingMore()) {
+              <button
+                (click)="loadMore()"
+                [disabled]="loadingMore()"
+                class="mt-1 text-mb-blue hover:text-blue-700 text-sm disabled:opacity-50"
+              >
+                Show more
+              </button>
+            }
+          </div>
+        }
       }
-    }
-    <!-- Скелет только при первой загрузке, когда показывать ещё нечего. Смена
+      <!-- Скелет только при первой загрузке, когда показывать ещё нечего. Смена
          страницы или отбора обходится приглушением прежних карточек и кружком
          поверх них — он рисуется в блоке выше -->
-    @if (loading() && listings().length === 0) {
-      <app-skeleton-loader variant="listing-grid" [count]="10"></app-skeleton-loader>
+      @if (loading() && listings().length === 0) {
+        <app-skeleton-loader variant="listing-grid" [count]="10"></app-skeleton-loader>
       }
 
-    <!-- Пусто только когда и правда пусто: при догрузке и смене страницы
+      <!-- Пусто только когда и правда пусто: при догрузке и смене страницы
          список на миг опорожняется, и надпись выскакивала под номерами
          поверх уже показанных карточек.
          isBrowser обязателен: на сервере отбор не запускался, список пуст
          всегда, и надпись уходила в отданный HTML - её видно до того, как
          браузер подхватит страницу -->
-    @if (isBrowser && !loading() && !loadingMore() && !pagingNow() && listings().length === 0) {
-      <div class="text-center py-12"><p class="text-gray-500 text-lg">No listings found.</p></div>
-    }
+      @if (isBrowser && !loading() && !loadingMore() && !pagingNow() && listings().length === 0) {
+        <div class="text-center py-12"><p class="text-gray-500 text-lg">No listings found.</p></div>
+      }
     </div>
-  `
+  `,
 })
 export class HomeComponent implements OnInit, OnDestroy {
   @ViewChild('listingsAnchor') listingsAnchor?: ElementRef<HTMLElement>;
@@ -367,9 +452,16 @@ export class HomeComponent implements OnInit, OnDestroy {
   /** Сужен ли показ хоть чем-нибудь: без этого считать нечего. */
   hasNarrowing = (): boolean => {
     const adv = this.advancedFilters();
-    return !!(this.selectedCategory() || this.cityFilter || this.searchQuery
-      || adv.price_min !== undefined || adv.price_max !== undefined
-      || adv.has_image || adv.posted_within || adv.seller_type);
+    return !!(
+      this.selectedCategory() ||
+      this.cityFilter ||
+      this.searchQuery ||
+      adv.price_min !== undefined ||
+      adv.price_max !== undefined ||
+      adv.has_image ||
+      adv.posted_within ||
+      adv.seller_type
+    );
   };
   subcategories = signal<Subcategory[]>([]);
   subsubcategories = signal<Subcategory[]>([]);
@@ -439,7 +531,7 @@ export class HomeComponent implements OnInit, OnDestroy {
       city: this.cityFilter || undefined,
       category: this.selectedCategory() || undefined,
       sort: (this.sortBy as any) || 'newest',
-      ...this.advancedFilters()
+      ...this.advancedFilters(),
     };
   }
 
@@ -451,14 +543,14 @@ export class HomeComponent implements OnInit, OnDestroy {
     this.api.getCategories().subscribe({ error: () => {} });
     this.api.getCities().subscribe({
       next: (data) => this.cities.set(data),
-      error: () => this.cities.set([])
+      error: () => this.cities.set([]),
     });
     this.api.getStates().subscribe({
       next: (data) => this.states.set(data),
-      error: () => this.states.set([])
+      error: () => this.states.set([]),
     });
 
-    this.route.queryParams.subscribe(params => {
+    this.route.queryParams.subscribe((params) => {
       // Переход в категорию не меняет маршрут, только параметры запроса, и
       // компонент остаётся тем же. Без очистки объявления прежнего раздела
       // висят на экране, пока грузится новый: сначала пропадают плитки и hero,
@@ -576,21 +668,22 @@ export class HomeComponent implements OnInit, OnDestroy {
     }
 
     const title = parts.length > 0 ? parts.join(' — ') : 'Buy & Sell in 50 US States';
-    const description = parts.length > 0
-      ? `Browse ${parts.join(', ')} listings on MoneyBay. Free classifieds across 50 US states.`
-      : 'Free classifieds marketplace for buying and selling items, services, jobs, and real estate across 51 cities in the United States.';
+    const description =
+      parts.length > 0
+        ? `Browse ${parts.join(', ')} listings on MoneyBay. Free classifieds across 50 US states.`
+        : 'Free classifieds marketplace for buying and selling items, services, jobs, and real estate across 51 cities in the United States.';
 
     this.seo.update({
       title,
       description,
       keywords: keywords.join(', '),
-      type: 'website'
+      type: 'website',
     });
   }
 
   loadHierarchy(): void {
     if (this.selectedCategory()) {
-      const cat = this.categories().find(c => c.slug === this.selectedCategory()) || null;
+      const cat = this.categories().find((c) => c.slug === this.selectedCategory()) || null;
       this.currentCategory.set(cat);
 
       this.api.getSubcategories(this.selectedCategory()!).subscribe({
@@ -605,13 +698,14 @@ export class HomeComponent implements OnInit, OnDestroy {
                 next: (children: Subcategory[]) => {
                   this.subsubcategories.set(children || []);
                   if (this.selectedSubSub()) {
-                    const ss = (children || []).find(c => c.slug === this.selectedSubSub()) || null;
+                    const ss =
+                      (children || []).find((c) => c.slug === this.selectedSubSub()) || null;
                     this.currentSubSub.set(ss);
                   } else {
                     this.currentSubSub.set(null);
                   }
                 },
-                error: () => this.subsubcategories.set([])
+                error: () => this.subsubcategories.set([]),
               });
             }
           } else {
@@ -620,7 +714,7 @@ export class HomeComponent implements OnInit, OnDestroy {
             this.subsubcategories.set([]);
           }
         },
-        error: () => this.subcategories.set([])
+        error: () => this.subcategories.set([]),
       });
     } else {
       this.subcategories.set([]);
@@ -658,7 +752,7 @@ export class HomeComponent implements OnInit, OnDestroy {
       const { page, sort, ...countParams } = params;
       this.api.getMatchCount(countParams).subscribe({
         next: (r) => this.matchCount.set(r),
-        error: () => this.matchCount.set(null)
+        error: () => this.matchCount.set(null),
       });
     }
 
@@ -680,7 +774,7 @@ export class HomeComponent implements OnInit, OnDestroy {
       next: (data) => {
         const incoming = data.listings || [];
         // Подгрузка добавляет к показанным, обычная загрузка заменяет
-        this.listings.update(prev => append ? [...prev, ...incoming] : incoming);
+        this.listings.update((prev) => (append ? [...prev, ...incoming] : incoming));
         this.loading.set(false);
         // Сбрасывался только в ветви ошибки: после удачного ответа признак
         // оставался поднятым, кнопка запиралась и скелеты висели навсегда
@@ -707,7 +801,7 @@ export class HomeComponent implements OnInit, OnDestroy {
           this.loading.set(false);
         }
         this.hasMore.set(false);
-      }
+      },
     });
   }
 
@@ -738,7 +832,7 @@ export class HomeComponent implements OnInit, OnDestroy {
   loadMore(): void {
     if (this.loadingMore() || !this.hasMore()) return;
     this.loadingMore.set(true);
-    this.currentPage.update(p => p + 1);
+    this.currentPage.update((p) => p + 1);
     this.loadListings(true);
   }
 
@@ -746,7 +840,7 @@ export class HomeComponent implements OnInit, OnDestroy {
   viewedPercent = (): number => {
     const total = this.matchCount()?.count ?? 0;
     if (total <= 0) return 0;
-    return Math.min(100, Math.round(this.listings().length / total * 100));
+    return Math.min(100, Math.round((this.listings().length / total) * 100));
   };
 
   goToPage(page: number): void {
@@ -758,17 +852,19 @@ export class HomeComponent implements OnInit, OnDestroy {
     // Прокрутка после перехода, а не до: смена адреса включает восстановление
     // положения (scrollPositionRestoration), которое ставит страницу в начало и
     // перебивает вызов, сделанный раньше.
-    this.router.navigate([], {
-      relativeTo: this.route,
-      queryParams: { page: page > 1 ? page : null },
-      queryParamsHandling: 'merge'
-    }).then(() => {
-      if (typeof window !== 'undefined') {
-        // Заглушка уже на месте и занимает высоту списка, поэтому якорь стоит
-        // там же, где встанет после прихода данных
-        requestAnimationFrame(() => this.scrollToListings());
-      }
-    });
+    this.router
+      .navigate([], {
+        relativeTo: this.route,
+        queryParams: { page: page > 1 ? page : null },
+        queryParamsHandling: 'merge',
+      })
+      .then(() => {
+        if (typeof window !== 'undefined') {
+          // Заглушка уже на месте и занимает высоту списка, поэтому якорь стоит
+          // там же, где встанет после прихода данных
+          requestAnimationFrame(() => this.scrollToListings());
+        }
+      });
   }
 
   private pendingScroll = false;
