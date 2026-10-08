@@ -12,7 +12,7 @@ MoneyBay project is built in Enterprise using strict typing and preserving inher
 
 - **Java 25**
 - **Amazon Corretto** — сборка OpenJDK от Amazon
-- **Spring Boot 3.5.0** — web framework
+- **Spring Boot 4.1.1** — web framework
 - **Spring Data JPA + Hibernate 6** — ORM для базы данных
 - **Spring Security** — аутентификация и авторизация
 - **jjwt 0.12.6** — JWT токены
@@ -28,7 +28,7 @@ MoneyBay project is built in Enterprise using strict typing and preserving inher
 ### Frontend (TypeScript)
 
 - **TypeScript 5.9** — type-safe JavaScript
-- **Angular 21.2** — SPA framework (standalone components, signals, SSR, Service Worker)
+- **Angular 22.2** — SPA framework (standalone components, signals, SSR, Service Worker)
 - **Tailwind CSS 3.4** — utility-first CSS framework
 - **SASS 1.99** — CSS preprocessor для UGC контента
 - **PostCSS 8.5** — CSS transformations
@@ -574,7 +574,7 @@ Moneybay/
 ├── ngsw-config.json                   # Angular Service Worker конфиг
 ├── proxy.conf.json                    # Proxy для локальной разработки
 │
-├── src/                               # FRONTEND (Angular 21)
+├── src/                               # FRONTEND (Angular 22)
 │   ├── app/
 │   │   ├── components/                # Переиспользуемые компоненты
 │   │   │   ├── header/               # Шапка сайта
@@ -645,7 +645,7 @@ Moneybay/
 │   ├── index.html                    # HTML шаблон
 │   └── favicon.ico                   # Favicon
 │
-├── backend/                           # BACKEND (Spring Boot 3.5)
+├── backend/                           # BACKEND (Spring Boot 4.1)
 │   ├── src/main/java/us/moneybay/
 │   │   ├── controller/               # REST контроллеры
 │   │   │   ├── ListingController.java
@@ -726,8 +726,8 @@ Moneybay/
 
 | Слой | Технология | Порт | Где размещено |
 |------|-----------|------|---------|
-| Frontend | Angular 21 + Tailwind CSS | 1100 (dev), 443 (prod) | Cloudflare Workers (SSR) |
-| Backend | Spring Boot 3.5 + Spring Security | 8080 | AWS ECS Fargate (ARM64) |
+| Frontend | Angular 22 + Tailwind CSS | 1100 (dev), 443 (prod) | Cloudflare Workers (SSR) |
+| Backend | Spring Boot 4.1 + Spring Security | 8080 | AWS ECS Fargate (ARM64) |
 | База | PostgreSQL 18 | 5432 | AWS RDS |
 | Обмен сообщениями | WebSocket STOMP | 8080 | AWS ECS Fargate (ARM64) |
 | Фотографии | Cloudflare R2 | - | Cloudflare CDN |
@@ -1180,6 +1180,92 @@ GET /api/us-cities?state=TX&q=San   → San Antonio, San Angelo, San Marcos
 `backend/src/main/resources/db/migration`. Они применяются при запуске, учёт ведётся в
 таблице `flyway_schema_history`. Данные городов заливает `V2__us_cities_data.sql`;
 повторный запуск безопасен — вставляются только отсутствующие записи.
+
+## Переход на Spring Boot 4 и Angular 22
+
+Сделан 8 октября 2026: Spring Boot 3.5.0 → 4.1.1, Angular 21.2.19 → 22.2.2.
+Обе ветки собраны порознь, проверены и сведены в `main` вместе.
+
+**Зачем.** Ради уязвимостей и поддержки, не ради нового. Spring Boot 3.5 вышел
+из бесплатной поддержки, Angular 21 ушёл бы следом. Скорости переход не
+прибавил, расход не изменил.
+
+### Что пришлось поправить в Spring Boot
+
+| Что | Было | Стало |
+|---|---|---|
+| `WebMvcTest`, `AutoConfigureMockMvc` | `spring-boot-test-autoconfigure` | отдельный модуль `spring-boot-webmvc-test` |
+| `SecurityAutoConfiguration` | `org.springframework.boot.autoconfigure.security.servlet` | `org.springframework.boot.security.autoconfigure` |
+| `SecurityFilterAutoConfiguration` | там же | `org.springframework.boot.security.autoconfigure.web.servlet` |
+| `CacheManager` | настраивался сам | нужен `spring-boot-starter-cache`; в срез `@WebMvcTest` импортируется `CacheAutoConfiguration` |
+
+Без `spring-boot-starter-cache` приложение не поднималось вовсе: оно помечено
+`@EnableCaching`, а кэш применяется в `KeywordFilterService` и
+`UserRatingService`.
+
+### Что сломалось на production и чем чинилось
+
+`/api/listings/facets` отвечал 500 — счётчики категорий в боковой панели.
+Hibernate 7 понимает возвращаемый тип `Object[]` как перечень строк и отдаёт
+массив массивов, отчего приведение `stats[0]` к `Number` падало с
+`ClassCastException`.
+
+Объявлено `List<Object[]>` с взятием первой строки. Остальные семь родных
+запросов проверены — таких больше нет.
+
+**Тесты этого не ловят:** запрос родной, а в тестах база не поднимается.
+Проверять такие места после смены версии Hibernate — только на работающем
+сервере.
+
+### Что пришлось поправить в Angular
+
+`ng update` перенёс код сам — правлено 52 файла, сборка прошла без ошибок.
+Отрисовка на сервере уцелела: `SsrAwaitService` с `PendingTasks` работает и в
+22-й версии.
+
+Единственный тест был заготовочным — проверял заголовок
+«Hello, moneybay-angular», которого на площадке никогда не было. Переписан на
+проверку шапки и подвала; корневой компонент в 22-й версии не получает службы
+сам, и без `provideServiceWorker` падал с `NG0201`.
+
+### Уязвимости
+
+Закрыты все по Angular, включая обход пути в SSR и обход очистки через
+привязки — обе высокой важности. Критическая в `proxy-addr` закрыта через
+`npm audit fix`; она доходила до production через `express`, на котором держится
+отрисовка.
+
+Осталось пять в `tailwindcss` и его зависимостях. Tailwind лежит в
+`devDependencies`: превращается в готовый CSS при сборке и на сервер не
+попадает.
+
+### Что нового в этих версиях
+
+**Angular 22** Google называет «началом эры сигналов». Сами сигналы появились
+ещё в 16-й, но до 22-й оставались добавкой: формы, перерисовка и отказ от
+`zone.js` работали мимо них. Теперь сигналы — устройство, а не возможность.
+
+| Что | Применяется ли здесь |
+|---|---|
+| Формы на сигналах вместо `ReactiveForms` | нет, формы прежние |
+| Компоненты без селекторов | нет |
+| `OnPush` по умолчанию | только для новых компонентов |
+| Отказ от `zone.js` | да, он убран и прежде — отсюда `SsrAwaitService` |
+| Vitest вместо Karma, поддержка Jest убрана | да, проверки идут через `ng test` |
+| Поддержка MCP в командной строке | нет |
+
+**Spring Boot 4.1** построен на Spring Framework 7.
+
+| Что | Применяется ли здесь |
+|---|---|
+| Встроенный gRPC | нет, один сервер |
+| Защита от SSRF через `InetAddressFilter` | работает сама |
+| Ротация записей Log4j из коробки | нет |
+| Hibernate 7 | да — он и сломал `facets` |
+| Разделение модулей: что приходило само, теперь просят отдельно | да — отсюда четыре правки выше |
+
+Из нового код не пользуется почти ничем: он написан по-старому и работает как
+прежде. Возможности лежат про запас.
 
 ## Testing
 
