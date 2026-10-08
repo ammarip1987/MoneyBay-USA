@@ -1,41 +1,78 @@
 <!doctype html>
 <html lang="en">
-<head>
-  <meta charset="utf-8">
-  <title>MoneyBay — Buy & Sell</title>
-  <base href="/">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <meta name="theme-color" content="#002f34">
-  <meta name="application-name" content="MoneyBay">
-  <meta name="apple-mobile-web-app-capable" content="yes">
-  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-  <meta name="apple-mobile-web-app-title" content="MoneyBay">
-  <meta name="mobile-web-app-capable" content="yes">
-  <link rel="icon" type="image/png" href="icons/icons8-m-50.png">
-  <link rel="apple-touch-icon" href="icons/icons8-m-50.png">
-  <link rel="manifest" href="manifest.webmanifest">
-  <!-- Шрифт значков качается сразу, не дожидаясь таблицы стилей: без этого
+  <head>
+    <meta charset="utf-8" />
+    <title>MoneyBay — Buy & Sell</title>
+    <base href="/" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="theme-color" content="#002f34" />
+    <meta name="application-name" content="MoneyBay" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+    <meta name="apple-mobile-web-app-title" content="MoneyBay" />
+    <meta name="mobile-web-app-capable" content="yes" />
+    <link rel="icon" type="image/png" href="icons/icons8-m-50.png" />
+    <link rel="apple-touch-icon" href="icons/icons8-m-50.png" />
+    <link rel="manifest" href="manifest.webmanifest" />
+    <!-- Шрифт значков качается сразу, не дожидаясь таблицы стилей: без этого
        значки категорий пустовали долю секунды при каждой перезагрузке -->
-  <link rel="preload" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/webfonts/fa-solid-900.woff2" as="font" type="font/woff2" crossorigin>
-  <link rel="preload" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/webfonts/fa-brands-400.woff2" as="font" type="font/woff2" crossorigin>
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
-  <!-- Пометка о закрытой рекламной полосе ставится до первой отрисовки:
+    <link
+      rel="preload"
+      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/webfonts/fa-solid-900.woff2"
+      as="font"
+      type="font/woff2"
+      crossorigin
+    />
+    <link
+      rel="preload"
+      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/webfonts/fa-brands-400.woff2"
+      as="font"
+      type="font/woff2"
+      crossorigin
+    />
+    <link
+      rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css"
+    />
+    <!-- Пометка о закрытой рекламной полосе ставится до первой отрисовки:
        иначе полоса мелькала — показывалась и тут же пряталась, дёргая шапку.
        Прятать её через разметку Angular нельзя: серверная и браузерная версии
        разошлись бы, и связь с крестиком рвалась — это уже было -->
-  <script>try{if(localStorage.getItem('promo-closed')==='1'){document.documentElement.className+=' promo-off'}}catch(e){}</script>
-  <style>.promo-off .promo-strip{display:none}</style>
+    <script>
+      try {
+        if (localStorage.getItem('promo-closed') === '1') {
+          document.documentElement.className += ' promo-off';
+        }
+      } catch (e) {}
+    </script>
+    <style>
+      .promo-off .promo-strip {
+        display: none;
+      }
+    </style>
 
-  <!-- Google tag (gtag.js) -->
-  <script async src="https://www.googletagmanager.com/gtag/js?id=G-XR67987XF2"></script>
-  <script>
-    window.dataLayer = window.dataLayer || [];
-    function gtag(){dataLayer.push(arguments);}
-    gtag('js', new Date());
-    gtag('config', 'G-XR67987XF2');
-  </script>
-</head>
-<body>
-  <app-root></app-root>
-</body>
+    <!-- Google tag (gtag.js) -->
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-XR67987XF2"></script>
+    <script>
+      window.dataLayer = window.dataLayer || [];
+      function gtag() {
+        dataLayer.push(arguments);
+      }
+      gtag('js', new Date());
+      gtag('config', 'G-XR67987XF2');
+    </script>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500&display=swap"
+      rel="stylesheet"
+    />
+    <link
+      href="https://fonts.googleapis.com/icon?family=Material+Symbols+Outlined"
+      rel="stylesheet"
+    />
+  </head>
+  <body>
+    <app-root></app-root>
+  </body>
 </html>

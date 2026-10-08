@@ -1,11 +1,24 @@
 import { Component, ChangeDetectionStrategy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterLink } from '@angular/router';
+import { MatButtonModule } from '@angular/material/button';
+import { MatCardModule } from '@angular/material/card';
+import { MatIconModule } from '@angular/material/icon';
+import { MatInputModule } from '@angular/material/input';
+import { MatFormFieldModule } from '@angular/material/form-field';
 
 @Component({
   selector: 'app-about',
   standalone: true,
-  imports: [CommonModule, RouterLink],
+  imports: [
+    CommonModule,
+    RouterLink,
+    MatButtonModule,
+    MatCardModule,
+    MatIconModule,
+    MatInputModule,
+    MatFormFieldModule
+  ],
   changeDetection: ChangeDetectionStrategy.Eager,
   template: `
     <div class="max-w-4xl mx-auto px-4 py-12 min-page">
@@ -78,6 +91,40 @@ import { RouterLink } from '@angular/router';
         >
           Start Browsing →
         </a>
+      </div>
+
+      <!-- Angular Material на пробу: та же страница, другой набор.
+           Поставлено рядом с кнопкой выше, чтобы разница была видна на одном
+           экране. Убрать вместе с зависимостью, если не подойдёт -->
+      <div class="mt-16 border-t border-gray-200 pt-10">
+        <p class="text-center text-sm text-gray-400 mb-6">Angular Material — на пробу</p>
+
+        <div class="flex flex-wrap items-center justify-center gap-3 mb-8">
+          <button mat-flat-button color="primary">Start Browsing</button>
+          <button mat-stroked-button>Secondary</button>
+          <button mat-button>Plain</button>
+          <button mat-icon-button aria-label="Favourite">
+            <mat-icon>star</mat-icon>
+          </button>
+        </div>
+
+        <mat-card class="max-w-md mx-auto">
+          <mat-card-header>
+            <mat-card-title>Listing card</mat-card-title>
+            <mat-card-subtitle>Cranberry Township, PA</mat-card-subtitle>
+          </mat-card-header>
+          <mat-card-content>
+            <p class="mt-3">Как выглядит карточка в наборе Material рядом с нынешней.</p>
+            <mat-form-field appearance="outline" class="w-full mt-4">
+              <mat-label>Search</mat-label>
+              <input matInput placeholder="What are you looking for?" />
+            </mat-form-field>
+          </mat-card-content>
+          <mat-card-actions>
+            <button mat-button>Save</button>
+            <button mat-button>Flag</button>
+          </mat-card-actions>
+        </mat-card>
       </div>
     </div>
   `,
