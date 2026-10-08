@@ -1,7 +1,18 @@
-import { ApplicationConfig, isDevMode, provideBrowserGlobalErrorListeners, provideAppInitializer, inject } from '@angular/core';
+import {
+  ApplicationConfig,
+  isDevMode,
+  provideBrowserGlobalErrorListeners,
+  provideAppInitializer,
+  inject,
+} from '@angular/core';
 import { provideRouter, withInMemoryScrolling } from '@angular/router';
 import { provideHttpClient, withInterceptors, withFetch } from '@angular/common/http';
-import { provideClientHydration, withEventReplay, withHttpTransferCacheOptions } from '@angular/platform-browser';
+import {
+  provideClientHydration,
+  withEventReplay,
+  withHttpTransferCacheOptions,
+  withNoIncrementalHydration,
+} from '@angular/platform-browser';
 import { provideServiceWorker } from '@angular/service-worker';
 
 import { routes } from './app.routes';
@@ -15,28 +26,37 @@ export const appConfig: ApplicationConfig = {
   providers: [
     provideBrowserGlobalErrorListeners(),
     // Возврат из объявления возвращает ленту на прежнее место, а не наверх
-    provideRouter(routes, withInMemoryScrolling({
-      scrollPositionRestoration: 'enabled',
-      anchorScrolling: 'enabled'
-    })),
-    provideHttpClient(withFetch(), withInterceptors([authInterceptor, cityContextInterceptor, errorInterceptor])),
+    provideRouter(
+      routes,
+      withInMemoryScrolling({
+        scrollPositionRestoration: 'enabled',
+        anchorScrolling: 'enabled',
+      }),
+    ),
+    provideHttpClient(
+      withFetch(),
+      withInterceptors([authInterceptor, cityContextInterceptor, errorInterceptor]),
+    ),
     // Ответы, полученные на сервере, передаются в браузер вместе со страницей.
     // Без этого браузер запрашивал категории заново, и пока запрос шёл,
     // готовые плитки со значками стирались и ставились обратно — это и было
     // мигание при обновлении страницы
     provideClientHydration(
       withEventReplay(),
-      withHttpTransferCacheOptions({ includePostRequests: false })
+      withHttpTransferCacheOptions({ includePostRequests: false }),
+      withNoIncrementalHydration(),
     ),
     provideServiceWorker('ngsw-worker.js', {
       enabled: !isDevMode(),
       // No automatic registration on page load: the SW registers only when
       // swRegistrationTrigger$ emits (user clicks "Find listings near me")
-      registrationStrategy: () => swRegistrationTrigger$
+      registrationStrategy: () => swRegistrationTrigger$,
     }),
     // Служба входа поднимается при запуске, а не когда её впервые запросят:
     // без этого обновление токена по куке не шло вовсе, и после перезагрузки
     // страницы человек оказывался снаружи, хотя кука была цела
-    provideAppInitializer(() => { inject(AuthService); })
-  ]
+    provideAppInitializer(() => {
+      inject(AuthService);
+    }),
+  ],
 };

@@ -1,4 +1,4 @@
-import { Component, inject, OnInit } from '@angular/core';
+import { Component, inject, OnInit, ChangeDetectionStrategy } from '@angular/core';
 import { RouterLink } from '@angular/router';
 import { SeoService } from '../../services/seo.service';
 import { AuthService } from '../../services/auth.service';
@@ -7,6 +7,7 @@ import { AuthService } from '../../services/auth.service';
   selector: 'app-forbidden',
   standalone: true,
   imports: [RouterLink],
+  changeDetection: ChangeDetectionStrategy.Eager,
   template: `
     <div class="min-h-[calc(100vh-200px)] flex items-center justify-center px-4 py-12">
       <div class="max-w-md text-center">
@@ -24,16 +25,14 @@ import { AuthService } from '../../services/auth.service';
               <i class="fas fa-sign-in-alt mr-2"></i> Log In
             </a>
           }
-          <a routerLink="/" class="btn btn-secondary">
-            <i class="fas fa-home mr-2"></i> Home
-          </a>
+          <a routerLink="/" class="btn btn-secondary"> <i class="fas fa-home mr-2"></i> Home </a>
           <a routerLink="/contact" class="btn btn-secondary">
             <i class="fas fa-envelope mr-2"></i> Contact Support
           </a>
         </div>
       </div>
     </div>
-  `
+  `,
 })
 export class ForbiddenComponent implements OnInit {
   private seo = inject(SeoService);
@@ -43,7 +42,7 @@ export class ForbiddenComponent implements OnInit {
     this.seo.update({
       title: 'Access Forbidden',
       description: 'You do not have permission to access this resource',
-      noindex: true
+      noindex: true,
     });
   }
 }

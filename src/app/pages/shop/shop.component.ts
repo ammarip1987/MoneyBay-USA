@@ -1,4 +1,11 @@
-import { Component, OnInit, inject, signal, PLATFORM_ID } from '@angular/core';
+import {
+  Component,
+  OnInit,
+  inject,
+  signal,
+  PLATFORM_ID,
+  ChangeDetectionStrategy,
+} from '@angular/core';
 import { CommonModule, isPlatformBrowser } from '@angular/common';
 import { ActivatedRoute, RouterLink } from '@angular/router';
 import { ApiService } from '../../services/api.service';
@@ -12,23 +19,38 @@ import { SeoService } from '../../services/seo.service';
   selector: 'app-shop',
   standalone: true,
   imports: [CommonModule, RouterLink, ListingCardComponent],
+  changeDetection: ChangeDetectionStrategy.Eager,
   template: `
     <div class="min-page">
       @if (store()) {
         <!-- Обложка -->
-        <div class="h-48 sm:h-64 bg-gradient-to-r from-mb-blue to-mb-cyan -mx-4 mb-0 overflow-hidden">
+        <div
+          class="h-48 sm:h-64 bg-gradient-to-r from-mb-blue to-mb-cyan -mx-4 mb-0 overflow-hidden"
+        >
           @if (store()!.bannerUrl) {
-            <img [src]="api.imageUrl(store()!.bannerUrl)" alt="" class="w-full h-full object-cover">
+            <img
+              [src]="api.imageUrl(store()!.bannerUrl)"
+              alt=""
+              class="w-full h-full object-cover"
+            />
           }
         </div>
 
         <div class="bg-white rounded-2xl shadow-lg -mt-12 relative z-10 p-6 sm:p-8 mb-8">
           <div class="flex items-start gap-5 flex-wrap">
-            <div class="w-24 h-24 rounded-2xl overflow-hidden flex-shrink-0 bg-gradient-to-br from-mb-blue to-mb-cyan flex items-center justify-center -mt-16 border-4 border-white shadow-md">
+            <div
+              class="w-24 h-24 rounded-2xl overflow-hidden flex-shrink-0 bg-gradient-to-br from-mb-blue to-mb-cyan flex items-center justify-center -mt-16 border-4 border-white shadow-md"
+            >
               @if (store()!.logoUrl) {
-                <img [src]="api.imageUrl(store()!.logoUrl)" alt="" class="w-full h-full object-cover">
+                <img
+                  [src]="api.imageUrl(store()!.logoUrl)"
+                  alt=""
+                  class="w-full h-full object-cover"
+                />
               } @else {
-                <span class="text-white text-3xl font-bold">{{ store()!.name[0].toUpperCase() }}</span>
+                <span class="text-white text-3xl font-bold">{{
+                  store()!.name[0].toUpperCase()
+                }}</span>
               }
             </div>
 
@@ -39,7 +61,9 @@ import { SeoService } from '../../services/seo.service';
                   <i class="fas fa-map-marker-alt mr-1 text-mb-blue"></i>{{ store()!.location }}
                 }
                 @if (store()!.hours) {
-                  <span class="ml-3"><i class="fas fa-clock mr-1 text-mb-blue"></i>{{ store()!.hours }}</span>
+                  <span class="ml-3"
+                    ><i class="fas fa-clock mr-1 text-mb-blue"></i>{{ store()!.hours }}</span
+                  >
                 }
               </p>
 
@@ -62,8 +86,12 @@ import { SeoService } from '../../services/seo.service';
                   }
                 }
                 @if (store()!.website) {
-                  <a [href]="store()!.website" target="_blank" rel="noopener noreferrer"
-                     class="btn btn-secondary text-sm">
+                  <a
+                    [href]="store()!.website"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    class="btn btn-secondary text-sm"
+                  >
                     <i class="fas fa-globe mr-2"></i>Website
                   </a>
                 }
@@ -96,7 +124,9 @@ import { SeoService } from '../../services/seo.service';
              "Storefront not found" уходила в отданный HTML -->
         <div class="flex items-center justify-center" style="min-height: 520px;">
           <span class="relative inline-flex items-center justify-center w-16 h-16">
-            <span class="absolute inset-0 border-4 border-mb-blue border-t-transparent rounded-full animate-spin"></span>
+            <span
+              class="absolute inset-0 border-4 border-mb-blue border-t-transparent rounded-full animate-spin"
+            ></span>
             <span class="text-2xl font-bold text-mb-blue select-none">M</span>
           </span>
         </div>
@@ -107,7 +137,7 @@ import { SeoService } from '../../services/seo.service';
         </div>
       }
     </div>
-  `
+  `,
 })
 export class ShopComponent implements OnInit {
   /** На сервере витрина ещё не загружена, и её отсутствие ничего не значит. */
@@ -136,10 +166,10 @@ export class ShopComponent implements OnInit {
         this.seo.update({
           title: data.storefront.name,
           description: (data.storefront.about || '').substring(0, 160),
-          type: 'website'
+          type: 'website',
         });
       },
-      error: () => this.loading.set(false)
+      error: () => this.loading.set(false),
     });
   }
 }

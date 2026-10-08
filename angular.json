@@ -18,9 +18,12 @@
           "builder": "@angular/build:application",
           "options": {
             "browser": "src/main.ts",
-              "server": "src/main.server.ts",
-              "ssr": { "entry": "src/server.worker.ts", "experimentalPlatform": "neutral" },
-              "externalDependencies": ["sockjs-client", "@stomp/stompjs"],
+            "server": "src/main.server.ts",
+            "ssr": {
+              "entry": "src/server.worker.ts",
+              "platform": "neutral"
+            },
+            "externalDependencies": ["sockjs-client", "@stomp/stompjs"],
             "outputMode": "server",
             "prerender": false,
             "tsConfig": "tsconfig.app.json",
@@ -35,13 +38,19 @@
                 "output": "/assets"
               }
             ],
-            "styles": [
-              "src/styles.css",
-              "src/ugc.scss"
-            ],
+            "styles": ["src/styles.css", "src/ugc.scss"],
             "inlineStyleLanguage": "scss",
             "security": {
-              "allowedHosts": ["localhost", "127.0.0.1", "newyork.localhost", "losangeles.localhost", "miami.localhost", "chicago.localhost", "moneybay.us", "moneybay.net"]
+              "allowedHosts": [
+                "localhost",
+                "127.0.0.1",
+                "newyork.localhost",
+                "losangeles.localhost",
+                "miami.localhost",
+                "chicago.localhost",
+                "moneybay.us",
+                "moneybay.net"
+              ]
             }
           },
           "configurations": {

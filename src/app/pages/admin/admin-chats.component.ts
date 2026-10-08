@@ -1,4 +1,4 @@
-import { Component, OnInit, signal } from '@angular/core';
+import { Component, OnInit, signal, ChangeDetectionStrategy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterLink } from '@angular/router';
 
@@ -16,6 +16,7 @@ interface AdminChat {
   selector: 'app-admin-chats',
   standalone: true,
   imports: [CommonModule, RouterLink],
+  changeDetection: ChangeDetectionStrategy.Eager,
   template: `
     <div class="max-w-7xl mx-auto px-4 py-8 min-page">
       <div class="flex justify-between items-center mb-8">
@@ -45,10 +46,12 @@ interface AdminChat {
               <td class="px-4 py-3">{{ chat.user1 }} ↔ {{ chat.user2 }}</td>
               <td class="px-4 py-3 text-gray-600">{{ chat.listing_title || '-' }}</td>
               <td class="px-4 py-3 text-gray-600 truncate max-w-xs">{{ chat.last_message }}</td>
-              <td class="px-4 py-3 text-gray-500">{{ chat.updated_at | date:'short' }}</td>
+              <td class="px-4 py-3 text-gray-500">{{ chat.updated_at | date: 'short' }}</td>
               <td class="px-4 py-3">{{ chat.message_count }}</td>
               <td class="px-4 py-3">
-                <a [routerLink]="['/admin/chat', chat.id]" class="text-mb-blue hover:underline">View</a>
+                <a [routerLink]="['/admin/chat', chat.id]" class="text-mb-blue hover:underline"
+                  >View</a
+                >
               </td>
             </tr>
           </tbody>
@@ -59,7 +62,7 @@ interface AdminChat {
         </div>
       </div>
     </div>
-  `
+  `,
 })
 export class AdminChatsComponent implements OnInit {
   chats = signal<AdminChat[]>([]);

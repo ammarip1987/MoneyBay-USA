@@ -1,10 +1,11 @@
-import { Component, Input } from '@angular/core';
+import { Component, Input, ChangeDetectionStrategy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 
 @Component({
   selector: 'app-skeleton-loader',
   standalone: true,
   imports: [CommonModule],
+  changeDetection: ChangeDetectionStrategy.Eager,
   template: `
     @switch (variant) {
       @case ('listing-card') {
@@ -111,10 +112,18 @@ import { CommonModule } from '@angular/common';
         <div class="h-4 bg-gray-200 rounded animate-pulse" [style.width.%]="width"></div>
       }
     }
-  `
+  `,
 })
 export class SkeletonLoaderComponent {
-  @Input() variant: 'listing-card' | 'listing-grid' | 'category-grid' | 'listing-detail' | 'text-lines' | 'avatar-card' | 'profile' | 'line' = 'line';
+  @Input() variant:
+    | 'listing-card'
+    | 'listing-grid'
+    | 'category-grid'
+    | 'listing-detail'
+    | 'text-lines'
+    | 'avatar-card'
+    | 'profile'
+    | 'line' = 'line';
   @Input() count = 8;
   @Input() width = 100;
 

@@ -1,4 +1,4 @@
-import { Component, OnInit, inject, signal } from '@angular/core';
+import { Component, OnInit, inject, signal, ChangeDetectionStrategy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ActivatedRoute, Router } from '@angular/router';
 import { ApiService } from '../../services/api.service';
@@ -14,34 +14,49 @@ interface PricingTier {
   selector: 'app-promote',
   standalone: true,
   imports: [CommonModule],
+  changeDetection: ChangeDetectionStrategy.Eager,
   template: `
     <div class="max-w-5xl mx-auto px-4 py-12 min-page">
       <div class="text-center mb-12">
         @if (justPosted()) {
           <!-- Приход сразу после публикации: сначала подтверждение, потом
                предложение — иначе выглядит как условие, а не как выбор -->
-          <div class="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-green-50 text-green-700 text-sm font-medium mb-6">
+          <div
+            class="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-green-50 text-green-700 text-sm font-medium mb-6"
+          >
             <i class="fas fa-circle-check"></i> Your listing is live
           </div>
           <h1 class="text-4xl font-bold text-mb-dark mb-4">Want more people to see it?</h1>
-          <p class="text-gray-600 text-lg">Boosted listings sit at the top of the feed and their category</p>
+          <p class="text-gray-600 text-lg">
+            Boosted listings sit at the top of the feed and their category
+          </p>
         } @else {
           <h1 class="text-4xl font-bold text-mb-dark mb-4">Boost Your Listing</h1>
-          <p class="text-gray-600 text-lg">Boosted listings sit at the top of the feed and their category</p>
+          <p class="text-gray-600 text-lg">
+            Boosted listings sit at the top of the feed and their category
+          </p>
         }
       </div>
 
       @if (error()) {
-        <div class="bg-red-50 border border-red-200 text-red-700 rounded-lg p-3 mb-6 text-sm max-w-2xl mx-auto">{{ error() }}</div>
+        <div
+          class="bg-red-50 border border-red-200 text-red-700 rounded-lg p-3 mb-6 text-sm max-w-2xl mx-auto"
+        >
+          {{ error() }}
+        </div>
       }
 
       <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
         @for (tier of tiers; track tier.hours) {
-          <div class="bg-white rounded-2xl shadow-lg p-8 border-2 relative"
-               [class.border-mb-blue]="tier.popular"
-               [class.border-gray-200]="!tier.popular">
+          <div
+            class="bg-white rounded-2xl shadow-lg p-8 border-2 relative"
+            [class.border-mb-blue]="tier.popular"
+            [class.border-gray-200]="!tier.popular"
+          >
             @if (tier.popular) {
-              <div class="absolute -top-3 left-1/2 -translate-x-1/2 bg-mb-blue text-white text-xs font-bold px-4 py-1 rounded-full">
+              <div
+                class="absolute -top-3 left-1/2 -translate-x-1/2 bg-mb-blue text-white text-xs font-bold px-4 py-1 rounded-full"
+              >
                 Most Popular
               </div>
             }
@@ -72,11 +87,13 @@ interface PricingTier {
               </li>
             </ul>
 
-            <button (click)="purchase(tier)"
-                    class="w-full btn"
-                    [class.btn-primary]="tier.popular"
-                    [class.btn-secondary]="!tier.popular"
-                    [disabled]="loading()">
+            <button
+              (click)="purchase(tier)"
+              class="w-full btn"
+              [class.btn-primary]="tier.popular"
+              [class.btn-secondary]="!tier.popular"
+              [disabled]="loading()"
+            >
               {{ loading() ? '...' : 'Boost Now' }}
             </button>
           </div>
@@ -93,7 +110,7 @@ interface PricingTier {
         Payment processed by Stripe. No subscription, one-time charge.
       </p>
     </div>
-  `
+  `,
 })
 export class PromoteComponent implements OnInit {
   private api = inject(ApiService);
@@ -109,7 +126,7 @@ export class PromoteComponent implements OnInit {
   tiers: PricingTier[] = [
     { hours: 24, price: 1.99, label: '24h Boost' },
     { hours: 48, price: 3.49, label: '48h Boost', popular: true },
-    { hours: 72, price: 4.99, label: '72h Boost' }
+    { hours: 72, price: 4.99, label: '72h Boost' },
   ];
 
   ngOnInit(): void {
@@ -137,7 +154,7 @@ export class PromoteComponent implements OnInit {
       error: (err) => {
         this.loading.set(false);
         this.error.set(err?.error?.message || 'Failed to start checkout');
-      }
+      },
     });
   }
 }

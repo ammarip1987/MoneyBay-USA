@@ -1,4 +1,14 @@
-import { Component, OnInit, OnDestroy, ViewChild, ElementRef, inject, signal, afterNextRender } from '@angular/core';
+import {
+  Component,
+  OnInit,
+  OnDestroy,
+  ViewChild,
+  ElementRef,
+  inject,
+  signal,
+  afterNextRender,
+  ChangeDetectionStrategy,
+} from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { HttpClient } from '@angular/common/http';
@@ -19,6 +29,7 @@ interface SupportMessage {
   selector: 'app-support-chat',
   standalone: true,
   imports: [CommonModule, FormsModule, SkeletonLoaderComponent],
+  changeDetection: ChangeDetectionStrategy.Eager,
   template: `
     <div class="max-w-3xl mx-auto px-4 py-8 min-page">
       <div class="bg-white rounded-2xl shadow-lg overflow-hidden">
@@ -42,16 +53,20 @@ interface SupportMessage {
           } @else {
             @for (msg of messages(); track msg.id) {
               <div class="flex" [class.justify-end]="!msg.is_admin">
-                <div class="max-w-[75%] rounded-2xl px-4 py-2 shadow"
-                     [class.bg-mb-blue]="!msg.is_admin"
-                     [class.text-white]="!msg.is_admin"
-                     [class.bg-white]="msg.is_admin"
-                     [class.text-gray-800]="msg.is_admin">
+                <div
+                  class="max-w-[75%] rounded-2xl px-4 py-2 shadow"
+                  [class.bg-mb-blue]="!msg.is_admin"
+                  [class.text-white]="!msg.is_admin"
+                  [class.bg-white]="msg.is_admin"
+                  [class.text-gray-800]="msg.is_admin"
+                >
                   <p class="text-sm whitespace-pre-wrap">{{ msg.content }}</p>
-                  <p class="text-xs mt-1"
-                     [class.text-blue-100]="!msg.is_admin"
-                     [class.text-gray-500]="msg.is_admin">
-                    {{ msg.is_admin ? 'Support · ' : '' }}{{ msg.created_at | date:'short' }}
+                  <p
+                    class="text-xs mt-1"
+                    [class.text-blue-100]="!msg.is_admin"
+                    [class.text-gray-500]="msg.is_admin"
+                  >
+                    {{ msg.is_admin ? 'Support · ' : '' }}{{ msg.created_at | date: 'short' }}
                   </p>
                 </div>
               </div>
@@ -60,16 +75,20 @@ interface SupportMessage {
         </div>
 
         <form (ngSubmit)="send()" class="p-4 border-t border-gray-200 flex gap-2">
-          <input type="text"
-                 [(ngModel)]="newMessage"
-                 name="content"
-                 placeholder="Type your message..."
-                 [disabled]="sending()"
-                 class="form-input flex-1"
-                 required>
-          <button type="submit"
-                  [disabled]="!newMessage.trim() || sending()"
-                  class="btn btn-primary px-6">
+          <input
+            type="text"
+            [(ngModel)]="newMessage"
+            name="content"
+            placeholder="Type your message..."
+            [disabled]="sending()"
+            class="form-input flex-1"
+            required
+          />
+          <button
+            type="submit"
+            [disabled]="!newMessage.trim() || sending()"
+            class="btn btn-primary px-6"
+          >
             @if (sending()) {
               <i class="fas fa-spinner fa-spin"></i>
             } @else {
@@ -79,7 +98,7 @@ interface SupportMessage {
         </form>
       </div>
     </div>
-  `
+  `,
 })
 export class SupportChatComponent implements OnInit, OnDestroy {
   @ViewChild('scrollContainer') scrollContainer!: ElementRef;
@@ -117,7 +136,7 @@ export class SupportChatComponent implements OnInit, OnDestroy {
         this.loading.set(false);
         setTimeout(() => this.scrollBottom(), 50);
       },
-      error: () => this.loading.set(false)
+      error: () => this.loading.set(false),
     });
   }
 
@@ -126,15 +145,17 @@ export class SupportChatComponent implements OnInit, OnDestroy {
     if (!content) return;
 
     this.sending.set(true);
-    this.http.post<SupportMessage>(`${environment.apiUrl}/api/support/messages`, { content }).subscribe({
-      next: (msg) => {
-        this.messages.update(list => [...list, msg]);
-        this.newMessage = '';
-        this.sending.set(false);
-        setTimeout(() => this.scrollBottom(), 50);
-      },
-      error: () => this.sending.set(false)
-    });
+    this.http
+      .post<SupportMessage>(`${environment.apiUrl}/api/support/messages`, { content })
+      .subscribe({
+        next: (msg) => {
+          this.messages.update((list) => [...list, msg]);
+          this.newMessage = '';
+          this.sending.set(false);
+          setTimeout(() => this.scrollBottom(), 50);
+        },
+        error: () => this.sending.set(false),
+      });
   }
 
   private scrollBottom(): void {

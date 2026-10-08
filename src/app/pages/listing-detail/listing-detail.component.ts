@@ -1,4 +1,13 @@
-import { Component, OnInit, inject, signal, computed, afterNextRender, PLATFORM_ID } from '@angular/core';
+import {
+  Component,
+  OnInit,
+  inject,
+  signal,
+  computed,
+  afterNextRender,
+  PLATFORM_ID,
+  ChangeDetectionStrategy,
+} from '@angular/core';
 import { CommonModule, isPlatformBrowser } from '@angular/common';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { FormsModule } from '@angular/forms';
@@ -13,180 +22,317 @@ import { ListingCardComponent } from '../../components/listing-card/listing-card
   selector: 'app-listing-detail',
   standalone: true,
   imports: [CommonModule, RouterLink, ListingCardComponent, FormsModule],
+  changeDetection: ChangeDetectionStrategy.Eager,
   template: `
     @if (listing()) {
       <div class="max-w-6xl mx-auto px-4 py-8 min-page">
-        <a href="/" (click)="goBackToListings($event)" class="text-mb-blue hover:underline mb-4 inline-block">← Back to listings</a>
+        <a
+          href="/"
+          (click)="goBackToListings($event)"
+          class="text-mb-blue hover:underline mb-4 inline-block"
+          >← Back to listings</a
+        >
 
         <div class="grid grid-cols-1 lg:grid-cols-2 gap-0 rounded-none">
-            <div class="flex flex-col gap-px rounded-none">
-              <div class="bg-gray-100 relative group rounded-none" style="height: 361px; width: 100%; overflow: hidden !important;">
-                @if (listing()!.images && listing()!.images.length > 0) {
-                  <img [src]="getImageUrl(listing()!.images[currentImage()])"
-                       [alt]="listing()!.title"
-                       (click)="openLightbox(currentImage())"
-                       class="w-full h-full object-cover cursor-zoom-in !rounded-none"
-                       loading="eager"
-                       fetchpriority="high"
-                       decoding="async">
-                  @if (listing()!.images.length > 1) {
-                    <button (click)="prevImage()" class="absolute left-px top-1/2 -translate-y-1/2 opacity-0 group-hover:opacity-60 w-7 h-20 flex items-center justify-start z-10 border-none cursor-pointer" style="background-color: #ffffff; color: #666; border: 1px solid #ddd; border-left: none; border-top-right-radius: 2.5em; border-bottom-right-radius: 2.5em;">
-                      <svg width="20" height="28" viewBox="0 0 20 32" fill="none"><path d="M16 4L4 16L16 28" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
-                    </button>
-                    <button (click)="nextImage()" class="absolute right-px top-1/2 -translate-y-1/2 opacity-0 group-hover:opacity-60 w-7 h-20 flex items-center justify-end z-10 border-none cursor-pointer" style="background-color: #ffffff; color: #666; border: 1px solid #ddd; border-right: none; border-top-left-radius: 2.5em; border-bottom-left-radius: 2.5em;">
-                      <svg width="20" height="28" viewBox="0 0 20 32" fill="none"><path d="M4 4L16 16L4 28" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
-                    </button>
-                    <div class="absolute left-1/2 -translate-x-1/2 z-10 opacity-0 group-hover:opacity-100 transition w-full" style="top: 0;">
-                      <div class="font-semibold w-full" style="background-color: rgba(255, 255, 255, 0.4); padding: 4px 8px; color: rgb(41, 45, 51); font-size: 0.78rem; display: flex; align-items: center; justify-content: center; line-height: 1;">
-                        image&nbsp;<span>{{ currentImage() + 1 }}</span>&nbsp;of {{ listing()!.images.length }}
-                      </div>
-                    </div>
-
-                  }
-                } @else {
-                  <div class="w-full h-full flex items-center justify-center text-gray-400"><span class="text-6xl">📷</span></div>
-                }
-              </div>
-              @if (listing()!.images && listing()!.images.length > 1) {
-                <div class="flex overflow-hidden justify-start bg-white rounded-none flex-wrap">
-                  @for (img of listing()!.images; track $index) {
-                    <div class="group relative">
-                      <button (click)="setImage($index)" (mouseenter)="currentImage.set($index)" class="flex-shrink-0 w-14 h-14 overflow-hidden border-2 !rounded-none" [class.border-mb-blue]="currentImage() === $index" [class.border-gray-300]="currentImage() !== $index">
-                        <img [src]="getImageUrl(img)" [alt]="'Thumbnail ' + ($index + 1)" class="w-full h-full object-cover !rounded-none">
-                      </button>
-                    </div>
-                  }
-                </div>
-              }
-            </div>
-
-            <div class="p-8">
-              <div class="flex justify-between items-start mb-4">
-                <h1 class="text-3xl font-bold text-mb-dark">{{ listing()!.title }}</h1>
-                @if (signedIn()) {
-                  <button (click)="toggleFavorite()" class="text-2xl bg-white/80 hover:bg-white rounded-lg p-2 transition" [style.color]="isFavorited() ? '#FFD700' : ''">
-                    {{ isFavorited() ? '★' : '☆' }}
+          <div class="flex flex-col gap-px rounded-none">
+            <div
+              class="bg-gray-100 relative group rounded-none"
+              style="height: 361px; width: 100%; overflow: hidden !important;"
+            >
+              @if (listing()!.images && listing()!.images.length > 0) {
+                <img
+                  [src]="getImageUrl(listing()!.images[currentImage()])"
+                  [alt]="listing()!.title"
+                  (click)="openLightbox(currentImage())"
+                  class="w-full h-full object-cover cursor-zoom-in !rounded-none"
+                  loading="eager"
+                  fetchpriority="high"
+                  decoding="async"
+                />
+                @if (listing()!.images.length > 1) {
+                  <button
+                    (click)="prevImage()"
+                    class="absolute left-px top-1/2 -translate-y-1/2 opacity-0 group-hover:opacity-60 w-7 h-20 flex items-center justify-start z-10 border-none cursor-pointer"
+                    style="background-color: #ffffff; color: #666; border: 1px solid #ddd; border-left: none; border-top-right-radius: 2.5em; border-bottom-right-radius: 2.5em;"
+                  >
+                    <svg width="20" height="28" viewBox="0 0 20 32" fill="none">
+                      <path
+                        d="M16 4L4 16L16 28"
+                        stroke="currentColor"
+                        stroke-width="2.5"
+                        stroke-linecap="round"
+                        stroke-linejoin="round"
+                      />
+                    </svg>
                   </button>
-                }
-              </div>
-              <p class="text-4xl font-bold text-mb-blue mb-6">\${{ listing()!.price | number:'1.0-2' }}</p>
-
-              <div class="flex items-center gap-3 mb-2 flex-wrap">
-                <p class="text-gray-600">
-                  <i class="fas fa-map-marker-alt mr-2 text-mb-blue"></i>{{ listing()!.location }}
-                  @if (listing()!.area) {
-                    <span class="text-gray-500"> · {{ listing()!.area }}</span>
-                  }
-                </p>
-                <a [href]="googleMapsUrl()"
-                   target="_blank"
-                   rel="noopener noreferrer"
-                   class="inline-flex items-center gap-1.5 text-mb-blue hover:text-blue-700 underline text-sm font-medium">
-                  <i class="fas fa-map"></i> google map
-                </a>
-              </div>
-
-              <div class="flex items-center gap-4 text-gray-500 text-sm mb-6">
-                <span>{{ listing()!.created_at | date:'MMM d, yyyy' }}</span>
-                <span class="px-2 py-0.5 bg-gray-100 rounded text-xs font-medium text-gray-700">
-                  {{ listing()!.seller_type === 'DEALER' ? 'Dealer' : 'Owner' }}
-                </span>
-                <span class="flex items-center gap-1">
-                  <i class="fas fa-eye"></i> {{ listing()!.views || 0 }} views
-                </span>
-              </div>
-              <div class="prose max-w-none mb-6" [innerHTML]="listing()!.description"></div>
-
-              @if (signedIn()) {
-                <div class="space-y-3">
-                  <a [routerLink]="['/chat', listing()!.user_id]"
-                     class="btn w-full text-center block bg-gray-100 hover:bg-gray-200 text-gray-800">Contact Seller</a>
-                  <div class="flex gap-3">
-                    <button (click)="toggleFavorite()"
-                            class="btn flex-1 bg-gray-100 hover:bg-gray-200 text-gray-800">{{ isFavorited() ? '★ Saved' : '☆ Save' }}</button>
-                    <button (click)="openFlagModal()"
-                            class="btn flex-1 bg-gray-100 hover:bg-gray-200 text-gray-800"><i class="fas fa-flag mr-1"></i>Flag</button>
-                  </div>
-                </div>
-              } @else {
-                <div class="bg-blue-50 border border-blue-200 rounded-lg p-4 text-sm">
-                  <a routerLink="/login" class="text-mb-blue hover:underline font-bold">Log in</a> to contact seller or save this listing.
-                </div>
-              }
-
-              <!-- Flag Modal -->
-              @if (flagModalOpen()) {
-                <div class="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4" (click)="closeFlagModal()">
-                  <div class="bg-white rounded-lg max-w-md w-full p-6 shadow-lg" (click)="$event.stopPropagation()">
-                    <div class="flex justify-between items-center mb-4">
-                      <h2 class="text-xl font-bold text-mb-dark">Flag Listing</h2>
-                      <button (click)="closeFlagModal()" class="text-gray-500 hover:text-gray-700 text-2xl leading-none">&times;</button>
+                  <button
+                    (click)="nextImage()"
+                    class="absolute right-px top-1/2 -translate-y-1/2 opacity-0 group-hover:opacity-60 w-7 h-20 flex items-center justify-end z-10 border-none cursor-pointer"
+                    style="background-color: #ffffff; color: #666; border: 1px solid #ddd; border-right: none; border-top-left-radius: 2.5em; border-bottom-left-radius: 2.5em;"
+                  >
+                    <svg width="20" height="28" viewBox="0 0 20 32" fill="none">
+                      <path
+                        d="M4 4L16 16L4 28"
+                        stroke="currentColor"
+                        stroke-width="2.5"
+                        stroke-linecap="round"
+                        stroke-linejoin="round"
+                      />
+                    </svg>
+                  </button>
+                  <div
+                    class="absolute left-1/2 -translate-x-1/2 z-10 opacity-0 group-hover:opacity-100 transition w-full"
+                    style="top: 0;"
+                  >
+                    <div
+                      class="font-semibold w-full"
+                      style="background-color: rgba(255, 255, 255, 0.4); padding: 4px 8px; color: rgb(41, 45, 51); font-size: 0.78rem; display: flex; align-items: center; justify-content: center; line-height: 1;"
+                    >
+                      image&nbsp;<span>{{ currentImage() + 1 }}</span
+                      >&nbsp;of {{ listing()!.images.length }}
                     </div>
-
-                    @if (flagSuccess()) {
-                      <div class="bg-green-50 border border-green-200 rounded-lg p-4 text-center mb-4">
-                        <p class="text-green-700 font-semibold"><i class="fas fa-check-circle mr-2"></i>Thank you for reporting</p>
-                        <p class="text-green-600 text-sm mt-1">Our team will review this listing</p>
-                      </div>
-                    } @else {
-                      <div class="space-y-4">
-                        <div>
-                          <label class="block text-sm font-semibold text-gray-700 mb-2">Reason for reporting</label>
-                          <select [(ngModel)]="selectedReason" class="w-full border border-gray-300 rounded-lg p-2 focus:outline-none focus:ring-2 focus:ring-mb-blue">
-                            <option value="">Select a reason...</option>
-                            @for (reason of flagReasons; track reason.value) {
-                              <option [value]="reason.value">{{ reason.label }}</option>
-                            }
-                          </select>
-                        </div>
-
-                        <div>
-                          <label class="block text-sm font-semibold text-gray-700 mb-2">Description (optional)</label>
-                          <textarea [(ngModel)]="flagDescription" class="w-full border border-gray-300 rounded-lg p-2 focus:outline-none focus:ring-2 focus:ring-mb-blue" rows="3" placeholder="Provide details about why you're reporting this listing..."></textarea>
-                        </div>
-
-                        <div class="flex gap-3 pt-4">
-                          <button (click)="closeFlagModal()" class="flex-1 btn btn-secondary">Cancel</button>
-                          <button (click)="submitFlag()" [disabled]="!selectedReason() || flagSubmitting()" class="flex-1 btn btn-primary">
-                            @if (flagSubmitting()) {
-                              <i class="fas fa-spinner fa-spin mr-1"></i>Submitting...
-                            } @else {
-                              Submit Flag
-                            }
-                          </button>
-                        </div>
-                      </div>
-                    }
                   </div>
+                }
+              } @else {
+                <div class="w-full h-full flex items-center justify-center text-gray-400">
+                  <span class="text-6xl">📷</span>
                 </div>
               }
             </div>
+            @if (listing()!.images && listing()!.images.length > 1) {
+              <div class="flex overflow-hidden justify-start bg-white rounded-none flex-wrap">
+                @for (img of listing()!.images; track $index) {
+                  <div class="group relative">
+                    <button
+                      (click)="setImage($index)"
+                      (mouseenter)="currentImage.set($index)"
+                      class="flex-shrink-0 w-14 h-14 overflow-hidden border-2 !rounded-none"
+                      [class.border-mb-blue]="currentImage() === $index"
+                      [class.border-gray-300]="currentImage() !== $index"
+                    >
+                      <img
+                        [src]="getImageUrl(img)"
+                        [alt]="'Thumbnail ' + ($index + 1)"
+                        class="w-full h-full object-cover !rounded-none"
+                      />
+                    </button>
+                  </div>
+                }
+              </div>
+            }
           </div>
+
+          <div class="p-8">
+            <div class="flex justify-between items-start mb-4">
+              <h1 class="text-3xl font-bold text-mb-dark">{{ listing()!.title }}</h1>
+              @if (signedIn()) {
+                <button
+                  (click)="toggleFavorite()"
+                  class="text-2xl bg-white/80 hover:bg-white rounded-lg p-2 transition"
+                  [style.color]="isFavorited() ? '#FFD700' : ''"
+                >
+                  {{ isFavorited() ? '★' : '☆' }}
+                </button>
+              }
+            </div>
+            <p class="text-4xl font-bold text-mb-blue mb-6">
+              \${{ listing()!.price | number: '1.0-2' }}
+            </p>
+
+            <div class="flex items-center gap-3 mb-2 flex-wrap">
+              <p class="text-gray-600">
+                <i class="fas fa-map-marker-alt mr-2 text-mb-blue"></i>{{ listing()!.location }}
+                @if (listing()!.area) {
+                  <span class="text-gray-500"> · {{ listing()!.area }}</span>
+                }
+              </p>
+              <a
+                [href]="googleMapsUrl()"
+                target="_blank"
+                rel="noopener noreferrer"
+                class="inline-flex items-center gap-1.5 text-mb-blue hover:text-blue-700 underline text-sm font-medium"
+              >
+                <i class="fas fa-map"></i> google map
+              </a>
+            </div>
+
+            <div class="flex items-center gap-4 text-gray-500 text-sm mb-6">
+              <span>{{ listing()!.created_at | date: 'MMM d, yyyy' }}</span>
+              <span class="px-2 py-0.5 bg-gray-100 rounded text-xs font-medium text-gray-700">
+                {{ listing()!.seller_type === 'DEALER' ? 'Dealer' : 'Owner' }}
+              </span>
+              <span class="flex items-center gap-1">
+                <i class="fas fa-eye"></i> {{ listing()!.views || 0 }} views
+              </span>
+            </div>
+            <div class="prose max-w-none mb-6" [innerHTML]="listing()!.description"></div>
+
+            @if (signedIn()) {
+              <div class="space-y-3">
+                <a
+                  [routerLink]="['/chat', listing()!.user_id]"
+                  class="btn w-full text-center block bg-gray-100 hover:bg-gray-200 text-gray-800"
+                  >Contact Seller</a
+                >
+                <div class="flex gap-3">
+                  <button
+                    (click)="toggleFavorite()"
+                    class="btn flex-1 bg-gray-100 hover:bg-gray-200 text-gray-800"
+                  >
+                    {{ isFavorited() ? '★ Saved' : '☆ Save' }}
+                  </button>
+                  <button
+                    (click)="openFlagModal()"
+                    class="btn flex-1 bg-gray-100 hover:bg-gray-200 text-gray-800"
+                  >
+                    <i class="fas fa-flag mr-1"></i>Flag
+                  </button>
+                </div>
+              </div>
+            } @else {
+              <div class="bg-blue-50 border border-blue-200 rounded-lg p-4 text-sm">
+                <a routerLink="/login" class="text-mb-blue hover:underline font-bold">Log in</a> to
+                contact seller or save this listing.
+              </div>
+            }
+
+            <!-- Flag Modal -->
+            @if (flagModalOpen()) {
+              <div
+                class="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4"
+                (click)="closeFlagModal()"
+              >
+                <div
+                  class="bg-white rounded-lg max-w-md w-full p-6 shadow-lg"
+                  (click)="$event.stopPropagation()"
+                >
+                  <div class="flex justify-between items-center mb-4">
+                    <h2 class="text-xl font-bold text-mb-dark">Flag Listing</h2>
+                    <button
+                      (click)="closeFlagModal()"
+                      class="text-gray-500 hover:text-gray-700 text-2xl leading-none"
+                    >
+                      &times;
+                    </button>
+                  </div>
+
+                  @if (flagSuccess()) {
+                    <div
+                      class="bg-green-50 border border-green-200 rounded-lg p-4 text-center mb-4"
+                    >
+                      <p class="text-green-700 font-semibold">
+                        <i class="fas fa-check-circle mr-2"></i>Thank you for reporting
+                      </p>
+                      <p class="text-green-600 text-sm mt-1">Our team will review this listing</p>
+                    </div>
+                  } @else {
+                    <div class="space-y-4">
+                      <div>
+                        <label class="block text-sm font-semibold text-gray-700 mb-2"
+                          >Reason for reporting</label
+                        >
+                        <select
+                          [(ngModel)]="selectedReason"
+                          class="w-full border border-gray-300 rounded-lg p-2 focus:outline-none focus:ring-2 focus:ring-mb-blue"
+                        >
+                          <option value="">Select a reason...</option>
+                          @for (reason of flagReasons; track reason.value) {
+                            <option [value]="reason.value">{{ reason.label }}</option>
+                          }
+                        </select>
+                      </div>
+
+                      <div>
+                        <label class="block text-sm font-semibold text-gray-700 mb-2"
+                          >Description (optional)</label
+                        >
+                        <textarea
+                          [(ngModel)]="flagDescription"
+                          class="w-full border border-gray-300 rounded-lg p-2 focus:outline-none focus:ring-2 focus:ring-mb-blue"
+                          rows="3"
+                          placeholder="Provide details about why you're reporting this listing..."
+                        ></textarea>
+                      </div>
+
+                      <div class="flex gap-3 pt-4">
+                        <button (click)="closeFlagModal()" class="flex-1 btn btn-secondary">
+                          Cancel
+                        </button>
+                        <button
+                          (click)="submitFlag()"
+                          [disabled]="!selectedReason() || flagSubmitting()"
+                          class="flex-1 btn btn-primary"
+                        >
+                          @if (flagSubmitting()) {
+                            <i class="fas fa-spinner fa-spin mr-1"></i>Submitting...
+                          } @else {
+                            Submit Flag
+                          }
+                        </button>
+                      </div>
+                    </div>
+                  }
+                </div>
+              </div>
+            }
+          </div>
+        </div>
 
         <!-- Lightbox -->
         @if (lightboxOpen()) {
-          <div class="fixed inset-0 bg-black/90 flex items-center justify-center" style="z-index: 99999;" (click)="closeLightbox()">
-            <button (click)="closeLightbox(); $event.stopPropagation()" class="absolute top-5 right-7 text-white text-4xl cursor-pointer">&times;</button>
+          <div
+            class="fixed inset-0 bg-black/90 flex items-center justify-center"
+            style="z-index: 99999;"
+            (click)="closeLightbox()"
+          >
+            <button
+              (click)="closeLightbox(); $event.stopPropagation()"
+              class="absolute top-5 right-7 text-white text-4xl cursor-pointer"
+            >
+              &times;
+            </button>
             <!-- Стрелки того же вида, что на карточке до увеличения: белая
                  подложка с закруглением с внутренней стороны. Видны всегда,
                  а не при наведении: в затемнении наводить не на что -->
-            <button (click)="prevImageLightbox(); $event.stopPropagation()"
-                    class="absolute left-0 top-1/2 -translate-y-1/2 w-9 h-24 flex items-center justify-start z-10 border-none cursor-pointer"
-                    style="background-color: #ffffff; color: #666; border: 1px solid #ddd; border-left: none; border-top-right-radius: 2.5em; border-bottom-right-radius: 2.5em;">
-              <svg width="26" height="36" viewBox="0 0 20 32" fill="none"><path d="M16 4L4 16L16 28" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+            <button
+              (click)="prevImageLightbox(); $event.stopPropagation()"
+              class="absolute left-0 top-1/2 -translate-y-1/2 w-9 h-24 flex items-center justify-start z-10 border-none cursor-pointer"
+              style="background-color: #ffffff; color: #666; border: 1px solid #ddd; border-left: none; border-top-right-radius: 2.5em; border-bottom-right-radius: 2.5em;"
+            >
+              <svg width="26" height="36" viewBox="0 0 20 32" fill="none">
+                <path
+                  d="M16 4L4 16L16 28"
+                  stroke="currentColor"
+                  stroke-width="2.5"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                />
+              </svg>
             </button>
             <!-- Ограничение по размерам окна, а не в пикселях: max-h-5xl в
                  Tailwind не существует вовсе (5xl задан только для ширины),
                  поэтому высота не ограничивалась и снимок выходил за
                  пределы затемнения, налезая на страницу -->
-            <img [src]="getImageUrl(listing()!.images[currentImage()])"
-                 class="!rounded-none object-contain"
-                 style="max-width: 92vw; max-height: 88vh;"
-                 (click)="$event.stopPropagation()">
-            <button (click)="nextImageLightbox(); $event.stopPropagation()"
-                    class="absolute right-0 top-1/2 -translate-y-1/2 w-9 h-24 flex items-center justify-end z-10 border-none cursor-pointer"
-                    style="background-color: #ffffff; color: #666; border: 1px solid #ddd; border-right: none; border-top-left-radius: 2.5em; border-bottom-left-radius: 2.5em;">
-              <svg width="26" height="36" viewBox="0 0 20 32" fill="none"><path d="M4 4L16 16L4 28" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+            <img
+              [src]="getImageUrl(listing()!.images[currentImage()])"
+              class="!rounded-none object-contain"
+              style="max-width: 92vw; max-height: 88vh;"
+              (click)="$event.stopPropagation()"
+            />
+            <button
+              (click)="nextImageLightbox(); $event.stopPropagation()"
+              class="absolute right-0 top-1/2 -translate-y-1/2 w-9 h-24 flex items-center justify-end z-10 border-none cursor-pointer"
+              style="background-color: #ffffff; color: #666; border: 1px solid #ddd; border-right: none; border-top-left-radius: 2.5em; border-bottom-left-radius: 2.5em;"
+            >
+              <svg width="26" height="36" viewBox="0 0 20 32" fill="none">
+                <path
+                  d="M4 4L16 16L4 28"
+                  stroke="currentColor"
+                  stroke-width="2.5"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                />
+              </svg>
             </button>
           </div>
         }
@@ -197,16 +343,22 @@ import { ListingCardComponent } from '../../components/listing-card/listing-card
         @if (similar() === null) {
           <div class="mt-12 flex items-center justify-center" style="min-height: 340px;">
             <span class="relative inline-flex items-center justify-center w-16 h-16">
-              <span class="absolute inset-0 border-4 border-mb-blue border-t-transparent rounded-full animate-spin"></span>
+              <span
+                class="absolute inset-0 border-4 border-mb-blue border-t-transparent rounded-full animate-spin"
+              ></span>
               <span class="text-2xl font-bold text-mb-blue select-none">M</span>
             </span>
           </div>
         }
 
         <!-- Similar Products -->
-        @if (similar() && (similar()!.same_location.length > 0 || similar()!.anywhere.length > 0 || similar()!.from_seller.length > 0)) {
+        @if (
+          similar() &&
+          (similar()!.same_location.length > 0 ||
+            similar()!.anywhere.length > 0 ||
+            similar()!.from_seller.length > 0)
+        ) {
           <div class="mt-12 space-y-12">
-
             @if (similar()!.same_location.length > 0) {
               <section>
                 <!-- Стрелки в строке заголовка, справа: не перекрывают карточки
@@ -214,24 +366,37 @@ import { ListingCardComponent } from '../../components/listing-card/listing-card
                 <!-- Заголовка слева нет: его роль берёт на себя сама кнопка -->
                 <div class="flex items-center justify-end mb-4 gap-4">
                   <div class="flex items-center gap-2 flex-none">
-                    <a [routerLink]="['/']"
-                       [queryParams]="{ city: listing()!.location }"
-                       class="px-4 py-2 rounded-full bg-gray-100 hover:bg-gray-200 text-sm font-medium text-gray-800 transition whitespace-nowrap">
+                    <a
+                      [routerLink]="['/']"
+                      [queryParams]="{ city: listing()!.location }"
+                      class="px-4 py-2 rounded-full bg-gray-100 hover:bg-gray-200 text-sm font-medium text-gray-800 transition whitespace-nowrap"
+                    >
                       Similar Products in {{ listing()!.location }}
                     </a>
-                  @if (similar()!.same_location.length > 3) {
-                    <div class="hidden md:flex gap-2 flex-none">
-                      <button (click)="scrollRow(row1, -368)" class="w-10 h-10 rounded-lg bg-gray-100 flex items-center justify-center text-gray-700 hover:bg-gray-200 transition" aria-label="Previous">
-                        <i class="fas fa-chevron-left text-sm"></i>
-                      </button>
-                      <button (click)="scrollRow(row1, 368)" class="w-10 h-10 rounded-lg bg-gray-100 flex items-center justify-center text-gray-700 hover:bg-gray-200 transition" aria-label="Next">
-                        <i class="fas fa-chevron-right text-sm"></i>
-                      </button>
-                    </div>
-                  }
+                    @if (similar()!.same_location.length > 3) {
+                      <div class="hidden md:flex gap-2 flex-none">
+                        <button
+                          (click)="scrollRow(row1, -368)"
+                          class="w-10 h-10 rounded-lg bg-gray-100 flex items-center justify-center text-gray-700 hover:bg-gray-200 transition"
+                          aria-label="Previous"
+                        >
+                          <i class="fas fa-chevron-left text-sm"></i>
+                        </button>
+                        <button
+                          (click)="scrollRow(row1, 368)"
+                          class="w-10 h-10 rounded-lg bg-gray-100 flex items-center justify-center text-gray-700 hover:bg-gray-200 transition"
+                          aria-label="Next"
+                        >
+                          <i class="fas fa-chevron-right text-sm"></i>
+                        </button>
+                      </div>
+                    }
                   </div>
                 </div>
-                <div class="flex gap-4 overflow-x-auto scrollbar-bottom pb-4 -mx-2 px-2 snap-x" #row1>
+                <div
+                  class="flex gap-4 overflow-x-auto scrollbar-bottom pb-4 -mx-2 px-2 snap-x"
+                  #row1
+                >
                   @for (item of similar()!.same_location; track item.id) {
                     <div class="flex-none w-40 sm:w-44 snap-start">
                       <app-listing-card [listing]="item"></app-listing-card>
@@ -247,24 +412,35 @@ import { ListingCardComponent } from '../../components/listing-card/listing-card
                      городом объявления, эта показывает остальные -->
                 <div class="flex items-center justify-end mb-4 gap-4">
                   <div class="flex items-center gap-2 flex-none">
-                    <a [routerLink]="['/']"
-                       [queryParams]="{ category: categorySlug() }"
-                       class="px-4 py-2 rounded-full bg-gray-100 hover:bg-gray-200 text-sm font-medium text-gray-800 transition whitespace-nowrap">
+                    <a
+                      [routerLink]="['/']"
+                      [queryParams]="{ category: categorySlug() }"
+                      class="px-4 py-2 rounded-full bg-gray-100 hover:bg-gray-200 text-sm font-medium text-gray-800 transition whitespace-nowrap"
+                    >
                       Similar Products
                     </a>
                     @if (similar()!.anywhere.length > 3) {
                       <div class="hidden md:flex gap-2 flex-none">
-                        <button (click)="scrollRow(rowAny, -368)" class="w-10 h-10 rounded-lg bg-gray-100 flex items-center justify-center text-gray-700 hover:bg-gray-200 transition">
+                        <button
+                          (click)="scrollRow(rowAny, -368)"
+                          class="w-10 h-10 rounded-lg bg-gray-100 flex items-center justify-center text-gray-700 hover:bg-gray-200 transition"
+                        >
                           <i class="fas fa-chevron-left text-sm"></i>
                         </button>
-                        <button (click)="scrollRow(rowAny, 368)" class="w-10 h-10 rounded-lg bg-gray-100 flex items-center justify-center text-gray-700 hover:bg-gray-200 transition">
+                        <button
+                          (click)="scrollRow(rowAny, 368)"
+                          class="w-10 h-10 rounded-lg bg-gray-100 flex items-center justify-center text-gray-700 hover:bg-gray-200 transition"
+                        >
                           <i class="fas fa-chevron-right text-sm"></i>
                         </button>
                       </div>
                     }
                   </div>
                 </div>
-                <div class="flex gap-4 overflow-x-auto scrollbar-bottom pb-4 -mx-2 px-2 snap-x" #rowAny>
+                <div
+                  class="flex gap-4 overflow-x-auto scrollbar-bottom pb-4 -mx-2 px-2 snap-x"
+                  #rowAny
+                >
                   @for (item of similar()!.anywhere; track item.id) {
                     <div class="flex-none w-40 sm:w-44 snap-start">
                       <app-listing-card [listing]="item"></app-listing-card>
@@ -279,23 +455,36 @@ import { ListingCardComponent } from '../../components/listing-card/listing-card
                 <!-- Заголовка слева нет: его роль берёт на себя сама кнопка -->
                 <div class="flex items-center justify-end mb-4 gap-4">
                   <div class="flex items-center gap-2 flex-none">
-                    <a [routerLink]="['/users', listing()!.user_id]"
-                       class="px-4 py-2 rounded-full bg-gray-100 hover:bg-gray-200 text-sm font-medium text-gray-800 transition whitespace-nowrap">
-                        More from this Seller
+                    <a
+                      [routerLink]="['/users', listing()!.user_id]"
+                      class="px-4 py-2 rounded-full bg-gray-100 hover:bg-gray-200 text-sm font-medium text-gray-800 transition whitespace-nowrap"
+                    >
+                      More from this Seller
                     </a>
                     @if (similar()!.from_seller.length > 3) {
                       <div class="hidden md:flex gap-2 flex-none">
-                        <button (click)="scrollRow(row3, -368)" class="w-10 h-10 rounded-lg bg-gray-100 flex items-center justify-center text-gray-700 hover:bg-gray-200 transition" aria-label="Previous">
+                        <button
+                          (click)="scrollRow(row3, -368)"
+                          class="w-10 h-10 rounded-lg bg-gray-100 flex items-center justify-center text-gray-700 hover:bg-gray-200 transition"
+                          aria-label="Previous"
+                        >
                           <i class="fas fa-chevron-left text-sm"></i>
                         </button>
-                        <button (click)="scrollRow(row3, 368)" class="w-10 h-10 rounded-lg bg-gray-100 flex items-center justify-center text-gray-700 hover:bg-gray-200 transition" aria-label="Next">
+                        <button
+                          (click)="scrollRow(row3, 368)"
+                          class="w-10 h-10 rounded-lg bg-gray-100 flex items-center justify-center text-gray-700 hover:bg-gray-200 transition"
+                          aria-label="Next"
+                        >
                           <i class="fas fa-chevron-right text-sm"></i>
                         </button>
                       </div>
                     }
                   </div>
                 </div>
-                <div class="flex gap-4 overflow-x-auto scrollbar-bottom pb-4 -mx-2 px-2 snap-x" #row3>
+                <div
+                  class="flex gap-4 overflow-x-auto scrollbar-bottom pb-4 -mx-2 px-2 snap-x"
+                  #row3
+                >
                   @for (item of similar()!.from_seller; track item.id) {
                     <div class="flex-none w-40 sm:w-44 snap-start">
                       <app-listing-card [listing]="item"></app-listing-card>
@@ -304,7 +493,6 @@ import { ListingCardComponent } from '../../components/listing-card/listing-card
                 </div>
               </section>
             }
-
           </div>
         }
       </div>
@@ -313,7 +501,9 @@ import { ListingCardComponent } from '../../components/listing-card/listing-card
            ниже уходила в отданный HTML - "Listing not found" было видно при
            каждом обновлении страницы, пока браузер не подхватит её -->
       <div class="flex justify-center py-12">
-        <div class="w-10 h-10 border-4 border-gray-200 border-t-mb-blue rounded-full animate-spin"></div>
+        <div
+          class="w-10 h-10 border-4 border-gray-200 border-t-mb-blue rounded-full animate-spin"
+        ></div>
       </div>
     } @else {
       <div class="text-center py-12">
@@ -321,7 +511,7 @@ import { ListingCardComponent } from '../../components/listing-card/listing-card
         <a routerLink="/" class="text-mb-blue hover:underline mt-4 inline-block">← Back to home</a>
       </div>
     }
-  `
+  `,
 })
 export class ListingDetailComponent implements OnInit {
   /** На сервере объявление ещё не загружено, и его отсутствие ничего не значит. */
@@ -341,8 +531,7 @@ export class ListingDetailComponent implements OnInit {
    * кнопки: страница подпрыгивает вместе с подвалом.
    */
   private authReady = signal(false);
-  signedIn = () => this.authReady() ? this.auth.isAuthenticated() : this.auth.authHint();
-
+  signedIn = () => (this.authReady() ? this.auth.isAuthenticated() : this.auth.authHint());
 
   constructor() {
     afterNextRender(() => {
@@ -390,7 +579,7 @@ export class ListingDetailComponent implements OnInit {
     { value: 'OFFENSIVE_CONTENT', label: 'Offensive Content' },
     { value: 'INVALID_CONTACT', label: 'Invalid Contact' },
     { value: 'DUPLICATE', label: 'Duplicate Listing' },
-    { value: 'OTHER', label: 'Other' }
+    { value: 'OTHER', label: 'Other' },
   ];
 
   /**
@@ -418,7 +607,7 @@ export class ListingDetailComponent implements OnInit {
   }
 
   ngOnInit(): void {
-    this.route.paramMap.subscribe(params => {
+    this.route.paramMap.subscribe((params) => {
       const id = Number(params.get('id'));
       if (!id) return;
 
@@ -465,15 +654,15 @@ export class ListingDetailComponent implements OnInit {
           this.listing.set(data);
           this.favorites.load();
           this.loading.set(false);
-          const image = data.images && data.images.length > 0
-            ? data.images[0]
-            : undefined;
+          const image = data.images && data.images.length > 0 ? data.images[0] : undefined;
           this.seo.update({
             title: data.title,
             description: (data.description || '').substring(0, 160),
             image,
             type: 'product',
-            keywords: [data.title, data.location, 'classifieds', 'marketplace'].filter(Boolean).join(', ')
+            keywords: [data.title, data.location, 'classifieds', 'marketplace']
+              .filter(Boolean)
+              .join(', '),
           });
           this.loadSimilar(id);
         },
@@ -486,7 +675,7 @@ export class ListingDetailComponent implements OnInit {
           } else {
             this.loadSimilar(id);
           }
-        }
+        },
       });
     });
   }
@@ -494,7 +683,8 @@ export class ListingDetailComponent implements OnInit {
   loadSimilar(id: number): void {
     this.api.getSimilarListings(id).subscribe({
       next: (data) => this.similar.set(data),
-      error: () => this.similar.set({ same_location: [], anywhere: [], similar_price: [], from_seller: [] })
+      error: () =>
+        this.similar.set({ same_location: [], anywhere: [], similar_price: [], from_seller: [] }),
     });
   }
 
@@ -504,7 +694,6 @@ export class ListingDetailComponent implements OnInit {
    */
   /** Слаг категории для кнопки «Similar Products»: она ведёт в раздел. */
   categorySlug = (): string | null => (this.listing() as any)?.category_slug || null;
-
 
   scrollRow(element: HTMLElement, offset: number): void {
     element.scrollBy({ left: offset, behavior: 'smooth' });
@@ -526,12 +715,12 @@ export class ListingDetailComponent implements OnInit {
 
   prevImage(): void {
     const len = this.listing()!.images.length;
-    this.currentImage.update(i => (i - 1 + len) % len);
+    this.currentImage.update((i) => (i - 1 + len) % len);
   }
 
   nextImage(): void {
     const len = this.listing()!.images.length;
-    this.currentImage.update(i => (i + 1) % len);
+    this.currentImage.update((i) => (i + 1) % len);
   }
 
   setImage(index: number): void {
@@ -549,7 +738,7 @@ export class ListingDetailComponent implements OnInit {
       },
       // Отказ прежде проходил молча: кнопка не менялась, и было не понять,
       // сохранилось ли
-      error: () => this.favBusy.set(false)
+      error: () => this.favBusy.set(false),
     });
   }
 
@@ -565,13 +754,13 @@ export class ListingDetailComponent implements OnInit {
   prevImageLightbox(): void {
     if (!this.listing()) return;
     const len = this.listing()!.images.length;
-    this.currentImage.update(i => (i - 1 + len) % len);
+    this.currentImage.update((i) => (i - 1 + len) % len);
   }
 
   nextImageLightbox(): void {
     if (!this.listing()) return;
     const len = this.listing()!.images.length;
-    this.currentImage.update(i => (i + 1) % len);
+    this.currentImage.update((i) => (i + 1) % len);
   }
 
   openFlagModal(): void {
@@ -608,7 +797,7 @@ export class ListingDetailComponent implements OnInit {
       error: (err) => {
         console.error('Error flagging listing:', err);
         this.flagSubmitting.set(false);
-      }
+      },
     });
   }
 }

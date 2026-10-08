@@ -1,4 +1,4 @@
-import { Component, OnInit, signal } from '@angular/core';
+import { Component, OnInit, signal, ChangeDetectionStrategy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterLink } from '@angular/router';
 import { User } from '../../models/listing.model';
@@ -7,6 +7,7 @@ import { User } from '../../models/listing.model';
   selector: 'app-admin-users',
   standalone: true,
   imports: [CommonModule, RouterLink],
+  changeDetection: ChangeDetectionStrategy.Eager,
   template: `
     <div class="max-w-7xl mx-auto px-4 py-8 min-page">
       <div class="flex justify-between items-center mb-8">
@@ -33,13 +34,17 @@ import { User } from '../../models/listing.model';
               <td class="px-4 py-3">{{ user.email }}</td>
               <td class="px-4 py-3">{{ user.username }}</td>
               <td class="px-4 py-3 text-gray-600">{{ user.city || '-' }}</td>
-              <td class="px-4 py-3 text-gray-500">{{ user.created_at | date:'short' }}</td>
+              <td class="px-4 py-3 text-gray-500">{{ user.created_at | date: 'short' }}</td>
               <td class="px-4 py-3">
                 <span *ngIf="user.is_admin" class="text-mb-blue font-bold">✓</span>
               </td>
               <td class="px-4 py-3 flex gap-2">
-                <button (click)="toggleAdmin(user)" class="text-mb-blue hover:underline text-xs">Toggle admin</button>
-                <button (click)="banUser(user)" class="text-red-600 hover:underline text-xs">Ban</button>
+                <button (click)="toggleAdmin(user)" class="text-mb-blue hover:underline text-xs">
+                  Toggle admin
+                </button>
+                <button (click)="banUser(user)" class="text-red-600 hover:underline text-xs">
+                  Ban
+                </button>
               </td>
             </tr>
           </tbody>
@@ -50,7 +55,7 @@ import { User } from '../../models/listing.model';
         </div>
       </div>
     </div>
-  `
+  `,
 })
 export class AdminUsersComponent implements OnInit {
   users = signal<User[]>([]);

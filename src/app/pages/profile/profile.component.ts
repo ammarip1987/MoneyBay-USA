@@ -1,4 +1,4 @@
-import { Component, OnInit, inject, signal } from '@angular/core';
+import { Component, OnInit, inject, signal, ChangeDetectionStrategy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterLink } from '@angular/router';
 import { ApiService } from '../../services/api.service';
@@ -10,6 +10,7 @@ import { environment } from '../../../environments/environment';
   selector: 'app-profile',
   standalone: true,
   imports: [CommonModule, RouterLink],
+  changeDetection: ChangeDetectionStrategy.Eager,
   template: `
     <div class="max-w-6xl mx-auto px-4 py-8 overflow-x-hidden min-page">
       <!-- Header Card -->
@@ -20,9 +21,11 @@ import { environment } from '../../../environments/environment';
             <!-- Снимок приходит только от Google, Facebook или Apple: своей
                  загрузки нет. Чужое лицо под своим именем — обычный приём
                  обмана, а от служб приходит то, что уже подтверждено -->
-            <div class="w-32 h-32 bg-gradient-to-br from-mb-blue to-mb-cyan rounded-2xl overflow-hidden flex items-center justify-center text-white text-5xl font-bold shadow-md">
+            <div
+              class="w-32 h-32 bg-gradient-to-br from-mb-blue to-mb-cyan rounded-2xl overflow-hidden flex items-center justify-center text-white text-5xl font-bold shadow-md"
+            >
               @if (user()?.avatarUrl) {
-                <img [src]="avatarUrl()" alt="" class="w-full h-full object-cover">
+                <img [src]="avatarUrl()" alt="" class="w-full h-full object-cover" />
               } @else {
                 {{ (user()?.email || '?')[0].toUpperCase() }}
               }
@@ -36,19 +39,34 @@ import { environment } from '../../../environments/environment';
 
             <!-- Action Buttons -->
             <div class="flex flex-wrap gap-2">
-              <a routerLink="/edit-profile" class="btn btn-primary flex-1 min-w-[100px] text-xs py-2 px-2">
+              <a
+                routerLink="/edit-profile"
+                class="btn btn-primary flex-1 min-w-[100px] text-xs py-2 px-2"
+              >
                 <i class="fas fa-edit mr-1"></i> Edit
               </a>
-              <a routerLink="/my-listings" class="flex-1 min-w-[100px] bg-gray-100 hover:bg-gray-200 text-gray-800 rounded-lg font-medium transition py-2 px-2 text-xs text-center flex items-center justify-center">
+              <a
+                routerLink="/my-listings"
+                class="flex-1 min-w-[100px] bg-gray-100 hover:bg-gray-200 text-gray-800 rounded-lg font-medium transition py-2 px-2 text-xs text-center flex items-center justify-center"
+              >
                 <i class="fas fa-list mr-1"></i> Ads
               </a>
-              <a routerLink="/messages" class="flex-1 min-w-[100px] bg-gray-100 hover:bg-gray-200 text-gray-800 rounded-lg font-medium transition py-2 px-2 text-xs text-center flex items-center justify-center">
+              <a
+                routerLink="/messages"
+                class="flex-1 min-w-[100px] bg-gray-100 hover:bg-gray-200 text-gray-800 rounded-lg font-medium transition py-2 px-2 text-xs text-center flex items-center justify-center"
+              >
                 <i class="fas fa-comments mr-1"></i> Msg
               </a>
-              <a routerLink="/favorites" class="flex-1 min-w-[100px] bg-gray-100 hover:bg-gray-200 text-gray-800 rounded-lg font-medium transition py-2 px-2 text-xs text-center flex items-center justify-center">
+              <a
+                routerLink="/favorites"
+                class="flex-1 min-w-[100px] bg-gray-100 hover:bg-gray-200 text-gray-800 rounded-lg font-medium transition py-2 px-2 text-xs text-center flex items-center justify-center"
+              >
                 ★ Fav
               </a>
-              <a routerLink="/storefront" class="flex-1 min-w-[100px] bg-gray-100 hover:bg-gray-200 text-gray-800 rounded-lg font-medium transition py-2 px-2 text-xs text-center flex items-center justify-center">
+              <a
+                routerLink="/storefront"
+                class="flex-1 min-w-[100px] bg-gray-100 hover:bg-gray-200 text-gray-800 rounded-lg font-medium transition py-2 px-2 text-xs text-center flex items-center justify-center"
+              >
                 <i class="fas fa-store mr-1"></i> Storefront
               </a>
             </div>
@@ -74,7 +92,9 @@ import { environment } from '../../../environments/environment';
                 <span class="text-gray-600">Phone</span>
                 <span class="font-medium">
                   @if (user()?.phone) {
-                    <a [href]="'tel:' + user()!.phone" class="text-mb-blue hover:underline">{{ user()!.phone }}</a>
+                    <a [href]="'tel:' + user()!.phone" class="text-mb-blue hover:underline">{{
+                      user()!.phone
+                    }}</a>
                   } @else {
                     <span class="text-gray-400">Not provided</span>
                   }
@@ -86,13 +106,17 @@ import { environment } from '../../../environments/environment';
               </li>
               <li class="flex justify-between items-center">
                 <span class="text-gray-600">Joined</span>
-                <span class="font-medium">{{ user()?.created_at | date:'MM/dd/yyyy' }}</span>
+                <span class="font-medium">{{
+                  $safeNavigationMigration(user()?.created_at) | date: 'MM/dd/yyyy'
+                }}</span>
               </li>
             </ul>
           </div>
 
           <!-- Account Status -->
-          <div class="bg-gradient-to-br from-blue-50 to-cyan-50 rounded-2xl shadow p-6 border border-blue-100">
+          <div
+            class="bg-gradient-to-br from-blue-50 to-cyan-50 rounded-2xl shadow p-6 border border-blue-100"
+          >
             <h3 class="font-bold text-mb-dark mb-3 flex items-center">
               <i class="fas fa-shield-alt text-mb-blue mr-2"></i> Account Status
             </h3>
@@ -121,7 +145,9 @@ import { environment } from '../../../environments/environment';
             <div class="border-b border-gray-100 px-6 py-4">
               <h2 class="text-xl font-bold text-mb-dark flex items-center">
                 <i class="fas fa-list text-mb-blue mr-2"></i> My Active Listings
-                <span class="ml-auto text-sm font-normal text-gray-500">{{ myListings().length }} total</span>
+                <span class="ml-auto text-sm font-normal text-gray-500"
+                  >{{ myListings().length }} total</span
+                >
               </h2>
             </div>
 
@@ -131,7 +157,15 @@ import { environment } from '../../../environments/environment';
                   <div class="flex gap-4">
                     <div class="w-20 h-20 rounded-lg overflow-hidden flex-shrink-0 bg-gray-100">
                       @if (listing.images && listing.images.length > 0) {
-                        <img [src]="getImageUrl(listing.images[0])" class="w-full h-full object-cover" [alt]="listing.title" width="80" height="80" loading="lazy" decoding="async">
+                        <img
+                          [src]="getImageUrl(listing.images[0])"
+                          class="w-full h-full object-cover"
+                          [alt]="listing.title"
+                          width="80"
+                          height="80"
+                          loading="lazy"
+                          decoding="async"
+                        />
                       } @else {
                         <div class="w-full h-full flex items-center justify-center text-gray-400">
                           <i class="fas fa-image text-2xl"></i>
@@ -140,23 +174,37 @@ import { environment } from '../../../environments/environment';
                     </div>
 
                     <div class="flex-1 min-w-0">
-                      <a [routerLink]="['/listing', listing.id]" class="block text-mb-dark font-bold hover:text-mb-blue truncate mb-1">
+                      <a
+                        [routerLink]="['/listing', listing.id]"
+                        class="block text-mb-dark font-bold hover:text-mb-blue truncate mb-1"
+                      >
                         {{ listing.title }}
                       </a>
-                      <p class="text-mb-blue font-bold text-lg">\${{ listing.price | number:'1.0-2' }}</p>
+                      <p class="text-mb-blue font-bold text-lg">
+                        \${{ listing.price | number: '1.0-2' }}
+                      </p>
                       <p class="text-sm text-gray-500">
                         <i class="fas fa-map-marker-alt mr-1"></i> {{ listing.location }}
                       </p>
                     </div>
 
                     <div class="flex flex-col gap-1 flex-shrink-0 w-20">
-                      <a [routerLink]="['/promote', listing.id]" class="w-full flex items-center justify-center bg-mb-blue hover:bg-blue-700 text-white text-xs py-1 px-2 rounded transition">
+                      <a
+                        [routerLink]="['/promote', listing.id]"
+                        class="w-full flex items-center justify-center bg-mb-blue hover:bg-blue-700 text-white text-xs py-1 px-2 rounded transition"
+                      >
                         <i class="fas fa-rocket mr-1"></i> Boost
                       </a>
-                      <a [routerLink]="['/edit-listing', listing.id]" class="w-full flex items-center justify-center bg-gray-200 hover:bg-gray-300 text-gray-800 text-xs py-1 px-2 rounded transition">
+                      <a
+                        [routerLink]="['/edit-listing', listing.id]"
+                        class="w-full flex items-center justify-center bg-gray-200 hover:bg-gray-300 text-gray-800 text-xs py-1 px-2 rounded transition"
+                      >
                         <i class="fas fa-edit mr-1"></i> Edit
                       </a>
-                      <button (click)="deleteListing(listing.id)" class="w-full flex items-center justify-center bg-gray-200 hover:bg-gray-300 text-gray-800 text-xs py-1 px-2 rounded transition">
+                      <button
+                        (click)="deleteListing(listing.id)"
+                        class="w-full flex items-center justify-center bg-gray-200 hover:bg-gray-300 text-gray-800 text-xs py-1 px-2 rounded transition"
+                      >
                         <i class="fas fa-trash-alt mr-1"></i> Del
                       </button>
                     </div>
@@ -178,7 +226,8 @@ import { environment } from '../../../environments/environment';
             @if (myListings().length > 6) {
               <div class="border-t border-gray-100 px-6 py-4 text-center">
                 <a routerLink="/my-listings" class="text-mb-blue hover:underline font-medium">
-                  View all {{ myListings().length }} listings <i class="fas fa-arrow-right ml-2"></i>
+                  View all {{ myListings().length }} listings
+                  <i class="fas fa-arrow-right ml-2"></i>
                 </a>
               </div>
             }
@@ -186,7 +235,7 @@ import { environment } from '../../../environments/environment';
         </div>
       </div>
     </div>
-  `
+  `,
 })
 export class ProfileComponent implements OnInit {
   private api = inject(ApiService);
@@ -207,7 +256,7 @@ export class ProfileComponent implements OnInit {
     this.loading.set(!this.api.hasCached('my-listings'));
     this.api.getProfile().subscribe({
       next: (data) => this.user.set(data),
-      error: () => {}
+      error: () => {},
     });
     this.api.getMyListings().subscribe({
       next: (data) => {
@@ -217,7 +266,7 @@ export class ProfileComponent implements OnInit {
       error: () => {
         this.myListings.set([]);
         this.loading.set(false);
-      }
+      },
     });
   }
 
@@ -228,7 +277,7 @@ export class ProfileComponent implements OnInit {
   deleteListing(id: number): void {
     if (!confirm('Delete this listing?')) return;
     this.api.deleteListing(id).subscribe({
-      next: () => this.myListings.update(list => list.filter(l => l.id !== id))
+      next: () => this.myListings.update((list) => list.filter((l) => l.id !== id)),
     });
   }
 }

@@ -1,4 +1,4 @@
-import { Component, OnInit, inject, signal } from '@angular/core';
+import { Component, OnInit, inject, signal, ChangeDetectionStrategy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
@@ -14,6 +14,7 @@ import { environment } from '../../../environments/environment';
   selector: 'app-edit-listing',
   standalone: true,
   imports: [CommonModule, FormsModule, ImageUploadComponent, CityAutocompleteComponent],
+  changeDetection: ChangeDetectionStrategy.Eager,
   template: `
     <div class="max-w-3xl mx-auto px-4 py-8 min-page">
       <h1 class="text-3xl font-bold text-mb-dark mb-8">Edit Listing</h1>
@@ -22,12 +23,17 @@ import { environment } from '../../../environments/environment';
         <form (ngSubmit)="onSubmit()" class="bg-white rounded-2xl shadow-lg p-8 space-y-6">
           <div class="form-group">
             <label class="form-label">Title *</label>
-            <input type="text" [(ngModel)]="title" name="title" class="form-input" required>
+            <input type="text" [(ngModel)]="title" name="title" class="form-input" required />
           </div>
 
           <div class="form-group">
             <label class="form-label">Description</label>
-            <textarea [(ngModel)]="description" name="description" class="form-input" rows="6"></textarea>
+            <textarea
+              [(ngModel)]="description"
+              name="description"
+              class="form-input"
+              rows="6"
+            ></textarea>
           </div>
 
           <div class="form-group">
@@ -41,12 +47,17 @@ import { environment } from '../../../environments/environment';
           <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div class="form-group">
               <label class="form-label">Price ($) *</label>
-              <input type="number" [(ngModel)]="price" name="price" class="form-input" required>
+              <input type="number" [(ngModel)]="price" name="price" class="form-input" required />
             </div>
 
             <div class="form-group">
               <label class="form-label">State</label>
-              <select [(ngModel)]="state" name="state" (ngModelChange)="onStateChange()" class="form-input">
+              <select
+                [(ngModel)]="state"
+                name="state"
+                (ngModelChange)="onStateChange()"
+                class="form-input"
+              >
                 <option value="">Select state</option>
                 @for (s of states(); track s.code) {
                   <option [value]="s.code">{{ s.name }}</option>
@@ -57,10 +68,13 @@ import { environment } from '../../../environments/environment';
 
           <div class="form-group">
             <label class="form-label">City / Town</label>
-            <app-city-autocomplete [state]="state" [value]="cityName"
-                                   (valueChange)="cityName = $event"
-                                   (citySelected)="cityName = $event.name"
-                                   placeholder="Start typing a city" />
+            <app-city-autocomplete
+              [state]="state"
+              [value]="cityName"
+              (valueChange)="cityName = $event"
+              (citySelected)="cityName = $event.name"
+              placeholder="Start typing a city"
+            />
           </div>
 
           @if (existingImages().length > 0) {
@@ -69,9 +83,19 @@ import { environment } from '../../../environments/environment';
               <div class="grid grid-cols-4 gap-2">
                 @for (img of existingImages(); track $index) {
                   <div class="relative group">
-                    <img [src]="getImageUrl(img)" class="w-full h-24 object-cover rounded border border-gray-200" loading="lazy" decoding="async">
-                    <button type="button" (click)="removeExisting($index)"
-                            class="absolute top-1 right-1 bg-red-500 text-white w-6 h-6 rounded-full text-xs opacity-0 group-hover:opacity-100 transition">×</button>
+                    <img
+                      [src]="getImageUrl(img)"
+                      class="w-full h-24 object-cover rounded border border-gray-200"
+                      loading="lazy"
+                      decoding="async"
+                    />
+                    <button
+                      type="button"
+                      (click)="removeExisting($index)"
+                      class="absolute top-1 right-1 bg-red-500 text-white w-6 h-6 rounded-full text-xs opacity-0 group-hover:opacity-100 transition"
+                    >
+                      ×
+                    </button>
                   </div>
                 }
               </div>
@@ -80,7 +104,10 @@ import { environment } from '../../../environments/environment';
 
           <div class="form-group">
             <label class="form-label">Add Photos</label>
-            <app-image-upload [maxFiles]="10" (filesChange)="onFilesChange($event)"></app-image-upload>
+            <app-image-upload
+              [maxFiles]="10"
+              (filesChange)="onFilesChange($event)"
+            ></app-image-upload>
           </div>
 
           <div class="flex gap-3 pt-4 border-t border-gray-100">
@@ -94,7 +121,7 @@ import { environment } from '../../../environments/environment';
         <div class="text-center py-12 text-gray-500">Loading...</div>
       }
     </div>
-  `
+  `,
 })
 export class EditListingComponent implements OnInit {
   private api = inject(ApiService);
@@ -139,7 +166,7 @@ export class EditListingComponent implements OnInit {
   ngOnInit(): void {
     this.api.getStates().subscribe({
       next: (data) => this.states.set(data || []),
-      error: () => this.states.set([])
+      error: () => this.states.set([]),
     });
 
     const id = Number(this.route.snapshot.paramMap.get('id'));
@@ -153,7 +180,7 @@ export class EditListingComponent implements OnInit {
           this.splitLocation(data.location);
           this.sellerType = data.seller_type === 'DEALER' ? 'DEALER' : 'OWNER';
           this.existingImages.set(data.images || []);
-        }
+        },
       });
     }
   }
@@ -165,7 +192,7 @@ export class EditListingComponent implements OnInit {
   removeExisting(index: number): void {
     const img = this.existingImages()[index];
     this.removedImages.push(img);
-    this.existingImages.update(list => list.filter((_, i) => i !== index));
+    this.existingImages.update((list) => list.filter((_, i) => i !== index));
   }
 
   onFilesChange(files: File[]): void {
@@ -183,7 +210,7 @@ export class EditListingComponent implements OnInit {
           maxWidthPx: 1920,
           maxHeightPx: 1920,
           quality: 0.82,
-          maxSizeBytes: 800 * 1024
+          maxSizeBytes: 800 * 1024,
         });
       } catch {
         uploadFiles = this.newFiles;
@@ -196,8 +223,8 @@ export class EditListingComponent implements OnInit {
     formData.append('price', String(this.price));
     formData.append('location', this.composeLocation());
     formData.append('seller_type', this.sellerType);
-    this.removedImages.forEach(img => formData.append('removed_images', img));
-    uploadFiles.forEach(f => formData.append('images', f));
+    this.removedImages.forEach((img) => formData.append('removed_images', img));
+    uploadFiles.forEach((f) => formData.append('images', f));
 
     this.api.updateListing(this.listing()!.id, formData).subscribe({
       next: () => {
@@ -208,7 +235,7 @@ export class EditListingComponent implements OnInit {
       error: (err) => {
         this.loading.set(false);
         this.notification.error(err?.error?.message || 'Failed to save');
-      }
+      },
     });
   }
 

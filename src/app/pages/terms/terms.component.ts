@@ -1,10 +1,11 @@
-import { Component } from '@angular/core';
+import { Component, ChangeDetectionStrategy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 
 @Component({
   selector: 'app-terms',
   standalone: true,
   imports: [CommonModule],
+  changeDetection: ChangeDetectionStrategy.Eager,
   template: `
     <div class="max-w-4xl mx-auto px-4 py-12 min-page">
       <h1 class="text-4xl font-bold mb-8">Terms of Service</h1>
@@ -59,18 +60,36 @@ import { CommonModule } from '@angular/common';
 
         <section>
           <h2>5. Dispute Resolution</h2>
-          <p>Disputes must be resolved between users directly. MoneyBay may mediate but is not liable for outcomes.</p>
+          <p>
+            Disputes must be resolved between users directly. MoneyBay may mediate but is not liable
+            for outcomes.
+          </p>
         </section>
 
         <section>
           <h2>6. Trust & Safety - Flagging System</h2>
           <p>MoneyBay maintains community safety through a user-driven flagging system:</p>
           <ul>
-            <li><strong>Flag a Listing:</strong> Click the "Flag" button on any listing to report spam, prohibited items, fraud, offensive content, or other violations</li>
-            <li><strong>Automatic Action:</strong> When a listing receives 20 or more flags from different users, it is automatically hidden from the platform</li>
-            <li><strong>Review Process:</strong> Our team reviews flagged listings and may take additional action including permanent removal and user suspension</li>
-            <li><strong>False Flags:</strong> Repeatedly flagging listings in bad faith may result in account suspension</li>
-            <li><strong>Community Responsibility:</strong> Help keep MoneyBay safe by flagging violations, but do not abuse the system</li>
+            <li>
+              <strong>Flag a Listing:</strong> Click the "Flag" button on any listing to report
+              spam, prohibited items, fraud, offensive content, or other violations
+            </li>
+            <li>
+              <strong>Automatic Action:</strong> When a listing receives 20 or more flags from
+              different users, it is automatically hidden from the platform
+            </li>
+            <li>
+              <strong>Review Process:</strong> Our team reviews flagged listings and may take
+              additional action including permanent removal and user suspension
+            </li>
+            <li>
+              <strong>False Flags:</strong> Repeatedly flagging listings in bad faith may result in
+              account suspension
+            </li>
+            <li>
+              <strong>Community Responsibility:</strong> Help keep MoneyBay safe by flagging
+              violations, but do not abuse the system
+            </li>
           </ul>
         </section>
 
@@ -80,6 +99,6 @@ import { CommonModule } from '@angular/common';
         </section>
       </div>
     </div>
-  `
+  `,
 })
 export class TermsComponent {}

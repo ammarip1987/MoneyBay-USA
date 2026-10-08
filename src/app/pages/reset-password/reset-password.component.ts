@@ -1,4 +1,4 @@
-import { Component, OnInit, inject, signal } from '@angular/core';
+import { Component, OnInit, inject, signal, ChangeDetectionStrategy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
@@ -9,6 +9,7 @@ import { NotificationService } from '../../services/notification.service';
   selector: 'app-reset-password',
   standalone: true,
   imports: [CommonModule, FormsModule, RouterLink],
+  changeDetection: ChangeDetectionStrategy.Eager,
   template: `
     <div class="max-w-md mx-auto px-4 py-12 min-page">
       <div class="bg-white rounded-2xl shadow-lg p-8">
@@ -17,17 +18,32 @@ import { NotificationService } from '../../services/notification.service';
         @if (!token()) {
           <div class="bg-red-50 border border-red-200 text-red-800 rounded-lg p-4 text-sm">
             Invalid or missing reset token.
-            <a routerLink="/forgot-password" class="text-mb-blue hover:underline block mt-2">Request a new link</a>
+            <a routerLink="/forgot-password" class="text-mb-blue hover:underline block mt-2"
+              >Request a new link</a
+            >
           </div>
         } @else {
           <form (ngSubmit)="onSubmit()">
             <div class="form-group">
               <label class="form-label">New Password</label>
-              <input type="password" [(ngModel)]="password" name="password" class="form-input" required minlength="6">
+              <input
+                type="password"
+                [(ngModel)]="password"
+                name="password"
+                class="form-input"
+                required
+                minlength="6"
+              />
             </div>
             <div class="form-group">
               <label class="form-label">Confirm Password</label>
-              <input type="password" [(ngModel)]="confirmPassword" name="confirm" class="form-input" required>
+              <input
+                type="password"
+                [(ngModel)]="confirmPassword"
+                name="confirm"
+                class="form-input"
+                required
+              />
             </div>
             <button type="submit" class="btn btn-primary w-full mt-4" [disabled]="loading()">
               {{ loading() ? 'Resetting...' : 'Reset Password' }}
@@ -36,7 +52,7 @@ import { NotificationService } from '../../services/notification.service';
         }
       </div>
     </div>
-  `
+  `,
 })
 export class ResetPasswordComponent implements OnInit {
   private api = inject(ApiService);
@@ -70,7 +86,7 @@ export class ResetPasswordComponent implements OnInit {
       error: (err) => {
         this.loading.set(false);
         this.notification.error(err?.error?.message || 'Failed to reset password');
-      }
+      },
     });
   }
 }
