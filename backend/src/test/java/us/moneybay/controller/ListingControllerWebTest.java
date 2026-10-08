@@ -3,8 +3,9 @@ package us.moneybay.controller;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
-import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
+import org.springframework.boot.autoconfigure.ImportAutoConfiguration;
+import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc;
+import org.springframework.boot.webmvc.test.autoconfigure.WebMvcTest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
@@ -40,11 +41,15 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
  *
  * База не поднимается: репозитории подменены, запросы к ним не уходят.
  */
+// CacheAutoConfiguration добавлен в срез намеренно: WebMvcTest поднимает
+// только слой веба, а приложение помечено @EnableCaching и требует
+// CacheManager. В Spring Boot 3 он приходил сам, в 4 — нет
 @WebMvcTest(controllers = ListingController.class,
             excludeAutoConfiguration = {
-                org.springframework.boot.autoconfigure.security.servlet.SecurityAutoConfiguration.class,
-                org.springframework.boot.autoconfigure.security.servlet.SecurityFilterAutoConfiguration.class
+                org.springframework.boot.security.autoconfigure.SecurityAutoConfiguration.class,
+                org.springframework.boot.security.autoconfigure.web.servlet.SecurityFilterAutoConfiguration.class
             })
+@ImportAutoConfiguration(org.springframework.boot.cache.autoconfigure.CacheAutoConfiguration.class)
 @AutoConfigureMockMvc(addFilters = false)
 class ListingControllerWebTest {
 
