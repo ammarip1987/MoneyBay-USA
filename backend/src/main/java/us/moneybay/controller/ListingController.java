@@ -246,7 +246,10 @@ public class ListingController {
         // Считает база: границы и среднее одним запросом, распределение —
         // вторым. Прежде все цены выбирались в приложение и обрабатывались там,
         // и на большой категории это занимало больше двух секунд.
-        Object[] stats = listingRepository.priceStats(city, category);
+        // Берётся первая строка: запрос возвращает её одну, но Hibernate 7
+        // отдаёт перечень. Пустым он не бывает — count(*) считает и по нулю
+        List<Object[]> rows = listingRepository.priceStats(city, category);
+        Object[] stats = rows.isEmpty() ? new Object[]{0L, null, null, null} : rows.get(0);
         Map<String, Object> response = new HashMap<>();
 
         long total = stats[0] == null ? 0 : ((Number) stats[0]).longValue();

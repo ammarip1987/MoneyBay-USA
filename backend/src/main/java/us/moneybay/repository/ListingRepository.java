@@ -256,7 +256,10 @@ public interface ListingRepository extends JpaRepository<Listing, Long> {
                    "AND (COALESCE(:city, '') = '' OR l.location = :city) " +
                    "AND (COALESCE(:categorySlug, '') = '' OR c.slug = :categorySlug)",
            nativeQuery = true)
-    Object[] priceStats(@Param("city") String city, @Param("categorySlug") String categorySlug);
+    // List<Object[]>, а не Object[]: Hibernate 7 в Spring Boot 4 понимает
+    // Object[] как перечень строк и отдаёт массив массивов, отчего приведение
+    // stats[0] к Number падало с ClassCastException — отбор отвечал 500
+    List<Object[]> priceStats(@Param("city") String city, @Param("categorySlug") String categorySlug);
 
     /**
      * Распределение цен по промежуткам средствами базы: width_bucket раскладывает
