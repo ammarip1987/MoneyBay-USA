@@ -46,7 +46,11 @@ import { NotificationsService } from '../../services/notifications.service';
         </div>
       }
 
-      <header class="bg-mb-dark text-white sticky top-0 z-50">
+      <!-- z-[70] у шапки, а не z-50: sticky создаёт свой слой, и выпадающая
+           панель внутри него не может подняться выше полосы объявления,
+           которая лежит снаружи с z-[60]. Панель оказывалась под полосой —
+           из-под неё торчала белая линия вместо раскрытого перечня -->
+      <header class="bg-mb-dark text-white sticky top-0 z-[70]">
         <nav class="max-w-7xl mx-auto px-4 py-4">
           <div class="flex justify-between items-center relative">
             <!-- Кнопка стоит перед именем площадки: так она первой попадает под
@@ -299,7 +303,7 @@ import { NotificationsService } from '../../services/notifications.service';
             id="catalog-panel"
             role="region"
             aria-label="All listings by category"
-            class="hidden md:block absolute left-0 right-0 top-full z-50 bg-white text-gray-800 border-t border-gray-200 shadow-xl"
+            class="hidden md:block absolute left-0 right-0 top-full z-[70] bg-white text-gray-800 border-t border-gray-200 shadow-xl"
           >
             <div class="max-w-7xl mx-auto flex">
               <!-- Разделы. Выбранный подсвечен, наведение сразу меняет правую
