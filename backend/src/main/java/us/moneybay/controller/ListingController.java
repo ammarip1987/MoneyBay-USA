@@ -36,6 +36,7 @@ public class ListingController {
 
     private final ListingRepository listingRepository;
     private final CategoryRepository categoryRepository;
+    private final us.moneybay.repository.SubcategoryRepository subcategoryRepository;
     private final CityRepository cityRepository;
 
     @Autowired
@@ -51,9 +52,11 @@ public class ListingController {
 
     public ListingController(ListingRepository listingRepository,
                              CategoryRepository categoryRepository,
+                             us.moneybay.repository.SubcategoryRepository subcategoryRepository,
                              CityRepository cityRepository) {
         this.listingRepository = listingRepository;
         this.categoryRepository = categoryRepository;
+        this.subcategoryRepository = subcategoryRepository;
         this.cityRepository = cityRepository;
     }
 
@@ -452,6 +455,7 @@ public class ListingController {
         @RequestParam String location,
         @RequestParam(required = false) String area,
         @RequestParam(name = "category_id", required = false) Long categoryId,
+        @RequestParam(name = "subcategory_id", required = false) Long subcategoryId,
         @RequestParam(name = "seller_type", required = false) String sellerType,
         @RequestParam(value = "images", required = false) MultipartFile[] images,
         Authentication auth) {
@@ -473,6 +477,10 @@ public class ListingController {
 
         if (categoryId != null) {
             categoryRepository.findById(categoryId).ifPresent(listing::setCategory);
+        }
+
+        if (subcategoryId != null) {
+            subcategoryRepository.findById(subcategoryId).ifPresent(listing::setSubcategory);
         }
 
         if (images != null && images.length > 0) {

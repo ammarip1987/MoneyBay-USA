@@ -46,13 +46,34 @@ import { CityAutocompleteComponent } from '../../components/city-autocomplete/ci
 
         <div class="form-group">
           <label class="form-label">Category *</label>
-          <select [(ngModel)]="categoryId" name="category" class="form-input" required>
+          <select
+            [ngModel]="categoryId"
+            (ngModelChange)="onCategoryChange($event)"
+            name="category"
+            class="form-input"
+            required
+          >
             <option value="">Select category</option>
             @for (cat of categories(); track cat.id) {
               <option [value]="cat.id">{{ cat.name }}</option>
             }
           </select>
         </div>
+
+        <!-- Подкатегория: показывается, когда у выбранной категории есть
+             вложенные. Необязательна — справочник заполнен не везде, и
+             требовать её нельзя -->
+        @if (subcategories().length > 0) {
+          <div class="form-group">
+            <label class="form-label">Subcategory</label>
+            <select [(ngModel)]="subcategoryId" name="subcategory" class="form-input">
+              <option value="">Any</option>
+              @for (sub of subcategories(); track sub.id) {
+                <option [value]="sub.id">{{ sub.name }}</option>
+              }
+            </select>
+          </div>
+        }
 
         <!-- Кто продаёт. По умолчанию владелец: так же считаются объявления,
              размещённые до появления этого поля -->
@@ -167,10 +188,13 @@ export class NewListingComponent implements OnInit {
   private compressor = inject(ImageCompressionService);
 
   categories = signal<Category[]>([]);
+  /** Подкатегории выбранной категории. Пусто — значит их нет, и поле скрыто. */
+  subcategories = signal<{ id: number; name: string; slug: string }[]>([]);
   loading = signal(false);
 
   title = '';
   categoryId = '';
+  subcategoryId = '';
   /** Кто продаёт. Владелец по умолчанию: перепродажу выбирают осознанно. */
   sellerType = 'OWNER';
   description = '';
@@ -205,6 +229,25 @@ export class NewListingComponent implements OnInit {
     this.api.getStates().subscribe({
       next: (data) => this.states.set(data || []),
       error: () => this.states.set([]),
+    });
+  }
+
+  /**
+   * Смена категории: подкатегории подгружаются заново, прежний выбор
+   * сбрасывается — он относился к другой категории.
+   */
+  onCategoryChange(value: string): void {
+    this.categoryId = value;
+    this.subcategoryId = '';
+    this.subcategories.set([]);
+    if (!value) return;
+
+    const cat = this.categories().find(c => String(c.id) === String(value));
+    if (!cat?.slug) return;
+
+    this.api.getSubcategories(cat.slug).subscribe({
+      next: (data) => this.subcategories.set(data || []),
+      error: () => this.subcategories.set([]),
     });
   }
 
@@ -284,6 +327,8 @@ export class NewListingComponent implements OnInit {
     const formData = new FormData();
     formData.append('title', this.title);
     formData.append('category_id', this.categoryId);
+    // Только когда выбрана: пустое значение сервер понял бы как ноль
+    if (this.subcategoryId) formData.append('subcategory_id', this.subcategoryId);
     formData.append('seller_type', this.sellerType);
     formData.append('description', this.description);
     formData.append('price', String(this.price));

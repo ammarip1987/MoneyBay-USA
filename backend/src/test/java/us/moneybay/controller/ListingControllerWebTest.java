@@ -58,6 +58,7 @@ class ListingControllerWebTest {
 
     @MockitoBean private ListingRepository listingRepository;
     @MockitoBean private CategoryRepository categoryRepository;
+    @MockitoBean private us.moneybay.repository.SubcategoryRepository subcategoryRepository;
     @MockitoBean private CityRepository cityRepository;
     @MockitoBean private R2PhotoService r2PhotoService;
     @MockitoBean private KeywordFilterService keywordFilterService;
@@ -97,7 +98,7 @@ class ListingControllerWebTest {
     @Test
     @DisplayName("лента отдаёт объявления с датой в created_at")
     void feedCarriesTheDate() throws Exception {
-        when(listingRepository.searchSlice(any(), any(), any(), any(Pageable.class)))
+        when(listingRepository.searchSlice(any(), any(), any(), any(), any(Pageable.class)))
             .thenReturn(List.of(sample()));
         when(listingRepository.findPromoted(any(), any(), any(Pageable.class)))
             .thenReturn(List.of());
@@ -115,7 +116,7 @@ class ListingControllerWebTest {
     @Test
     @DisplayName("последняя страница считается по числу объявлений")
     void lastPageComesFromTheCount() throws Exception {
-        when(listingRepository.searchSlice(any(), any(), any(), any(Pageable.class)))
+        when(listingRepository.searchSlice(any(), any(), any(), any(), any(Pageable.class)))
             .thenReturn(List.of(sample()));
         when(listingRepository.findPromoted(any(), any(), any(Pageable.class)))
             .thenReturn(List.of());
@@ -133,7 +134,7 @@ class ListingControllerWebTest {
     @Test
     @DisplayName("ответ ленты несёт признак следующей страницы")
     void feedReportsWhetherMorePagesFollow() throws Exception {
-        when(listingRepository.searchSlice(any(), any(), any(), any(Pageable.class)))
+        when(listingRepository.searchSlice(any(), any(), any(), any(), any(Pageable.class)))
             .thenReturn(List.of(sample()));
         when(listingRepository.findPromoted(any(), any(), any(Pageable.class)))
             .thenReturn(List.of());
@@ -153,7 +154,7 @@ class ListingControllerWebTest {
         boosted.setTitle("Boosted one");
         boosted.setPromotedUntil(Instant.parse("2027-01-01T00:00:00Z"));
 
-        when(listingRepository.searchSlice(any(), any(), any(), any(Pageable.class)))
+        when(listingRepository.searchSlice(any(), any(), any(), any(), any(Pageable.class)))
             .thenReturn(List.of(plain));
         when(listingRepository.findPromoted(any(), any(), any(Pageable.class)))
             .thenReturn(List.of(boosted));
