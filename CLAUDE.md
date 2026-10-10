@@ -27,15 +27,15 @@
 
 ### Проект
 
-Полнофункциональная площадка объявлений на Angular 21 + Spring Boot 3.5 с поддержкой английского языка. Аналог Craigslist для США. Переписана с Flask-проекта `c:\Moneybay`.
+Полнофункциональная площадка объявлений на Angular 22 + Spring Boot 4.1 с поддержкой английского языка. Аналог Craigslist для США. Переписана с Flask-проекта `c:\Moneybay`.
 
 **Основная информация:**
-- Frontend: Angular 21 (TypeScript), Tailwind CSS + SASS
-- Backend: Spring Boot 3.5 (Java 25), Spring Data JPA, Spring Security + JWT
+- Frontend: Angular 22 (TypeScript), Tailwind CSS + SASS
+- Backend: Spring Boot 4.1 (Java 25), Spring Data JPA, Spring Security + JWT
 - База: PostgreSQL 18 (`moneybay`, пользователь `moneybay_app`, пароль `moneybay123`)
 - WebSocket: STOMP через @stomp/stompjs + sockjs-client
 - Stripe Java SDK 26.6 для платежей
-- SSR: @angular/ssr 21.2
+- SSR: @angular/ssr 22.2
 
 **Структура:**
 - `src/` — Angular frontend
@@ -79,7 +79,7 @@ ng serve
 
 ### Деплой
 
-Этот проект **локальный**, не деплоится на production. Production — Flask-версия в `c:\Moneybay` (деплоится на Cloud Run `moneybay` в us-central1).
+Площадка **на production**: `moneybay.us`, задача ECS Fargate в us-east-2, фронт в воркере Cloudflare. Деплой при каждом пуше в `main` — `.github/workflows/deploy.yml`. Прежняя версия на Flask лежит в `c:Moneybay` и не деплоится.
 
 **Конкуренты:**
 - Craigslist — главный конкурент на рынке США. Цель: УБИТЬ по UX, монетизации и функциональности.
