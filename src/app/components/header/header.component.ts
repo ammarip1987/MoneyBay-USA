@@ -572,7 +572,15 @@ export class HeaderComponent implements OnDestroy {
     this.catalogOpen.set(opening);
     if (!opening) return;
 
-    if (this.catalogCategories().length) return;
+    // При повторном открытии справочник уже загружен, но выбранный раздел
+    // надо вернуть к первому: иначе в правой части остаётся тот, на который
+    // наводили в прошлый раз, и подкатегории оказываются от чужой категории
+    const loaded = this.catalogCategories();
+    if (loaded.length) {
+      if (loaded[0]) this.hoverCategory(loaded[0]);
+      return;
+    }
+
     this.api.getCategories().subscribe({
       next: (cats) => {
         this.catalogCategories.set(cats || []);
