@@ -82,10 +82,12 @@ public interface ListingRepository extends JpaRepository<Listing, Long> {
     @Query("SELECT l FROM Listing l WHERE l.isActive = true AND l.isDeleted = false " +
            "AND (COALESCE(:city, '') = '' OR l.location = :city) " +
            "AND (COALESCE(:state, '') = '' OR SUBSTRING(l.location, LENGTH(l.location) - 1, 2) = :state) " +
-           "AND (COALESCE(:categorySlug, '') = '' OR l.category.slug = :categorySlug)")
+           "AND (COALESCE(:categorySlug, '') = '' OR l.category.slug = :categorySlug) " +
+           "AND (COALESCE(:subcategorySlug, '') = '' OR l.subcategory.slug = :subcategorySlug)")
     List<Listing> searchSlice(@Param("city") String city,
                               @Param("state") String state,
                               @Param("categorySlug") String categorySlug,
+                              @Param("subcategorySlug") String subcategorySlug,
                               Pageable pageable);
 
     /**

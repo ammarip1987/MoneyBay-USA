@@ -343,12 +343,15 @@ import { NotificationsService } from '../../services/notifications.service';
 
                   @if (catalogSubs().length) {
                     <!-- Столбцами: перечень в одну колонку заставлял бы прокручивать
-                       панель, хотя места по ширине достаточно -->
+                       панель, хотя места по ширине достаточно.
+                       Параметр зовётся sub, а не subcategory: под этим именем
+                       его читает главная, и ссылка с subcategory открывала
+                       всю категорию вместо выбранной подкатегории -->
                     <div class="mt-4 columns-2 lg:columns-3 gap-8">
                       @for (sub of catalogSubs(); track sub.id) {
                         <a
                           [routerLink]="['/']"
-                          [queryParams]="{ category: cat.slug, subcategory: sub.slug }"
+                          [queryParams]="{ category: cat.slug, sub: sub.slug }"
                           (click)="closeCatalog()"
                           class="block py-1 text-sm text-gray-700 hover:text-mb-dark hover:underline break-inside-avoid"
                           >{{ sub.name }}</a

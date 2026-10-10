@@ -742,6 +742,12 @@ export class HomeComponent implements OnInit, OnDestroy {
     if (this.selectedCategory() || this.searchQuery) params.page_size = 20;
     if (this.searchQuery) params.q = this.searchQuery;
     if (this.selectedCategory()) params.category = this.selectedCategory();
+    // Подкатегория уходит на сервер: прежде selectedSub применялся только для
+    // показа плиток, а лента приходила по всей категории.
+    // Берётся самый глубокий выбранный уровень — третий лежит в той же
+    // таблице subcategories, отличается только parent_id
+    const sub = this.selectedSubSub() || this.selectedSub();
+    if (sub) params.subcategory = sub;
     if (this.cityFilter) params.city = this.cityFilter;
     if (this.sortBy && this.sortBy !== 'newest') params.sort = this.sortBy;
 

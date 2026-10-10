@@ -104,6 +104,7 @@ public class ListingController {
         @RequestParam(required = false) String q,
         @RequestParam(required = false) String city,
         @RequestParam(required = false) String category,
+        @RequestParam(required = false) String subcategory,
         @RequestParam(defaultValue = "newest") String sort,
         @RequestParam(name = "price_min", required = false) Double priceMin,
         @RequestParam(name = "price_max", required = false) Double priceMax,
@@ -201,7 +202,7 @@ public class ListingController {
         String stateOnly = stateOf(city);
 
         List<Listing> rows = (q == null || q.isBlank())
-            ? listingRepository.searchSlice(cityOnly, stateOnly, category, slice)
+            ? listingRepository.searchSlice(cityOnly, stateOnly, category, subcategory, slice)
             : listingRepository.searchByText(q, cityOnly, stateOnly, category,
                   PAGE_SIZE + 1, (page - 1) * PAGE_SIZE);
 

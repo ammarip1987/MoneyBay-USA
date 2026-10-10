@@ -85,6 +85,14 @@ public class Listing {
     @JoinColumn(name = "category_id")
     private Category category;
 
+    /**
+     * Подкатегория: необязательна. Справочник заполнен не у всех категорий, и
+     * прежние объявления заводились без неё.
+     */
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "subcategory_id")
+    private Subcategory subcategory;
+
     @Column(name = "created_at", updatable = false)
     private Instant createdAt;
 
