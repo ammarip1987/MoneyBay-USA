@@ -15,8 +15,7 @@ ALTER TABLE listings
     ADD CONSTRAINT fk_listings_subcategory
     FOREIGN KEY (subcategory_id) REFERENCES subcategories(id);
 
--- Указатель под отбор: те же условия, что в запросах ленты, и created_at для
--- порядка выдачи. Частичный — снятые объявления в выдачу не идут.
-CREATE INDEX IF NOT EXISTS idx_listings_subcategory_created
-    ON listings (subcategory_id, created_at DESC)
-    WHERE is_active AND NOT is_deleted;
+-- Указатель вынесен в V19 вместе с прочими: построение на 1.2 млн строк идёт
+-- минутами и держит таблицу, проверка состояния задачи за это время не
+-- проходит, и ECS гасит задачу посреди миграции. Столбец добавляется быстро —
+-- ALTER TABLE ADD COLUMN без значения по умолчанию только правит заголовок.
