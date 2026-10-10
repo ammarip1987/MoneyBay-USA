@@ -68,7 +68,13 @@ export class ApiService {
   private readonly staleTtlMs = 5 * 60_000;
   private readonly refreshing = new Set<string>();
 
-  private cached<T>(key: string, request: () => Observable<T>): Observable<T> {
+  /**
+   * @param awaitOnServer держать ли отдачу страницы до ответа. По умолчанию
+   *   да — без этого сервер отдавал каркас без данных. Ставится false для
+   *   запросов, без которых страница осмысленна: их ожидание только задержит
+   *   показ.
+   */
+  private cached<T>(key: string, request: () => Observable<T>, awaitOnServer = true): Observable<T> {
     const hit = this.cache.get(key);
     const age = hit ? Date.now() - hit.at : Infinity;
 
@@ -91,7 +97,8 @@ export class ApiService {
     }
 
     // awaited только здесь: ветки выше отдают из памяти мгновенно, ждать нечего
-    return this.awaited(request().pipe(tap(value => this.cache.set(key, { at: Date.now(), value }))));
+    const fresh = request().pipe(tap(value => this.cache.set(key, { at: Date.now(), value })));
+    return awaitOnServer ? this.awaited(fresh) : fresh;
   }
 
   /** Сбрасывает кэш: вызывается после создания, правки или удаления объявления. */
@@ -150,17 +157,22 @@ export class ApiService {
         httpParams = httpParams.set(key, String(value));
       }
     });
+    // false: подсчёт отобранного идёт секундами и дописывается в полосу,
+    // когда придёт. Страница без него осмысленна — карточки уже показаны
     return this.cached(`count?${httpParams.toString()}`, () =>
       this.http.get<{ count: number; total: number }>(
-        `${this.baseUrl}/api/listings/count`, { params: httpParams }));
+        `${this.baseUrl}/api/listings/count`, { params: httpParams }), false);
   }
 
   getFacets(category?: string, city?: string): Observable<any> {
     let httpParams = new HttpParams();
     if (category) httpParams = httpParams.set('category', category);
     if (city) httpParams = httpParams.set('city', city);
+    // false: отбор по цене считается по всем объявлениям категории и идёт
+    // секунды. Боковая панель без него осмысленна, а ожидание задерживало
+    // показ всей страницы раздела на столько же
     return this.cached(`facets?${httpParams.toString()}`, () =>
-      this.http.get<any>(`${this.baseUrl}/api/listings/facets`, { params: httpParams }));
+      this.http.get<any>(`${this.baseUrl}/api/listings/facets`, { params: httpParams }), false);
   }
 
   getListing(id: number): Observable<Listing> {
